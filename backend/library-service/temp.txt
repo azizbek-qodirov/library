@@ -1,0 +1,22 @@
+{
+  "author_ids": [
+    "bfe0ce83-a610-4b91-bc31-4869e26be01e"
+  ],
+  "available_copies": 1,
+  "category_ids": [
+    "62a2576d-a5bd-4ba6-999c-2fcdc32bd2f3",
+    "ac687d3c-53f2-43a6-89ae-eb16cf035f8d"
+
+  ],
+  "cover_image_id": "",
+  "description": "The Road Ahead is Bill Gates' 1995 book, co-written with Nathan Myhrvold and Peter Rinearson, that describes his vision for the personal computing revolution and the 'information superhighway'. The book details how emerging technologies and the internet would profoundly transform society, work, shopping, and communication, and it offers predictions that have come true, such as online shopping, computerized wallets, and the rise of remote work",
+  "is_reference_only": false,
+  "isbn": "9780140243512",
+  "language": "en",
+  "location": "",
+  "page_count": 286,
+  "published_date": "11-24-1995",
+  "publisher_id": "ecc7b199-7d7f-4368-859e-6f65d5c1e564",
+  "title": "The road ahead",
+  "total_copies": 2
+}

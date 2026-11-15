@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "/internal/pkg/genproto";
+
+package protos;
+
+import "library_submodule/void.proto";
+
+service FileService {
+    rpc CreateFile(FileCreateReq) returns (FileGetRes);
+    rpc GetFile(ByID) returns (FileGetRes);
+    rpc DeleteFile(ByID) returns (Void);
+    rpc GetAllFiles(FilesGetAllReq) returns (GetAllFilesRes);
+}
+
+message FileCreateReq {
+    string url = 1;
+    string mime_type = 2;
+    int64 size = 3; // size in bytes
+}
+
+message FileGetRes {
+    string id = 1;
+    string url = 2;
+    string mime_type = 3;
+    int64 size = 4;
+    string created_at = 5;
+    string updated_at = 6;
+}
+
+message FilesGetAllReq {
+    int64 offset = 1;
+    int64 limit = 2;
+    string mime_type = 3;
+}
+
+message GetAllFilesRes {
+    repeated FileGetRes files = 1;
+    int64 total_count = 2;
+}

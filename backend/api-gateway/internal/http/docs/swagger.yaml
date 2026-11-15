@@ -1,0 +1,1688 @@
+definitions:
+  genproto.AuthorCreateReq:
+    properties:
+      biography:
+        type: string
+      birth_date:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.AuthorGetRes:
+    properties:
+      biography:
+        type: string
+      birth_date:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.AuthorUpdateBody:
+    properties:
+      biography:
+        type: string
+      birth_date:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.BookCreateReq:
+    properties:
+      author_ids:
+        items:
+          type: string
+        type: array
+      available_copies:
+        type: integer
+      category_ids:
+        items:
+          type: string
+        type: array
+      cover_image_id:
+        type: string
+      description:
+        type: string
+      is_reference_only:
+        type: boolean
+      isbn:
+        type: string
+      language:
+        type: string
+      location:
+        type: string
+      page_count:
+        type: integer
+      published_date:
+        type: string
+      publisher_id:
+        type: string
+      title:
+        type: string
+      total_copies:
+        type: integer
+    type: object
+  genproto.BookGetRes:
+    properties:
+      author_ids:
+        items:
+          $ref: '#/definitions/genproto.AuthorGetRes'
+        type: array
+      available_copies:
+        type: integer
+      category_ids:
+        items:
+          $ref: '#/definitions/genproto.CategoryGetRes'
+        type: array
+      cover_image_id:
+        $ref: '#/definitions/genproto.FileGetRes'
+      description:
+        type: string
+      id:
+        type: string
+      is_reference_only:
+        type: boolean
+      isbn:
+        type: string
+      language:
+        type: string
+      location:
+        type: string
+      page_count:
+        type: integer
+      published_date:
+        type: string
+      publisher_id:
+        $ref: '#/definitions/genproto.PublisherGetRes'
+      title:
+        type: string
+      total_copies:
+        type: integer
+    type: object
+  genproto.BookUpdateBody:
+    properties:
+      author_ids:
+        items:
+          type: string
+        type: array
+      available_copies:
+        type: integer
+      category_ids:
+        items:
+          type: string
+        type: array
+      cover_image_id:
+        type: string
+      description:
+        type: string
+      is_reference_only:
+        type: boolean
+      isbn:
+        type: string
+      language:
+        type: string
+      location:
+        type: string
+      page_count:
+        type: integer
+      published_date:
+        type: string
+      publisher_id:
+        type: string
+      title:
+        type: string
+      total_copies:
+        type: integer
+    type: object
+  genproto.BooksGetAllRes:
+    properties:
+      books:
+        items:
+          $ref: '#/definitions/genproto.BookGetRes'
+        type: array
+      total_count:
+        type: integer
+    type: object
+  genproto.BorrowingCreateReq:
+    properties:
+      book_id:
+        type: string
+      due_date:
+        type: string
+      from_date:
+        type: string
+      notes:
+        type: string
+      user_id:
+        type: string
+    type: object
+  genproto.BorrowingGetRes:
+    properties:
+      book:
+        $ref: '#/definitions/genproto.BookGetRes'
+      due_date:
+        type: string
+      extension_date:
+        type: string
+      from_date:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      returned_at:
+        type: string
+      status:
+        type: string
+      user:
+        $ref: '#/definitions/genproto.UserGetRes'
+    type: object
+  genproto.BorrowingUpdateBody:
+    properties:
+      due_date:
+        type: string
+      extension_date:
+        type: string
+      from_date:
+        type: string
+      notes:
+        type: string
+      returned_at:
+        type: string
+      status:
+        type: string
+    type: object
+  genproto.BorrowingsGetAllRes:
+    properties:
+      borrowings:
+        items:
+          $ref: '#/definitions/genproto.BorrowingGetRes'
+        type: array
+      total_count:
+        type: integer
+    type: object
+  genproto.CategoryCreateReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.CategoryGetRes:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.CategoryUpdateBody:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.FileGetRes:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      mime_type:
+        type: string
+      size:
+        type: integer
+      updated_at:
+        type: string
+      url:
+        type: string
+    type: object
+  genproto.GetAllAuthorsRes:
+    properties:
+      authors:
+        items:
+          $ref: '#/definitions/genproto.AuthorGetRes'
+        type: array
+      total_count:
+        type: integer
+    type: object
+  genproto.GetAllCategoriesRes:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/genproto.CategoryGetRes'
+        type: array
+      total_count:
+        type: integer
+    type: object
+  genproto.GetAllFilesRes:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/genproto.FileGetRes'
+        type: array
+      total_count:
+        type: integer
+    type: object
+  genproto.GetAllPublishersRes:
+    properties:
+      publishers:
+        items:
+          $ref: '#/definitions/genproto.PublisherGetRes'
+        type: array
+      total_count:
+        type: integer
+    type: object
+  genproto.PublisherCreateReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.PublisherGetRes:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.PublisherUpdateBody:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  genproto.RecommendedCreateReq:
+    properties:
+      book_id:
+        type: string
+    type: object
+  genproto.RecommendedGetRes:
+    properties:
+      book_id:
+        $ref: '#/definitions/genproto.BookGetRes'
+      created_at:
+        type: string
+      id:
+        type: string
+    type: object
+  genproto.RecommendedsGetAllRes:
+    properties:
+      recommendeds:
+        items:
+          $ref: '#/definitions/genproto.RecommendedGetRes'
+        type: array
+      total_count:
+        type: integer
+    type: object
+  genproto.UserCreateReq:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      group_name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  genproto.UserGetRes:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      group_name:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  genproto.UserUpdateBody:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      group_name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  genproto.UsersGetAllRes:
+    properties:
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/genproto.UserGetRes'
+        type: array
+    type: object
+  genproto.Void:
+    type: object
+info:
+  contact: {}
+paths:
+  /author:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new author in the database
+      parameters:
+      - description: Author create request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.AuthorCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Author created successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Creates a new author
+      tags:
+      - 04-Author
+  /author/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an author by ID
+      parameters:
+      - description: Author ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Author deleted successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid author ID
+          schema:
+            type: string
+        "404":
+          description: Author not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete author
+      tags:
+      - 04-Author
+    get:
+      consumes:
+      - application/json
+      description: Retrieves an author's information by ID
+      parameters:
+      - description: Author ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Author found
+          schema:
+            $ref: '#/definitions/genproto.AuthorGetRes'
+        "400":
+          description: Invalid author ID
+          schema:
+            type: string
+        "404":
+          description: Author not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get author by ID
+      tags:
+      - 04-Author
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing author
+      parameters:
+      - description: Author ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Author update request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.AuthorUpdateBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Author updated successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload or author ID
+          schema:
+            type: string
+        "404":
+          description: Author not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Update author
+      tags:
+      - 04-Author
+  /authors:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all authors
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of authors
+          schema:
+            $ref: '#/definitions/genproto.GetAllAuthorsRes'
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get all authors
+      tags:
+      - 04-Author
+  /book:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new book in the database
+      parameters:
+      - description: Book create request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.BookCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Book created successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Creates a new book
+      tags:
+      - 05-Book
+  /book/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a book by ID
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Book deleted successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid book ID
+          schema:
+            type: string
+        "404":
+          description: Book not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete book
+      tags:
+      - 05-Book
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a book's information by ID
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Book found
+          schema:
+            $ref: '#/definitions/genproto.BookGetRes'
+        "400":
+          description: Invalid book ID
+          schema:
+            type: string
+        "404":
+          description: Book not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get book by ID
+      tags:
+      - 05-Book
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing book
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Book update request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.BookUpdateBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Book updated successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload or book ID
+          schema:
+            type: string
+        "404":
+          description: Book not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Update book
+      tags:
+      - 05-Book
+  /books:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of books with optional filters for location, categories,
+        authors, publisher, language, reference-only status, and search query
+      parameters:
+      - default: 10
+        description: Number of books to return
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      - description: Search by book title, ISBN, or author name
+        in: query
+        name: search
+        type: string
+      - description: Filter by book location
+        in: query
+        name: location
+        type: string
+      - description: Comma-separated list of category IDs to filter
+        in: query
+        name: category_ids
+        type: string
+      - description: Comma-separated list of author IDs to filter
+        in: query
+        name: author_ids
+        type: string
+      - description: Filter by publisher ID
+        in: query
+        name: publisher_id
+        type: string
+      - description: Filter by book language
+        in: query
+        name: language
+        type: string
+      - description: Filter only reference books
+        in: query
+        name: is_reference_only
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of books with total count
+          schema:
+            $ref: '#/definitions/genproto.BooksGetAllRes'
+        "400":
+          description: Invalid request parameters
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get all books
+      tags:
+      - 05-Book
+  /borrowing:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new borrowing record in the database
+      parameters:
+      - description: Borrowing create request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.BorrowingCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Borrowing created successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Creates a new borrowing
+      tags:
+      - 06-Borrowing
+  /borrowing/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a borrowing record by ID
+      parameters:
+      - description: Borrowing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Borrowing deleted successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid borrowing ID
+          schema:
+            type: string
+        "404":
+          description: Borrowing not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete borrowing
+      tags:
+      - 06-Borrowing
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a borrowing record by ID
+      parameters:
+      - description: Borrowing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Borrowing found
+          schema:
+            $ref: '#/definitions/genproto.BorrowingGetRes'
+        "400":
+          description: Invalid borrowing ID
+          schema:
+            type: string
+        "404":
+          description: Borrowing not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get borrowing by ID
+      tags:
+      - 06-Borrowing
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing borrowing record
+      parameters:
+      - description: Borrowing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Borrowing update request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.BorrowingUpdateBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Borrowing updated successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload or borrowing ID
+          schema:
+            type: string
+        "404":
+          description: Borrowing not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Update borrowing
+      tags:
+      - 06-Borrowing
+  /borrowings:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of borrowings with filters
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Search by book title, author, or borrower name
+        in: query
+        name: search
+        type: string
+      - description: Filter by start date (YYYY-MM-DD)
+        in: query
+        name: from_date
+        type: string
+      - description: Filter by due date (YYYY-MM-DD)
+        in: query
+        name: due_date
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of borrowings
+          schema:
+            $ref: '#/definitions/genproto.BorrowingsGetAllRes'
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get all borrowings
+      tags:
+      - 06-Borrowing
+  /categories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all categories
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of categories
+          schema:
+            $ref: '#/definitions/genproto.GetAllCategoriesRes'
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get all categories
+      tags:
+      - 02-Category
+  /category:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new category in the database
+      parameters:
+      - description: Category create request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.CategoryCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Category created successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Creates a new category
+      tags:
+      - 02-Category
+  /category/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category deleted successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid category ID
+          schema:
+            type: string
+        "404":
+          description: Category not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete category
+      tags:
+      - 02-Category
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a category's information by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category found
+          schema:
+            $ref: '#/definitions/genproto.CategoryGetRes'
+        "400":
+          description: Invalid category ID
+          schema:
+            type: string
+        "404":
+          description: Category not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get category by ID
+      tags:
+      - 02-Category
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Category update request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.CategoryUpdateBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category updated successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload or category ID
+          schema:
+            type: string
+        "404":
+          description: Category not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Update category
+      tags:
+      - 02-Category
+  /file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a file to Minio and stores metadata in the FileService.
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: File created successfully
+          schema:
+            $ref: '#/definitions/genproto.FileGetRes'
+        "400":
+          description: Invalid file upload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Upload a new file
+      tags:
+      - 08-File
+  /file/{id}:
+    delete:
+      description: Deletes a file record and removes it from Minio.
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: File deleted successfully
+          schema:
+            type: string
+        "404":
+          description: File not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete a file
+      tags:
+      - 08-File
+    get:
+      description: Retrieves a file record by its ID.
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File retrieved successfully
+          schema:
+            $ref: '#/definitions/genproto.FileGetRes'
+        "404":
+          description: File not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get a file by ID
+      tags:
+      - 08-File
+  /files:
+    get:
+      description: Retrieves all files with pagination and optional MIME type filter.
+      parameters:
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Limit per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by MIME type
+        in: query
+        name: mime_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Files retrieved successfully
+          schema:
+            $ref: '#/definitions/genproto.GetAllFilesRes'
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: List all files
+      tags:
+      - 08-File
+  /publisher:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new publisher in the database
+      parameters:
+      - description: Publisher create request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.PublisherCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Publisher created successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Creates a new publisher
+      tags:
+      - 03-Publisher
+  /publisher/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a publisher by ID
+      parameters:
+      - description: Publisher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Publisher deleted successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid publisher ID
+          schema:
+            type: string
+        "404":
+          description: Publisher not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete publisher
+      tags:
+      - 03-Publisher
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a publisher's information by ID
+      parameters:
+      - description: Publisher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Publisher found
+          schema:
+            $ref: '#/definitions/genproto.PublisherGetRes'
+        "400":
+          description: Invalid publisher ID
+          schema:
+            type: string
+        "404":
+          description: Publisher not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get publisher by ID
+      tags:
+      - 03-Publisher
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing publisher
+      parameters:
+      - description: Publisher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Publisher update request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.PublisherUpdateBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Publisher updated successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload or publisher ID
+          schema:
+            type: string
+        "404":
+          description: Publisher not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Update publisher
+      tags:
+      - 03-Publisher
+  /publishers:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all publishers
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Order by field
+        in: query
+        name: order_by
+        type: string
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of publishers
+          schema:
+            $ref: '#/definitions/genproto.GetAllPublishersRes'
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get all publishers
+      tags:
+      - 03-Publisher
+  /recommended:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of recommended books
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of recommended books
+          schema:
+            $ref: '#/definitions/genproto.RecommendedsGetAllRes'
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get all recommended books
+      tags:
+      - 07-Recommended
+    post:
+      consumes:
+      - application/json
+      description: Marks a book as recommended
+      parameters:
+      - description: Recommended create request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.RecommendedCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Recommended created successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Create a recommended book
+      tags:
+      - 07-Recommended
+  /recommended/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a recommended book by ID
+      parameters:
+      - description: Recommended ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recommended deleted successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "404":
+          description: Recommended not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete recommended book
+      tags:
+      - 07-Recommended
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a recommended book (with nested book, author, publisher,
+        categories)
+      parameters:
+      - description: Recommended ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recommended book
+          schema:
+            $ref: '#/definitions/genproto.RecommendedGetRes'
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "404":
+          description: Recommended book not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get recommended book by ID
+      tags:
+      - 07-Recommended
+  /user:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user in the database with specified roles either
+        student or teacher
+      parameters:
+      - description: User create request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.UserCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "429":
+          description: Too many requests, please try again later
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Creates a new user
+      tags:
+      - 01-User
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid user ID
+          schema:
+            type: string
+        "404":
+          description: User not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Delete user
+      tags:
+      - 01-User
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a user's information by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User found
+          schema:
+            $ref: '#/definitions/genproto.UserGetRes'
+        "400":
+          description: Invalid user ID
+          schema:
+            type: string
+        "404":
+          description: User not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get user by ID
+      tags:
+      - 01-User
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing user's information
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User update request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.UserUpdateBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated successfully
+          schema:
+            $ref: '#/definitions/genproto.Void'
+        "400":
+          description: Invalid request payload or user ID
+          schema:
+            type: string
+        "404":
+          description: User not found
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Update user
+      tags:
+      - 01-User
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all users
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      - description: Group name
+        in: query
+        name: group_name
+        type: string
+      - description: Role
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            $ref: '#/definitions/genproto.UsersGetAllRes'
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Get all users
+      tags:
+      - 01-User
+swagger: "2.0"
+tags:
+- description: User CRUD methods
+  name: 01-User
+- description: Category CRUD methods
+  name: 02-Category
+- description: Publisher CRUD methods
+  name: 03-Publisher
+- description: Author CRUD methods
+  name: 04-Author
+- description: Book CRUD methods
+  name: 05-Book
+- description: Borrowing CRUD methods
+  name: 06-Borrowing
+- description: Recommended books CRUD methods
+  name: 07-Recommended
+- description: File management methods
+  name: 08-File

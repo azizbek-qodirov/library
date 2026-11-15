@@ -1,0 +1,120 @@
+package repo
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	pb "library/internal/pkg/genproto"
+)
+
+type PublisherRepo struct {
+	db *sql.DB
+}
+
+func NewPublisherRepo(db *sql.DB) *PublisherRepo {
+	return &PublisherRepo{db: db}
+}
+
+func (r *PublisherRepo) CreatePublisher(ctx context.Context, req *pb.PublisherCreateReq) (*pb.Void, error) {
+	query := `INSERT INTO publishers (name, description) VALUES ($1, $2)`
+	_, err := r.db.ExecContext(ctx, query, req.Name, req.Description)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Void{}, nil
+}
+
+func (r *PublisherRepo) GetPublisher(ctx context.Context, req *pb.ByID) (*pb.PublisherGetRes, error) {
+	query := `SELECT id, name, description FROM publishers WHERE id = $1`
+	var pub pb.PublisherGetRes
+	err := r.db.QueryRowContext(ctx, query, req.Id).Scan(
+		&pub.Id,
+		&pub.Name,
+		&pub.Description,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &pub, nil
+}
+
+func (r *PublisherRepo) UpdatePublisher(ctx context.Context, req *pb.PublisherUpdateReq) (*pb.Void, error) {
+	query := `UPDATE publishers SET name = $1, description = $2 WHERE id = $3`
+	_, err := r.db.ExecContext(ctx, query, req.Body.Name, req.Body.Description, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Void{}, nil
+}
+
+func (r *PublisherRepo) DeletePublisher(ctx context.Context, req *pb.ByID) (*pb.Void, error) {
+	query := `DELETE FROM publishers WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Void{}, nil
+}
+
+func (r *PublisherRepo) GetAllPublishers(ctx context.Context, req *pb.PublishersGetAllReq) (*pb.GetAllPublishersRes, error) {
+	query := `SELECT id, name, description FROM publishers WHERE 1=1`
+	var args []interface{}
+	argCount := 1
+
+	// search
+	if req.Search != "" {
+		query += fmt.Sprintf(" AND (name ILIKE $%d OR description ILIKE $%d)", argCount, argCount+1)
+		args = append(args, "%"+req.Search+"%", "%"+req.Search+"%")
+		argCount += 2
+	}
+
+	// order by
+	if req.OrderBy != "" {
+		query += fmt.Sprintf(" ORDER BY %s", req.OrderBy)
+	} else {
+		query += " ORDER BY created_at DESC"
+	}
+
+	// pagination
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
+	args = append(args, req.Limit, req.Offset)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var publishers []*pb.PublisherGetRes
+	for rows.Next() {
+		var pub pb.PublisherGetRes
+		if err := rows.Scan(&pub.Id, &pub.Name, &pub.Description); err != nil {
+			return nil, err
+		}
+		publishers = append(publishers, &pub)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Count query
+	countQuery := "SELECT count(id) FROM publishers WHERE 1=1"
+	var countArgs []interface{}
+	argCount = 1
+
+	if req.Search != "" {
+		countQuery += fmt.Sprintf(" AND (name ILIKE $%d OR description ILIKE $%d)", argCount, argCount+1)
+		countArgs = append(countArgs, "%"+req.Search+"%", "%"+req.Search+"%")
+	}
+
+	var total uint64
+	if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+		return nil, err
+	}
+
+	return &pb.GetAllPublishersRes{
+		Publishers: publishers,
+		TotalCount: total,
+	}, nil
+}

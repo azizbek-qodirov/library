@@ -1,0 +1,2571 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/author": {
+            "post": {
+                "description": "Creates a new author in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "04-Author"
+                ],
+                "summary": "Creates a new author",
+                "parameters": [
+                    {
+                        "description": "Author create request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.AuthorCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Author created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/author/{id}": {
+            "get": {
+                "description": "Retrieves an author's information by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "04-Author"
+                ],
+                "summary": "Get author by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Author ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Author found",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.AuthorGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid author ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Author not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing author",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "04-Author"
+                ],
+                "summary": "Update author",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Author ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Author update request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.AuthorUpdateBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Author updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or author ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Author not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes an author by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "04-Author"
+                ],
+                "summary": "Delete author",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Author ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Author deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid author ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Author not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/authors": {
+            "get": {
+                "description": "Retrieves a list of all authors",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "04-Author"
+                ],
+                "summary": "Get all authors",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of authors",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.GetAllAuthorsRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/book": {
+            "post": {
+                "description": "Creates a new book in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "05-Book"
+                ],
+                "summary": "Creates a new book",
+                "parameters": [
+                    {
+                        "description": "Book create request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BookCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Book created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/book/{id}": {
+            "get": {
+                "description": "Retrieves a book's information by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "05-Book"
+                ],
+                "summary": "Get book by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book found",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BookGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid book ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing book",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "05-Book"
+                ],
+                "summary": "Update book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Book update request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BookUpdateBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or book ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a book by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "05-Book"
+                ],
+                "summary": "Delete book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid book ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/books": {
+            "get": {
+                "description": "Retrieves a list of books with optional filters for location, categories, authors, publisher, language, reference-only status, and search query",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "05-Book"
+                ],
+                "summary": "Get all books",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of books to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Pagination offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search by book title, ISBN, or author name",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by book location",
+                        "name": "location",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated list of category IDs to filter",
+                        "name": "category_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated list of author IDs to filter",
+                        "name": "author_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by publisher ID",
+                        "name": "publisher_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by book language",
+                        "name": "language",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter only reference books",
+                        "name": "is_reference_only",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of books with total count",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BooksGetAllRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/borrowing": {
+            "post": {
+                "description": "Creates a new borrowing record in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Creates a new borrowing",
+                "parameters": [
+                    {
+                        "description": "Borrowing create request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BorrowingCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Borrowing created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/borrowing/{id}": {
+            "get": {
+                "description": "Retrieves a borrowing record by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Get borrowing by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Borrowing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Borrowing found",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BorrowingGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid borrowing ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Borrowing not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing borrowing record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Update borrowing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Borrowing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Borrowing update request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BorrowingUpdateBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Borrowing updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or borrowing ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Borrowing not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a borrowing record by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Delete borrowing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Borrowing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Borrowing deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid borrowing ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Borrowing not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/borrowings": {
+            "get": {
+                "description": "Retrieves a list of borrowings with filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Get all borrowings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search by book title, author, or borrower name",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by start date (YYYY-MM-DD)",
+                        "name": "from_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by due date (YYYY-MM-DD)",
+                        "name": "due_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of borrowings",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BorrowingsGetAllRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories": {
+            "get": {
+                "description": "Retrieves a list of all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "02-Category"
+                ],
+                "summary": "Get all categories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of categories",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.GetAllCategoriesRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/category": {
+            "post": {
+                "description": "Creates a new category in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "02-Category"
+                ],
+                "summary": "Creates a new category",
+                "parameters": [
+                    {
+                        "description": "Category create request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.CategoryCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/category/{id}": {
+            "get": {
+                "description": "Retrieves a category's information by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "02-Category"
+                ],
+                "summary": "Get category by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category found",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.CategoryGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid category ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing category",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "02-Category"
+                ],
+                "summary": "Update category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Category update request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.CategoryUpdateBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or category ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a category by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "02-Category"
+                ],
+                "summary": "Delete category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid category ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/file": {
+            "post": {
+                "description": "Uploads a file to Minio and stores metadata in the FileService.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "08-File"
+                ],
+                "summary": "Upload a new file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "File to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "File created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.FileGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid file upload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/file/{id}": {
+            "get": {
+                "description": "Retrieves a file record by its ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "08-File"
+                ],
+                "summary": "Get a file by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "File ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.FileGetRes"
+                        }
+                    },
+                    "404": {
+                        "description": "File not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a file record and removes it from Minio.",
+                "tags": [
+                    "08-File"
+                ],
+                "summary": "Delete a file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "File ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File deleted successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "File not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/files": {
+            "get": {
+                "description": "Retrieves all files with pagination and optional MIME type filter.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "08-File"
+                ],
+                "summary": "List all files",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by MIME type",
+                        "name": "mime_type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Files retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.GetAllFilesRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/publisher": {
+            "post": {
+                "description": "Creates a new publisher in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "03-Publisher"
+                ],
+                "summary": "Creates a new publisher",
+                "parameters": [
+                    {
+                        "description": "Publisher create request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.PublisherCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Publisher created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/publisher/{id}": {
+            "get": {
+                "description": "Retrieves a publisher's information by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "03-Publisher"
+                ],
+                "summary": "Get publisher by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Publisher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Publisher found",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.PublisherGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid publisher ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Publisher not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing publisher",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "03-Publisher"
+                ],
+                "summary": "Update publisher",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Publisher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Publisher update request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.PublisherUpdateBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Publisher updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or publisher ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Publisher not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a publisher by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "03-Publisher"
+                ],
+                "summary": "Delete publisher",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Publisher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Publisher deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid publisher ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Publisher not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/publishers": {
+            "get": {
+                "description": "Retrieves a list of all publishers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "03-Publisher"
+                ],
+                "summary": "Get all publishers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order by field",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of publishers",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.GetAllPublishersRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommended": {
+            "get": {
+                "description": "Retrieves a paginated list of recommended books",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "07-Recommended"
+                ],
+                "summary": "Get all recommended books",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of recommended books",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.RecommendedsGetAllRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Marks a book as recommended",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "07-Recommended"
+                ],
+                "summary": "Create a recommended book",
+                "parameters": [
+                    {
+                        "description": "Recommended create request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.RecommendedCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Recommended created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommended/{id}": {
+            "get": {
+                "description": "Retrieves a recommended book (with nested book, author, publisher, categories)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "07-Recommended"
+                ],
+                "summary": "Get recommended book by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Recommended ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recommended book",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.RecommendedGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Recommended book not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a recommended book by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "07-Recommended"
+                ],
+                "summary": "Delete recommended book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Recommended ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recommended deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Recommended not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user": {
+            "post": {
+                "description": "Creates a new user in the database with specified roles either student or teacher",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "01-User"
+                ],
+                "summary": "Creates a new user",
+                "parameters": [
+                    {
+                        "description": "User create request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.UserCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests, please try again later",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{id}": {
+            "get": {
+                "description": "Retrieves a user's information by their ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "01-User"
+                ],
+                "summary": "Get user by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User found",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.UserGetRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing user's information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "01-User"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User update request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.UserUpdateBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or user ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a user by their ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "01-User"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.Void"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "description": "Retrieves a list of all users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "01-User"
+                ],
+                "summary": "Get all users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Group name",
+                        "name": "group_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "role",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of users",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.UsersGetAllRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "genproto.AuthorCreateReq": {
+            "type": "object",
+            "properties": {
+                "biography": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.AuthorGetRes": {
+            "type": "object",
+            "properties": {
+                "biography": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.AuthorUpdateBody": {
+            "type": "object",
+            "properties": {
+                "biography": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.BookCreateReq": {
+            "type": "object",
+            "properties": {
+                "author_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "available_copies": {
+                    "type": "integer"
+                },
+                "category_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cover_image_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_reference_only": {
+                    "type": "boolean"
+                },
+                "isbn": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "published_date": {
+                    "type": "string"
+                },
+                "publisher_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "total_copies": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.BookGetRes": {
+            "type": "object",
+            "properties": {
+                "author_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.AuthorGetRes"
+                    }
+                },
+                "available_copies": {
+                    "type": "integer"
+                },
+                "category_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.CategoryGetRes"
+                    }
+                },
+                "cover_image_id": {
+                    "$ref": "#/definitions/genproto.FileGetRes"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_reference_only": {
+                    "type": "boolean"
+                },
+                "isbn": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "published_date": {
+                    "type": "string"
+                },
+                "publisher_id": {
+                    "$ref": "#/definitions/genproto.PublisherGetRes"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "total_copies": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.BookUpdateBody": {
+            "type": "object",
+            "properties": {
+                "author_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "available_copies": {
+                    "type": "integer"
+                },
+                "category_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cover_image_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_reference_only": {
+                    "type": "boolean"
+                },
+                "isbn": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "published_date": {
+                    "type": "string"
+                },
+                "publisher_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "total_copies": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.BooksGetAllRes": {
+            "type": "object",
+            "properties": {
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.BookGetRes"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.BorrowingCreateReq": {
+            "type": "object",
+            "properties": {
+                "book_id": {
+                    "type": "string"
+                },
+                "due_date": {
+                    "type": "string"
+                },
+                "from_date": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.BorrowingGetRes": {
+            "type": "object",
+            "properties": {
+                "book": {
+                    "$ref": "#/definitions/genproto.BookGetRes"
+                },
+                "due_date": {
+                    "type": "string"
+                },
+                "extension_date": {
+                    "type": "string"
+                },
+                "from_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "returned_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/genproto.UserGetRes"
+                }
+            }
+        },
+        "genproto.BorrowingUpdateBody": {
+            "type": "object",
+            "properties": {
+                "due_date": {
+                    "type": "string"
+                },
+                "extension_date": {
+                    "type": "string"
+                },
+                "from_date": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "returned_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.BorrowingsGetAllRes": {
+            "type": "object",
+            "properties": {
+                "borrowings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.BorrowingGetRes"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.CategoryCreateReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.CategoryGetRes": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.CategoryUpdateBody": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.FileGetRes": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.GetAllAuthorsRes": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.AuthorGetRes"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.GetAllCategoriesRes": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.CategoryGetRes"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.GetAllFilesRes": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.FileGetRes"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.GetAllPublishersRes": {
+            "type": "object",
+            "properties": {
+                "publishers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.PublisherGetRes"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.PublisherCreateReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.PublisherGetRes": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.PublisherUpdateBody": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.RecommendedCreateReq": {
+            "type": "object",
+            "properties": {
+                "book_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.RecommendedGetRes": {
+            "type": "object",
+            "properties": {
+                "book_id": {
+                    "$ref": "#/definitions/genproto.BookGetRes"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.RecommendedsGetAllRes": {
+            "type": "object",
+            "properties": {
+                "recommendeds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.RecommendedGetRes"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genproto.UserCreateReq": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.UserGetRes": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.UserUpdateBody": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "genproto.UsersGetAllRes": {
+            "type": "object",
+            "properties": {
+                "total": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.UserGetRes"
+                    }
+                }
+            }
+        },
+        "genproto.Void": {
+            "type": "object"
+        }
+    },
+    "tags": [
+        {
+            "description": "User CRUD methods",
+            "name": "01-User"
+        },
+        {
+            "description": "Category CRUD methods",
+            "name": "02-Category"
+        },
+        {
+            "description": "Publisher CRUD methods",
+            "name": "03-Publisher"
+        },
+        {
+            "description": "Author CRUD methods",
+            "name": "04-Author"
+        },
+        {
+            "description": "Book CRUD methods",
+            "name": "05-Book"
+        },
+        {
+            "description": "Borrowing CRUD methods",
+            "name": "06-Borrowing"
+        },
+        {
+            "description": "Recommended books CRUD methods",
+            "name": "07-Recommended"
+        },
+        {
+            "description": "File management methods",
+            "name": "08-File"
+        }
+    ]
+}

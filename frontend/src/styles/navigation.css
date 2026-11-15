@@ -1,0 +1,79 @@
+/* Navigation Styles - Library Theme */
+
+/* Enhanced Navbar */
+.navbar {
+  backdrop-filter: blur(15px);
+  background: rgba(248, 250, 252, 0.95) !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 15px rgba(30, 41, 59, 0.1);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+}
+
+.navbar-brand {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, var(--library-primary), var(--library-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.navbar-brand:hover {
+  background: linear-gradient(135deg, var(--library-accent), var(--library-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-link {
+  position: relative;
+  font-weight: 500 !important;
+  color: var(--library-text) !important;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem !important;
+  margin: 0 0.25rem;
+  border-radius: 8px;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(135deg, var(--library-primary), var(--library-accent));
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--library-primary) !important;
+  background: rgba(37, 99, 235, 0.05);
+  transform: translateY(-1px);
+}
+
+.nav-link:hover::before,
+.nav-link.active::before {
+  width: 70%;
+}
+
+/* Mobile Menu Enhancements */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background: rgba(248, 250, 252, 0.98);
+    border-radius: 12px;
+    margin-top: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 8px 25px rgba(30, 41, 59, 0.15);
+    backdrop-filter: blur(20px);
+  }
+
+  .nav-link {
+    padding: 0.75rem 1rem !important;
+    margin: 0.25rem 0;
+  }
+}

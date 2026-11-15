@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+option go_package = "/internal/pkg/genproto";
+
+package protos;
+
+import "library_submodule/void.proto";
+import "library_submodule/publisher.proto";
+import "library_submodule/author.proto";
+import "library_submodule/category.proto";
+import "library_submodule/file.proto";
+
+service BookService{
+    rpc CreateBook(BookCreateReq) returns (Void);
+    rpc GetBook(ByID) returns (BookGetRes);
+    rpc UpdateBook(BookUpdateReq) returns (Void);
+    rpc DeleteBook(ByID) returns (Void);
+    rpc GetAllBooks(BooksGetAllReq) returns (BooksGetAllRes);
+};
+
+message BookCreateReq {
+    string title = 1;
+    string cover_image_id = 2;
+    string location = 4;
+    bool is_reference_only = 5;
+    string description = 6;
+    string isbn = 7;
+    optional string published_date = 8;
+    repeated string category_ids = 9;
+    repeated string author_ids = 10;
+    string publisher_id = 11;
+    string language = 12;
+    int32 page_count = 13;
+    int32 total_copies = 14;
+    int32 available_copies = 15;
+}
+
+message BookGetRes {
+    string id = 1;
+    string title = 2;
+    FileGetRes cover_image_id = 3;
+    string location = 5;
+    bool is_reference_only = 6;
+    string description = 7;
+    string isbn = 8;
+    string published_date = 9;
+    repeated CategoryGetRes category_ids = 10;
+    repeated AuthorGetRes author_ids = 11;
+    PublisherGetRes publisher_id = 12;
+    string language = 13;
+    int32 page_count = 14;
+    int32 total_copies = 15;
+    int32 available_copies = 16;
+}
+
+message BookUpdateReq {
+    string id = 1;
+    BookUpdateBody body = 2;
+}
+
+message BookUpdateBody {
+    string title = 1;
+    string cover_image_id = 2;
+    string location = 4;
+    bool is_reference_only = 5;
+    string description = 6;
+    string isbn = 7;
+    optional string published_date = 8;
+    repeated string category_ids = 9;
+    repeated string author_ids = 10;
+    string publisher_id = 11;
+    string language = 12;
+    int32 page_count = 13;
+    int32 total_copies = 14;
+    int32 available_copies = 15;
+}
+
+message BooksGetAllReq {
+    string location = 1;
+    repeated string category_ids = 2;
+    repeated string author_ids = 3;
+    string publisher_id = 4;
+    string language = 5;
+    optional bool is_reference_only = 6;
+    int64 offset = 7;
+    int64 limit = 8;
+    string search = 9;
+}
+
+message BooksGetAllRes {
+    repeated BookGetRes books = 1;
+    int64 total_count = 2;
+}

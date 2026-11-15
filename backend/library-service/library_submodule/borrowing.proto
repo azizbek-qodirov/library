@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+option go_package = "/internal/pkg/genproto";
+
+package protos;
+
+import "library_submodule/void.proto";
+import "library_submodule/book.proto";
+import "library_submodule/user.proto";
+
+service BorrowingService {
+    rpc CreateBorrowing(BorrowingCreateReq) returns (Void);
+    rpc GetBorrowing(ByID) returns (BorrowingGetRes);
+    rpc UpdateBorrowing(BorrowingUpdateReq) returns (Void);
+    rpc DeleteBorrowing(ByID) returns (Void);
+    rpc GetAllBorrowings(BorrowingsGetAllReq) returns (BorrowingsGetAllRes);
+}
+
+message BorrowingCreateReq {
+    string book_id = 1;
+    string user_id = 2;
+    string from_date = 3;
+    string due_date = 4;
+    string notes = 5;
+}
+
+message BorrowingGetRes{
+    string id = 1;
+    BookGetRes book = 2;
+    UserGetRes user = 3;
+    string from_date = 4;
+    string due_date = 5;
+    string extension_date = 6;
+    string status = 7;
+    string returned_at = 8;
+    string notes = 9;
+}
+
+message BorrowingUpdateReq {
+    string id = 1;
+    BorrowingUpdateBody body = 2;
+}
+
+message BorrowingUpdateBody {
+    string from_date = 1;
+    string due_date = 2;
+    optional string extension_date = 3;
+    string status = 4;
+    optional string returned_at = 5;
+    string notes = 6;
+}
+
+message BorrowingsGetAllReq {
+    string search = 1;
+    string from_date = 2;
+    string due_date = 3;
+    string status = 4;
+    int64 offset = 5;
+    int64 limit = 6;
+}
+
+message BorrowingsGetAllRes {
+    repeated BorrowingGetRes borrowings = 1;
+    int64 total_count = 2;
+}

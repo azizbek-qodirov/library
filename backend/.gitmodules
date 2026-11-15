@@ -1,0 +1,3 @@
+[submodule "api-gateway/library_submodule"]
+	path = api-gateway/library_submodule
+	url = git@github.com:azizbek-qodirov/library_submodule.git

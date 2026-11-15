@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "/internal/pkg/genproto";
+
+package protos;
+
+message Void {};
+
+message ByID {
+    string id = 1;
+};
