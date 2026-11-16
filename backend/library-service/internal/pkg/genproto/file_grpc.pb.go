@@ -19,10 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FileService_CreateFile_FullMethodName  = "/protos.FileService/CreateFile"
-	FileService_GetFile_FullMethodName     = "/protos.FileService/GetFile"
-	FileService_DeleteFile_FullMethodName  = "/protos.FileService/DeleteFile"
-	FileService_GetAllFiles_FullMethodName = "/protos.FileService/GetAllFiles"
+	FileService_CreateFile_FullMethodName          = "/protos.FileService/CreateFile"
+	FileService_GetFile_FullMethodName             = "/protos.FileService/GetFile"
+	FileService_ActivateFile_FullMethodName        = "/protos.FileService/ActivateFile"
+	FileService_PrepareFileDeletion_FullMethodName = "/protos.FileService/PrepareFileDeletion"
+	FileService_DeleteFile_FullMethodName          = "/protos.FileService/DeleteFile"
+	FileService_GetAllFiles_FullMethodName         = "/protos.FileService/GetAllFiles"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -31,6 +33,10 @@ const (
 type FileServiceClient interface {
 	CreateFile(ctx context.Context, in *FileCreateReq, opts ...grpc.CallOption) (*FileGetRes, error)
 	GetFile(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*FileGetRes, error)
+	// Activate after the object has been written to storage.
+	ActivateFile(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*FileGetRes, error)
+	PrepareFileDeletion(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*FileGetRes, error)
+	// Finalize only after the object has been removed from storage.
 	DeleteFile(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
 	GetAllFiles(ctx context.Context, in *FilesGetAllReq, opts ...grpc.CallOption) (*GetAllFilesRes, error)
 }
@@ -63,6 +69,26 @@ func (c *fileServiceClient) GetFile(ctx context.Context, in *ByID, opts ...grpc.
 	return out, nil
 }
 
+func (c *fileServiceClient) ActivateFile(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*FileGetRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FileGetRes)
+	err := c.cc.Invoke(ctx, FileService_ActivateFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) PrepareFileDeletion(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*FileGetRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FileGetRes)
+	err := c.cc.Invoke(ctx, FileService_PrepareFileDeletion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fileServiceClient) DeleteFile(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Void)
@@ -89,6 +115,10 @@ func (c *fileServiceClient) GetAllFiles(ctx context.Context, in *FilesGetAllReq,
 type FileServiceServer interface {
 	CreateFile(context.Context, *FileCreateReq) (*FileGetRes, error)
 	GetFile(context.Context, *ByID) (*FileGetRes, error)
+	// Activate after the object has been written to storage.
+	ActivateFile(context.Context, *ByID) (*FileGetRes, error)
+	PrepareFileDeletion(context.Context, *ByID) (*FileGetRes, error)
+	// Finalize only after the object has been removed from storage.
 	DeleteFile(context.Context, *ByID) (*Void, error)
 	GetAllFiles(context.Context, *FilesGetAllReq) (*GetAllFilesRes, error)
 	mustEmbedUnimplementedFileServiceServer()
@@ -106,6 +136,12 @@ func (UnimplementedFileServiceServer) CreateFile(context.Context, *FileCreateReq
 }
 func (UnimplementedFileServiceServer) GetFile(context.Context, *ByID) (*FileGetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFile not implemented")
+}
+func (UnimplementedFileServiceServer) ActivateFile(context.Context, *ByID) (*FileGetRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActivateFile not implemented")
+}
+func (UnimplementedFileServiceServer) PrepareFileDeletion(context.Context, *ByID) (*FileGetRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PrepareFileDeletion not implemented")
 }
 func (UnimplementedFileServiceServer) DeleteFile(context.Context, *ByID) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
@@ -170,6 +206,42 @@ func _FileService_GetFile_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileService_ActivateFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).ActivateFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_ActivateFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).ActivateFile(ctx, req.(*ByID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_PrepareFileDeletion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).PrepareFileDeletion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_PrepareFileDeletion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).PrepareFileDeletion(ctx, req.(*ByID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FileService_DeleteFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ByID)
 	if err := dec(in); err != nil {
@@ -220,6 +292,14 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFile",
 			Handler:    _FileService_GetFile_Handler,
+		},
+		{
+			MethodName: "ActivateFile",
+			Handler:    _FileService_ActivateFile_Handler,
+		},
+		{
+			MethodName: "PrepareFileDeletion",
+			Handler:    _FileService_PrepareFileDeletion_Handler,
 		},
 		{
 			MethodName: "DeleteFile",

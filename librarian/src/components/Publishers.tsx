@@ -1,20 +1,25 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { usePaginatedList } from './usePaginatedList';
+import { staffFetch } from './api';
+import React, { useEffect, useRef, useState } from 'react';
 
 import type { Publisher, PublisherFormData } from './types';
 import { API_BASE_URL } from './types';
 
+interface SavedData {
+  showForm?: boolean;
+  formData?: PublisherFormData;
+  editingPublisher?: Publisher | null;
+  searchQuery?: string;
+}
+
 interface Props {
-  savedData?: any;
-  onDataChange: (data: any) => void;
+  savedData?: SavedData | null;
+  onDataChange: (data: SavedData | null) => void;
 }
 
 
 const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
-  const [publishers, setPublishers] = useState<Publisher[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPublishers, setTotalPublishers] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<PublisherFormData>({
     name: '',
@@ -27,9 +32,11 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
   });
   const [actionLoading, setActionLoading] = useState(false);
   const actionAbortController = useRef<AbortController | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const itemsPerPage = 20;
+  const {
+    items: publishers, total: totalPublishers, loading, error, currentPage, setCurrentPage, reload: fetchPublishers,
+  } = usePaginatedList<Publisher>('/publishers', 'publishers', 'total_count', searchQuery);
   const totalPages = Math.ceil(totalPublishers / itemsPerPage);
 
   useEffect(() => {
@@ -40,30 +47,6 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     };
   }, []);
 
-  // Restore saved data
-  const fetchPublishers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', itemsPerPage.toString());
-      params.append('offset', ((currentPage - 1) * itemsPerPage).toString());
-      if (searchQuery.trim()) params.append('search', searchQuery.trim());
-
-      const response = await fetch(`${API_BASE_URL}/publishers?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch publishers');
-
-      const data = await response.json();
-      setPublishers(data.publishers || []);
-      setTotalPublishers(data.total_count || 0);
-    } catch (error) {
-      console.error('Error fetching publishers:', error);
-      setError('Failed to fetch publishers. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchQuery, itemsPerPage]);
-
   useEffect(() => {
     if (savedData) {
       if (savedData.showForm) setShowForm(true);
@@ -73,18 +56,6 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     }
   }, [savedData]);
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-      fetchPublishers();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [searchQuery, fetchPublishers]);
-
-  useEffect(() => {
-    fetchPublishers();
-  }, [currentPage, fetchPublishers]);
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
@@ -103,7 +74,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
       const method = editingPublisher ? 'PUT' : 'POST';
       const body = formData;
 
-      const response = await fetch(url, {
+      const response = await staffFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -119,8 +90,8 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
       handleCancelForm();
       fetchPublishers();
       alert(`Publisher ${editingPublisher ? 'updated' : 'created'} successfully!`);
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error('Error saving publisher:', error);
       alert(`Failed to save publisher. ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
@@ -135,7 +106,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     actionAbortController.current = new AbortController();
     const signal = actionAbortController.current.signal;
     try {
-      const response = await fetch(`${API_BASE_URL}/publisher/${deleteModal.publisher.id}`, {
+      const response = await staffFetch(`${API_BASE_URL}/publisher/${deleteModal.publisher.id}`, {
         method: 'DELETE',
         signal
       });
@@ -149,8 +120,8 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
       setDeleteModal({ isOpen: false, publisher: null });
       fetchPublishers();
       alert('Publisher deleted successfully!');
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error('Error deleting publisher:', error);
       alert(`Failed to delete publisher. ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
@@ -261,7 +232,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
       </button>
     );
 
-    return <div className="d-flex justify-content-center align-items-center mt-4">{pages}</div>;
+    return <div className="d-flex flex-wrap row-gap-2 justify-content-center align-items-center mt-4">{pages}</div>;
   };
 
   if (showForm) {
@@ -357,7 +328,6 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
       {error && (
         <div className="alert alert-danger alert-dismissible" role="alert">
           <strong>Error!</strong> {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
         </div>
       )}
 
@@ -402,24 +372,24 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th className="border-0 fw-semibold">Publisher Name</th>
-                    <th className="border-0 fw-semibold">Description</th>
-                    <th className="border-0 fw-semibold text-end">Actions</th>
+              <table className="table table-hover mb-0 library-record-table" role="table">
+                <thead role="rowgroup" className="table-light">
+                  <tr role="row">
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Publisher Name</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Description</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {publishers.map((publisher) => (
-                    <tr key={publisher.id}>
-                      <td className="py-3">
+                    <tr role="row" key={publisher.id}>
+                      <td role="cell" data-label="Publisher" className="py-3">
                         <div className="fw-medium">{publisher.name}</div>
                       </td>
-                      <td className="py-3 text-muted">
+                      <td role="cell" data-label="Description" className="py-3 text-muted">
                         {publisher.description || '-'}
                       </td>
-                      <td className="py-3 text-end">
+                      <td role="cell" data-label="Actions" className="py-3 text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
@@ -427,7 +397,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                               setEditingPublisher(publisher);
                               setFormData({
                                 name: publisher.name,
-                                description: publisher.description
+                                description: publisher.description ?? ''
                               });
                               setShowForm(true);
                             }}

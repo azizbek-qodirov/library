@@ -1,4 +1,6 @@
-import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
+import { usePaginatedList } from './usePaginatedList';
+import { staffFetch } from './api';
+import { type JSX, useEffect, useRef, useState } from 'react';
 import type { Author } from './types';
 import { API_BASE_URL } from './types';
 
@@ -16,11 +18,7 @@ interface Props {
 
 // Authors Section Component (Similar structure)
 const AuthorsSection = ({ savedData, onDataChange }: Props) => {
-  const [authors, setAuthors] = useState<Author[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalAuthors, setTotalAuthors] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', birth_date: '', biography: '' });
   const [editingAuthor, setEditingAuthor] = useState<Author | null>(null);
@@ -29,6 +27,9 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
   const actionAbortController = useRef<AbortController | null>(null);
 
   const itemsPerPage = 20;
+  const {
+    items: authors, total: totalAuthors, loading, error, currentPage, setCurrentPage, reload: fetchAuthors,
+  } = usePaginatedList<Author>('/authors', 'authors', 'total_count', searchQuery);
   const totalPages = Math.ceil(totalAuthors / itemsPerPage);
 
   useEffect(() => {
@@ -39,24 +40,6 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
     };
   }, []);
 
-  const fetchAuthors = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', itemsPerPage.toString());
-      params.append('offset', ((currentPage - 1) * itemsPerPage).toString());
-      if (searchQuery.trim()) params.append('search', searchQuery.trim());
-
-      const response = await fetch(`${API_BASE_URL}/authors?${params.toString()}`);
-      const data = await response.json();
-      setAuthors(data.authors || []);
-      setTotalAuthors(data.total_count || 0);
-    } catch (error) {
-      console.error('Error fetching authors:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchQuery, itemsPerPage]);
 
   useEffect(() => {
     if (savedData) {
@@ -67,17 +50,6 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
     }
   }, [savedData]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-      fetchAuthors();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [searchQuery, fetchAuthors]);
-
-  useEffect(() => {
-    fetchAuthors();
-  }, [currentPage, fetchAuthors]);
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
@@ -97,7 +69,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
       const method = editingAuthor ? 'PUT' : 'POST';
       const body =  formData;
 
-      const response = await fetch(url, {
+      const response = await staffFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -110,8 +82,8 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
       handleCancelForm();
       fetchAuthors();
       alert(`Author ${editingAuthor ? 'updated' : 'created'} successfully!`);
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       alert('Failed to save author. Please try again.');
     } finally {
       setActionLoading(false);
@@ -126,7 +98,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
 
     setActionLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/author/${deleteModal.author.id}`, {
+      const response = await staffFetch(`${API_BASE_URL}/author/${deleteModal.author.id}`, {
         method: 'DELETE',
         signal
       });
@@ -137,8 +109,8 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
       setDeleteModal({ isOpen: false, author: null });
       fetchAuthors();
       alert('Author deleted successfully!');
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       alert('Failed to delete author. Please try again.');
     } finally {
       setActionLoading(false);
@@ -249,7 +221,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
       </button>
     );
 
-    return <div className="d-flex justify-content-center align-items-center mt-4">{pages}</div>;
+    return <div className="d-flex flex-wrap row-gap-2 justify-content-center align-items-center mt-4">{pages}</div>;
   };
 
   if (showForm) {
@@ -351,6 +323,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
           </div>
         </div>
         <div className="card-body p-0">
+          {error && <div className="alert alert-danger" role="alert">{error}</div>}
           {loading ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary"></div>
@@ -361,22 +334,22 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Birth Date</th>
-                    <th>Biography</th>
-                    <th className="text-end">Actions</th>
+              <table className="table table-hover mb-0 library-record-table" role="table">
+                <thead role="rowgroup" className="table-light">
+                  <tr role="row">
+                    <th role="columnheader" scope="col">Name</th>
+                    <th role="columnheader" scope="col">Birth Date</th>
+                    <th role="columnheader" scope="col">Biography</th>
+                    <th role="columnheader" scope="col" className="text-end">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {authors.map((author) => (
-                    <tr key={author.id}>
-                      <td className="fw-medium">{author.name}</td>
-                      <td>{author.birth_date ? new Date(author.birth_date).toLocaleDateString() : '-'}</td>
-                      <td className="text-muted">{author.biography?.substring(0, 50)}{author.biography?.length > 50 ? '...' : ''}</td>
-                      <td className="text-end">
+                    <tr role="row" key={author.id}>
+                      <td role="cell" data-label="Name" className="fw-medium">{author.name}</td>
+                      <td role="cell" data-label="Birth date">{author.birth_date ? new Date(author.birth_date).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '-'}</td>
+                      <td role="cell" data-label="Biography" className="text-muted">{author.biography?.substring(0, 50)}{(author.biography?.length ?? 0) > 50 ? '...' : ''}</td>
+                      <td role="cell" data-label="Actions" className="text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
@@ -384,8 +357,8 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
                               setEditingAuthor(author);
                               setFormData({ 
                                 name: author.name, 
-                                birth_date: author.birth_date || '', 
-                                biography: author.biography 
+                                birth_date: author.birth_date?.split('T')[0] ?? '',
+                                biography: author.biography ?? ''
                               });
                               setShowForm(true);
                             }}

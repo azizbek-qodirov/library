@@ -129,6 +129,7 @@ type RecommendedsGetAllReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Offset        int64                  `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
 	Limit         int64                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Search        string                 `protobuf:"bytes,3,opt,name=search,proto3" json:"search,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -175,6 +176,13 @@ func (x *RecommendedsGetAllReq) GetLimit() int64 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *RecommendedsGetAllReq) GetSearch() string {
+	if x != nil {
+		return x.Search
+	}
+	return ""
 }
 
 type RecommendedsGetAllRes struct {
@@ -240,10 +248,11 @@ const file_library_submodule_recommended_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\abook_id\x18\x02 \x01(\v2\x12.protos.BookGetResR\x06bookId\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x03 \x01(\tR\tcreatedAt\"E\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\"]\n" +
 	"\x15RecommendedsGetAllReq\x12\x16\n" +
 	"\x06offset\x18\x01 \x01(\x03R\x06offset\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x03R\x05limit\"w\n" +
+	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x16\n" +
+	"\x06search\x18\x03 \x01(\tR\x06search\"w\n" +
 	"\x15RecommendedsGetAllRes\x12=\n" +
 	"\frecommendeds\x18\x01 \x03(\v2\x19.protos.RecommendedGetResR\frecommendeds\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +

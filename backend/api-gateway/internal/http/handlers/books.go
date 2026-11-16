@@ -24,10 +24,11 @@ import (
 // @Success 201 {object} pb.Void "Book created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /book [post]
 func (h *HTTPHandler) CreateBook(c *gin.Context) {
 	req := &pb.BookCreateReq{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -45,8 +46,8 @@ func (h *HTTPHandler) CreateBook(c *gin.Context) {
 		errors.ValidationError(c, err)
 		return
 	}
-	if err := validation.ValidatePositiveInt(int(req.TotalCopies), "Total copies"); err != nil {
-		errors.ValidationError(c, err)
+	if req.TotalCopies < 0 {
+		errors.BadRequest(c, "Total copies cannot be negative")
 		return
 	}
 
@@ -123,6 +124,7 @@ func (h *HTTPHandler) GetBookByID(c *gin.Context) {
 // @Failure 400 {object} string "Invalid request payload or book ID"
 // @Failure 404 {object} string "Book not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /book/{id} [put]
 func (h *HTTPHandler) UpdateBook(c *gin.Context) {
 	id := c.Param("id")
@@ -134,7 +136,7 @@ func (h *HTTPHandler) UpdateBook(c *gin.Context) {
 	}
 
 	body := &pb.BookUpdateBody{}
-	if err := c.BindJSON(body); err != nil {
+	if err := c.ShouldBindJSON(body); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -199,6 +201,7 @@ func (h *HTTPHandler) UpdateBook(c *gin.Context) {
 // @Failure 400 {object} string "Invalid book ID"
 // @Failure 404 {object} string "Book not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /book/{id} [delete]
 func (h *HTTPHandler) DeleteBook(c *gin.Context) {
 	id := c.Param("id")
@@ -239,18 +242,18 @@ func (h *HTTPHandler) DeleteBook(c *gin.Context) {
 // @Success 200 {object} pb.BooksGetAllRes "List of books with total count"
 // @Failure 400 {object} string "Invalid request parameters"
 // @Failure 500 {object} string "Server error"
+// @Param available_only query bool false "Only books available for checkout"
 // @Router /books [get]
 func (h *HTTPHandler) GetAllBooks(c *gin.Context) {
-	// Pagination
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 10
+	limit, offset, ok := pagination(c)
+	if !ok {
+		return
 	}
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil || offset < 0 {
-		offset = 0
+
+	availableOnly, err := strconv.ParseBool(c.DefaultQuery("available_only", "false"))
+	if err != nil {
+		errors.BadRequest(c, "Invalid available_only filter")
+		return
 	}
 
 	// Filters
@@ -262,7 +265,11 @@ func (h *HTTPHandler) GetAllBooks(c *gin.Context) {
 	// Parse is_reference_only as optional bool (nil if not provided)
 	var isReferenceOnly *bool
 	if refOnlyStr := c.Query("is_reference_only"); refOnlyStr != "" {
-		refOnly := refOnlyStr == "true"
+		refOnly, err := strconv.ParseBool(refOnlyStr)
+		if err != nil {
+			errors.BadRequest(c, "Invalid is_reference_only filter")
+			return
+		}
 		isReferenceOnly = &refOnly
 	}
 
@@ -306,6 +313,7 @@ func (h *HTTPHandler) GetAllBooks(c *gin.Context) {
 		PublisherId:     publisherID,
 		Language:        language,
 		IsReferenceOnly: isReferenceOnly,
+		AvailableOnly:   availableOnly,
 		Limit:           int64(limit),
 		Offset:          int64(offset),
 	})

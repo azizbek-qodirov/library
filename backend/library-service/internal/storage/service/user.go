@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"library/internal/pkg/funcs"
 	pb "library/internal/pkg/genproto"
@@ -23,12 +25,15 @@ func NewUserService(db *sql.DB) *UserService {
 }
 
 func (s *UserService) CreateUser(ctx context.Context, req *pb.UserCreateReq) (*pb.Void, error) {
-	if !funcs.IsValidEmail(req.Email) {
-		return nil, errors.New("invalid email address")
+	if strings.TrimSpace(req.FullName) == "" {
+		return nil, status.Error(codes.InvalidArgument, "full name is required")
+	}
+	if req.Email != "" && !funcs.IsValidEmail(req.Email) {
+		return nil, status.Error(codes.InvalidArgument, "invalid email address")
 	}
 
 	if !funcs.IsValidRole(req.Role) {
-		return nil, errors.New("invalid role")
+		return nil, status.Error(codes.InvalidArgument, "invalid role")
 	}
 
 	return s.userRepo.CreateUser(ctx, req)
@@ -39,12 +44,18 @@ func (s *UserService) GetUser(ctx context.Context, req *pb.ByID) (*pb.UserGetRes
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, req *pb.UserUpdateReq) (*pb.Void, error) {
-	if !funcs.IsValidEmail(req.Body.Email) {
-		return nil, errors.New("invalid email address")
+	if req.GetBody() == nil {
+		return nil, status.Error(codes.InvalidArgument, "user update body is required")
+	}
+	if strings.TrimSpace(req.Body.FullName) == "" {
+		return nil, status.Error(codes.InvalidArgument, "full name is required")
+	}
+	if req.Body.Email != "" && !funcs.IsValidEmail(req.Body.Email) {
+		return nil, status.Error(codes.InvalidArgument, "invalid email address")
 	}
 
 	if !funcs.IsValidRole(req.Body.Role) {
-		return nil, errors.New("invalid role")
+		return nil, status.Error(codes.InvalidArgument, "invalid role")
 	}
 	return s.userRepo.UpdateUser(ctx, req)
 }

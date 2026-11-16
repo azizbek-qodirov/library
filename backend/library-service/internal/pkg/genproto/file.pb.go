@@ -26,6 +26,8 @@ type FileCreateReq struct {
 	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	MimeType      string                 `protobuf:"bytes,2,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
 	Size          int64                  `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"` // size in bytes
+	ObjectKey     string                 `protobuf:"bytes,4,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`
+	PendingUpload bool                   `protobuf:"varint,5,opt,name=pending_upload,json=pendingUpload,proto3" json:"pending_upload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -81,6 +83,20 @@ func (x *FileCreateReq) GetSize() int64 {
 	return 0
 }
 
+func (x *FileCreateReq) GetObjectKey() string {
+	if x != nil {
+		return x.ObjectKey
+	}
+	return ""
+}
+
+func (x *FileCreateReq) GetPendingUpload() bool {
+	if x != nil {
+		return x.PendingUpload
+	}
+	return false
+}
+
 type FileGetRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -89,6 +105,8 @@ type FileGetRes struct {
 	Size          int64                  `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     string                 `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	State         string                 `protobuf:"bytes,7,opt,name=state,proto3" json:"state,omitempty"`
+	ObjectKey     string                 `protobuf:"bytes,8,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -161,6 +179,20 @@ func (x *FileGetRes) GetCreatedAt() string {
 func (x *FileGetRes) GetUpdatedAt() string {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return ""
+}
+
+func (x *FileGetRes) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *FileGetRes) GetObjectKey() string {
+	if x != nil {
+		return x.ObjectKey
 	}
 	return ""
 }
@@ -281,11 +313,14 @@ var File_library_submodule_file_proto protoreflect.FileDescriptor
 
 const file_library_submodule_file_proto_rawDesc = "" +
 	"\n" +
-	"\x1clibrary_submodule/file.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\"R\n" +
+	"\x1clibrary_submodule/file.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\"\x98\x01\n" +
 	"\rFileCreateReq\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1b\n" +
 	"\tmime_type\x18\x02 \x01(\tR\bmimeType\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x03R\x04size\"\x9d\x01\n" +
+	"\x04size\x18\x03 \x01(\x03R\x04size\x12\x1d\n" +
+	"\n" +
+	"object_key\x18\x04 \x01(\tR\tobjectKey\x12%\n" +
+	"\x0epending_upload\x18\x05 \x01(\bR\rpendingUpload\"\xd2\x01\n" +
 	"\n" +
 	"FileGetRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
@@ -295,7 +330,10 @@ const file_library_submodule_file_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\tR\tupdatedAt\"[\n" +
+	"updated_at\x18\x06 \x01(\tR\tupdatedAt\x12\x14\n" +
+	"\x05state\x18\a \x01(\tR\x05state\x12\x1d\n" +
+	"\n" +
+	"object_key\x18\b \x01(\tR\tobjectKey\"[\n" +
 	"\x0eFilesGetAllReq\x12\x16\n" +
 	"\x06offset\x18\x01 \x01(\x03R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x1b\n" +
@@ -303,11 +341,13 @@ const file_library_submodule_file_proto_rawDesc = "" +
 	"\x0eGetAllFilesRes\x12(\n" +
 	"\x05files\x18\x01 \x03(\v2\x12.protos.FileGetResR\x05files\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
-	"totalCount2\xdc\x01\n" +
+	"totalCount2\xc7\x02\n" +
 	"\vFileService\x127\n" +
 	"\n" +
 	"CreateFile\x12\x15.protos.FileCreateReq\x1a\x12.protos.FileGetRes\x12+\n" +
-	"\aGetFile\x12\f.protos.ByID\x1a\x12.protos.FileGetRes\x12(\n" +
+	"\aGetFile\x12\f.protos.ByID\x1a\x12.protos.FileGetRes\x120\n" +
+	"\fActivateFile\x12\f.protos.ByID\x1a\x12.protos.FileGetRes\x127\n" +
+	"\x13PrepareFileDeletion\x12\f.protos.ByID\x1a\x12.protos.FileGetRes\x12(\n" +
 	"\n" +
 	"DeleteFile\x12\f.protos.ByID\x1a\f.protos.Void\x12=\n" +
 	"\vGetAllFiles\x12\x16.protos.FilesGetAllReq\x1a\x16.protos.GetAllFilesResB\x18Z\x16/internal/pkg/genprotob\x06proto3"
@@ -337,14 +377,18 @@ var file_library_submodule_file_proto_depIdxs = []int32{
 	1, // 0: protos.GetAllFilesRes.files:type_name -> protos.FileGetRes
 	0, // 1: protos.FileService.CreateFile:input_type -> protos.FileCreateReq
 	4, // 2: protos.FileService.GetFile:input_type -> protos.ByID
-	4, // 3: protos.FileService.DeleteFile:input_type -> protos.ByID
-	2, // 4: protos.FileService.GetAllFiles:input_type -> protos.FilesGetAllReq
-	1, // 5: protos.FileService.CreateFile:output_type -> protos.FileGetRes
-	1, // 6: protos.FileService.GetFile:output_type -> protos.FileGetRes
-	5, // 7: protos.FileService.DeleteFile:output_type -> protos.Void
-	3, // 8: protos.FileService.GetAllFiles:output_type -> protos.GetAllFilesRes
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
+	4, // 3: protos.FileService.ActivateFile:input_type -> protos.ByID
+	4, // 4: protos.FileService.PrepareFileDeletion:input_type -> protos.ByID
+	4, // 5: protos.FileService.DeleteFile:input_type -> protos.ByID
+	2, // 6: protos.FileService.GetAllFiles:input_type -> protos.FilesGetAllReq
+	1, // 7: protos.FileService.CreateFile:output_type -> protos.FileGetRes
+	1, // 8: protos.FileService.GetFile:output_type -> protos.FileGetRes
+	1, // 9: protos.FileService.ActivateFile:output_type -> protos.FileGetRes
+	1, // 10: protos.FileService.PrepareFileDeletion:output_type -> protos.FileGetRes
+	5, // 11: protos.FileService.DeleteFile:output_type -> protos.Void
+	3, // 12: protos.FileService.GetAllFiles:output_type -> protos.GetAllFilesRes
+	7, // [7:13] is the sub-list for method output_type
+	1, // [1:7] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name

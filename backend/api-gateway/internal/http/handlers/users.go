@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
+	"strings"
 	"time"
 
 	"library-gateway/internal/pkg/errors"
@@ -25,10 +25,11 @@ import (
 // @Failure 401 {object} string "Unauthorized"
 // @Failure 429 {object} string "Too many requests, please try again later"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /user [post]
 func (h *HTTPHandler) CreateUser(c *gin.Context) {
 	req := &pb.UserCreateReq{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
 		return
 	}
@@ -44,11 +45,14 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if err := validation.ValidatePhone(req.Phone); err != nil {
+	phone, err := validation.NormalizePhone(req.Phone)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	req.Phone = phone
+	req.Role = strings.ToLower(strings.TrimSpace(req.Role))
 	if err := validation.ValidateRole(req.Role); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -57,7 +61,7 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
 	defer cancel()
 
-	_, err := h.US.CreateUser(ctx, req)
+	_, err = h.US.CreateUser(ctx, req)
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Create user")
 		return
@@ -77,6 +81,7 @@ func (h *HTTPHandler) CreateUser(c *gin.Context) {
 // @Failure 400 {object} string "Invalid user ID"
 // @Failure 404 {object} string "User not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /user/{id} [get]
 func (h *HTTPHandler) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
@@ -111,6 +116,7 @@ func (h *HTTPHandler) GetUserByID(c *gin.Context) {
 // @Failure 400 {object} string "Invalid request payload or user ID"
 // @Failure 404 {object} string "User not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /user/{id} [put]
 func (h *HTTPHandler) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
@@ -122,35 +128,29 @@ func (h *HTTPHandler) UpdateUser(c *gin.Context) {
 	}
 
 	body := &pb.UserUpdateBody{}
-	if err := c.BindJSON(body); err != nil {
+	if err := c.ShouldBindJSON(body); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
 
-	// Validate update fields if present
-	if body.FullName != "" {
-		if err := validation.ValidateStringNotEmpty(body.FullName, "Full name"); err != nil {
-			errors.ValidationError(c, err)
-			return
-		}
+	if err := validation.ValidateStringNotEmpty(body.FullName, "Full name"); err != nil {
+		errors.ValidationError(c, err)
+		return
 	}
-	if body.Email != "" {
-		if err := validation.ValidateEmail(body.Email); err != nil {
-			errors.ValidationError(c, err)
-			return
-		}
+	if err := validation.ValidateEmail(body.Email); err != nil {
+		errors.ValidationError(c, err)
+		return
 	}
-	if body.Phone != "" {
-		if err := validation.ValidatePhone(body.Phone); err != nil {
-			errors.ValidationError(c, err)
-			return
-		}
+	phone, err := validation.NormalizePhone(body.Phone)
+	if err != nil {
+		errors.ValidationError(c, err)
+		return
 	}
-	if body.Role != "" {
-		if err := validation.ValidateRole(body.Role); err != nil {
-			errors.ValidationError(c, err)
-			return
-		}
+	body.Phone = phone
+	body.Role = strings.ToLower(strings.TrimSpace(body.Role))
+	if err := validation.ValidateRole(body.Role); err != nil {
+		errors.ValidationError(c, err)
+		return
 	}
 
 	req := &pb.UserUpdateReq{
@@ -161,7 +161,7 @@ func (h *HTTPHandler) UpdateUser(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
 	defer cancel()
 
-	_, err := h.US.UpdateUser(ctx, req)
+	_, err = h.US.UpdateUser(ctx, req)
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Update user")
 		return
@@ -181,6 +181,7 @@ func (h *HTTPHandler) UpdateUser(c *gin.Context) {
 // @Failure 400 {object} string "Invalid user ID"
 // @Failure 404 {object} string "User not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /user/{id} [delete]
 func (h *HTTPHandler) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
@@ -216,29 +217,17 @@ func (h *HTTPHandler) DeleteUser(c *gin.Context) {
 // @Param role query string false "Role"
 // @Success 200 {object} pb.UsersGetAllRes "List of users"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /users [get]
 func (h *HTTPHandler) GetAllUsers(c *gin.Context) {
-	limit_str := c.Query("limit")
-	offset_str := c.Query("offset")
-
-	limit, err := strconv.Atoi(limit_str)
-	if err != nil || limit <= 0 {
-		limit = 10
-	}
-	offset, err := strconv.Atoi(offset_str)
-	if err != nil || offset < 0 {
-		offset = 0
-	}
-
-	// Validate pagination
-	if err := validation.ValidatePagination(int32(limit), int32(offset)); err != nil {
-		errors.ValidationError(c, err)
+	limit, offset, ok := pagination(c)
+	if !ok {
 		return
 	}
 
 	search := c.Query("search")
 	group_name := c.Query("group_name")
-	role := c.Query("role")
+	role := strings.ToLower(strings.TrimSpace(c.Query("role")))
 
 	// Validate role filter if provided
 	if role != "" {

@@ -35,6 +35,7 @@ definitions:
           type: string
         type: array
       available_copies:
+        description: 'Deprecated: Marked as deprecated in library_submodule/book.proto.'
         type: integer
       category_ids:
         items:
@@ -54,7 +55,11 @@ definitions:
         type: string
       page_count:
         type: integer
+      publication_year:
+        description: Zero clears the year; omission preserves it on update.
+        type: integer
       published_date:
+        description: YYYY-MM-DD; omitted if unknown.
         type: string
       publisher_id:
         type: string
@@ -91,6 +96,9 @@ definitions:
         type: string
       page_count:
         type: integer
+      publication_year:
+        description: Edition year when the exact date is unknown.
+        type: integer
       published_date:
         type: string
       publisher_id:
@@ -107,6 +115,7 @@ definitions:
           type: string
         type: array
       available_copies:
+        description: 'Deprecated: Marked as deprecated in library_submodule/book.proto.'
         type: integer
       category_ids:
         items:
@@ -126,7 +135,11 @@ definitions:
         type: string
       page_count:
         type: integer
+      publication_year:
+        description: Zero clears the year; omission preserves it on update.
+        type: integer
       published_date:
+        description: YYYY-MM-DD; omitted if unknown.
         type: string
       publisher_id:
         type: string
@@ -154,6 +167,9 @@ definitions:
         type: string
       notes:
         type: string
+      request_id:
+        description: Optional idempotency key for checkout retries.
+        type: string
       user_id:
         type: string
     type: object
@@ -177,6 +193,14 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/genproto.UserGetRes'
+    type: object
+  genproto.BorrowingRenewReq:
+    properties:
+      extension_date:
+        description: YYYY-MM-DD
+        type: string
+      id:
+        type: string
     type: object
   genproto.BorrowingUpdateBody:
     properties:
@@ -211,6 +235,8 @@ definitions:
     type: object
   genproto.CategoryGetRes:
     properties:
+      book_count:
+        type: integer
       description:
         type: string
       id:
@@ -233,8 +259,12 @@ definitions:
         type: string
       mime_type:
         type: string
+      object_key:
+        type: string
       size:
         type: integer
+      state:
+        type: string
       updated_at:
         type: string
       url:
@@ -380,6 +410,8 @@ definitions:
     type: object
 info:
   contact: {}
+  title: University Library API
+  version: "1.0"
 paths:
   /author:
     post:
@@ -408,6 +440,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Creates a new author
       tags:
       - 04-Author
@@ -441,6 +475,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete author
       tags:
       - 04-Author
@@ -511,6 +547,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Update author
       tags:
       - 04-Author
@@ -531,6 +569,10 @@ paths:
       - description: Search query
         in: query
         name: search
+        type: string
+      - description: Sort by name or birth_date
+        in: query
+        name: order_by
         type: string
       produces:
       - application/json
@@ -573,6 +615,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Creates a new book
       tags:
       - 05-Book
@@ -606,6 +650,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete book
       tags:
       - 05-Book
@@ -676,6 +722,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Update book
       tags:
       - 05-Book
@@ -724,6 +772,10 @@ paths:
         in: query
         name: is_reference_only
         type: boolean
+      - description: Only books available for checkout
+        in: query
+        name: available_only
+        type: boolean
       produces:
       - application/json
       responses:
@@ -769,6 +821,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Creates a new borrowing
       tags:
       - 06-Borrowing
@@ -802,6 +856,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete borrowing
       tags:
       - 06-Borrowing
@@ -834,6 +890,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Get borrowing by ID
       tags:
       - 06-Borrowing
@@ -872,7 +930,65 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Update borrowing
+      tags:
+      - 06-Borrowing
+  /borrowing/{id}/lost:
+    post:
+      parameters:
+      - description: Borrowing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - StaffAuth: []
+      summary: Mark a checked-out copy lost
+      tags:
+      - 06-Borrowing
+  /borrowing/{id}/renew:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Borrowing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New extension date
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/genproto.BorrowingRenewReq'
+      responses:
+        "204":
+          description: No Content
+      security:
+      - StaffAuth: []
+      summary: Extend an active loan
+      tags:
+      - 06-Borrowing
+  /borrowing/{id}/return:
+    post:
+      parameters:
+      - description: Borrowing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - StaffAuth: []
+      summary: Return a borrowed or recovered copy
       tags:
       - 06-Borrowing
   /borrowings:
@@ -916,6 +1032,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Get all borrowings
       tags:
       - 06-Borrowing
@@ -936,6 +1054,10 @@ paths:
       - description: Search query
         in: query
         name: search
+        type: string
+      - description: Use book_count to rank by title count
+        in: query
+        name: sort
         type: string
       produces:
       - application/json
@@ -978,6 +1100,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Creates a new category
       tags:
       - 02-Category
@@ -1011,6 +1135,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete category
       tags:
       - 02-Category
@@ -1081,6 +1207,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Update category
       tags:
       - 02-Category
@@ -1110,6 +1238,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Upload a new file
       tags:
       - 08-File
@@ -1135,6 +1265,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete a file
       tags:
       - 08-File
@@ -1161,6 +1293,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Get a file by ID
       tags:
       - 08-File
@@ -1191,6 +1325,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: List all files
       tags:
       - 08-File
@@ -1221,6 +1357,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Creates a new publisher
       tags:
       - 03-Publisher
@@ -1254,6 +1392,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete publisher
       tags:
       - 03-Publisher
@@ -1324,6 +1464,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Update publisher
       tags:
       - 03-Publisher
@@ -1377,6 +1519,10 @@ paths:
         in: query
         name: offset
         type: integer
+      - description: Search title, ISBN, or author
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -1417,6 +1563,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Create a recommended book
       tags:
       - 07-Recommended
@@ -1450,6 +1598,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete recommended book
       tags:
       - 07-Recommended
@@ -1522,6 +1672,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Creates a new user
       tags:
       - 01-User
@@ -1555,6 +1707,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Delete user
       tags:
       - 01-User
@@ -1587,6 +1741,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Get user by ID
       tags:
       - 01-User
@@ -1625,6 +1781,8 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Update user
       tags:
       - 01-User
@@ -1665,9 +1823,14 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - StaffAuth: []
       summary: Get all users
       tags:
       - 01-User
+securityDefinitions:
+  StaffAuth:
+    type: basic
 swagger: "2.0"
 tags:
 - description: User CRUD methods

@@ -1,3 +1,5 @@
+import { usePaginatedList } from './usePaginatedList';
+import { readAPI, staffFetch } from './api';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Book, Recommended } from './types';
 import { API_BASE_URL } from './types';
@@ -16,19 +18,17 @@ interface Props {
 
 // Recommended Section
 const RecommendedSection = ({ savedData, onDataChange }: Props) => {
-  const [recommended, setRecommended] = useState<Recommended[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecommended, setTotalRecommended] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [showForm, setShowForm] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState('');
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; recommended: Recommended | null }>({ isOpen: false, recommended: null });
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const actionAbortController = useRef<AbortController | null>(null);
   const hasLoadedRef = useRef(false);
 
+  const {
+    items: recommended, total: totalRecommended, loading, error, currentPage, setCurrentPage, reload: fetchRecommended,
+  } = usePaginatedList<Recommended>('/recommended', 'recommendeds', 'total_count', searchQuery);
   const itemsPerPage = 20;
   const totalPages = Math.ceil(totalRecommended / itemsPerPage);
 
@@ -49,66 +49,15 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
     }
   }, [savedData]);
 
-  const fetchBooks = useCallback(async (searchQuery: string = '') => {
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', '100');
-      params.append('offset', '0');
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
-      }
-      const response = await fetch(`${API_BASE_URL}/books?${params.toString()}`);
-      const data = await response.json();
-      const books = data.books || [];
-
-      return books.map((book: Book) => ({
-        id: book.id,
-        label: book.title,
-        subtitle: `${book.author_ids?.map(a => a.name).join(', ') || 'No author'} | ISBN: ${book.isbn}`
-      }));
-    } catch (error) {
-      console.error('Error fetching books:', error);
-      return [];
-    }
+  const fetchBooks = useCallback(async (search: string, signal?: AbortSignal) => {
+    const params = new URLSearchParams({ search, limit: '50' });
+    const { books = [] } = await readAPI<{ books?: Book[] }>(`/books?${params}`, { signal });
+    return books.map(book => ({
+      id: book.id,
+      label: book.title,
+      subtitle: `${book.author_ids?.map(a => a.name).join(', ') || 'No author'} | ISBN: ${book.isbn}`
+    }));
   }, []);
-
-  const fetchRecommended = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', itemsPerPage.toString());
-      params.append('offset', ((currentPage - 1) * itemsPerPage).toString());
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
-      }
-
-      const response = await fetch(`${API_BASE_URL}/recommended?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch recommended books');
-
-      const data = await response.json();
-      setRecommended(data.recommendeds || []);
-      setTotalRecommended(data.total_count || 0);
-    } catch (error) {
-      console.error('Error fetching recommended:', error);
-      setError('Failed to fetch recommended books. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchQuery, itemsPerPage]);
-
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-      fetchRecommended();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [searchQuery, fetchRecommended]);
-
-  useEffect(() => {
-    fetchRecommended();
-  }, [currentPage, fetchRecommended]);
 
   const handleSave = async () => {
     if (!selectedBookId) {
@@ -116,37 +65,25 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
       return;
     }
 
-    // Check if book is already recommended
-    const alreadyRecommended = recommended.some(rec => rec.book_id.id === selectedBookId);
-    if (alreadyRecommended) {
-      alert('This book is already in the recommended list!');
-      return;
-    }
-
     setActionLoading(true);
     actionAbortController.current = new AbortController();
     const signal = actionAbortController.current.signal;
     try {
-      const response = await fetch(`${API_BASE_URL}/recommended`, {
+      await readAPI('/recommended', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ book_id: selectedBookId }),
         signal
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to add recommended book');
-      }
-
       actionAbortController.current = null;
       handleCancelForm();
       fetchRecommended();
       alert('Book added to recommended successfully!');
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error('Error adding recommended:', error);
-      alert(`Failed to add recommended book. ${error.message || 'Please try again.'}`);
+      alert(`Failed to add recommended book. ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setActionLoading(false);
     }
@@ -159,7 +96,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
     actionAbortController.current = new AbortController();
     const signal = actionAbortController.current.signal;
     try {
-      const response = await fetch(`${API_BASE_URL}/recommended/${deleteModal.recommended.id}`, {
+      const response = await staffFetch(`${API_BASE_URL}/recommended/${deleteModal.recommended.id}`, {
         method: 'DELETE',
         signal
       });
@@ -170,8 +107,8 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
       setDeleteModal({ isOpen: false, recommended: null });
       fetchRecommended();
       alert('Recommended book removed successfully!');
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       alert('Failed to remove recommended book. Please try again.');
     } finally {
       setActionLoading(false);
@@ -269,7 +206,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
       </button>
     );
 
-    return <div className="d-flex justify-content-center align-items-center mt-4">{pages}</div>;
+    return <div className="d-flex flex-wrap row-gap-2 justify-content-center align-items-center mt-4">{pages}</div>;
   };
 
   if (showForm) {
@@ -360,7 +297,6 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
       {error && (
         <div className="alert alert-danger alert-dismissible" role="alert">
           <strong>Error!</strong> {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
         </div>
       )}
 

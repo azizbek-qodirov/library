@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	pb "library/internal/pkg/genproto"
 	"library/internal/storage/repo"
 )
@@ -26,6 +29,9 @@ func (s *CategoryService) GetCategory(ctx context.Context, req *pb.ByID) (*pb.Ca
 }
 
 func (s *CategoryService) UpdateCategory(ctx context.Context, req *pb.CategoryUpdateReq) (*pb.Void, error) {
+	if req.GetBody() == nil {
+		return nil, status.Error(codes.InvalidArgument, "category update body is required")
+	}
 	return s.repo.UpdateCategory(ctx, req)
 }
 

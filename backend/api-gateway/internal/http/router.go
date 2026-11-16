@@ -1,6 +1,9 @@
 package api
 
 import (
+	"crypto/sha256"
+	"crypto/subtle"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +16,10 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title University Library API
+// @version 1.0
+// @securityDefinitions.basic StaffAuth
 
 // @tag.name 01-User
 // @tag.description User CRUD methods
@@ -47,6 +54,7 @@ func NewRouter(h *handlers.HTTPHandler, logger *l.Logger, cfg *config.Config) *g
 	allowedOrigins := strings.Split(cfg.CORS_ALLOWED_ORIGINS, ",")
 	router.Use(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
+		c.Writer.Header().Add("Vary", "Origin")
 
 		// Check if origin is in allowed list
 		allowed := false
@@ -72,58 +80,93 @@ func NewRouter(h *handlers.HTTPHandler, logger *l.Logger, cfg *config.Config) *g
 		c.Next()
 	})
 
+	staff := router.Group("")
+	staff.Use(requireStaff(cfg))
+	staff.GET("/staff/session", func(c *gin.Context) {
+		c.Header("Cache-Control", "no-store")
+		c.Status(http.StatusNoContent)
+	})
+
 	// Users
-	router.POST("/user", h.CreateUser)
-	router.GET("/user/:id", h.GetUserByID)
-	router.PUT("/user/:id", h.UpdateUser)
-	router.DELETE("/user/:id", h.DeleteUser)
-	router.GET("/users", h.GetAllUsers)
+	staff.POST("/user", h.CreateUser)
+	staff.GET("/user/:id", h.GetUserByID)
+	staff.PUT("/user/:id", h.UpdateUser)
+	staff.DELETE("/user/:id", h.DeleteUser)
+	staff.GET("/users", h.GetAllUsers)
 
 	// Categories
-	router.POST("/category", h.CreateCategory)
+	staff.POST("/category", h.CreateCategory)
 	router.GET("/category/:id", h.GetCategoryByID)
-	router.PUT("/category/:id", h.UpdateCategory)
-	router.DELETE("/category/:id", h.DeleteCategory)
+	staff.PUT("/category/:id", h.UpdateCategory)
+	staff.DELETE("/category/:id", h.DeleteCategory)
 	router.GET("/categories", h.GetAllCategories)
 
 	// Publishers
-	router.POST("/publisher", h.CreatePublisher)
+	staff.POST("/publisher", h.CreatePublisher)
 	router.GET("/publisher/:id", h.GetPublisherByID)
-	router.PUT("/publisher/:id", h.UpdatePublisher)
-	router.DELETE("/publisher/:id", h.DeletePublisher)
+	staff.PUT("/publisher/:id", h.UpdatePublisher)
+	staff.DELETE("/publisher/:id", h.DeletePublisher)
 	router.GET("/publishers", h.GetAllPublishers)
 
 	// Authors
-	router.POST("/author", h.CreateAuthor)
+	staff.POST("/author", h.CreateAuthor)
 	router.GET("/author/:id", h.GetAuthorByID)
-	router.PUT("/author/:id", h.UpdateAuthor)
-	router.DELETE("/author/:id", h.DeleteAuthor)
+	staff.PUT("/author/:id", h.UpdateAuthor)
+	staff.DELETE("/author/:id", h.DeleteAuthor)
 	router.GET("/authors", h.GetAllAuthors)
 
 	// Books
-	router.POST("/book", h.CreateBook)
+	staff.POST("/book", h.CreateBook)
 	router.GET("/book/:id", h.GetBookByID)
-	router.PUT("/book/:id", h.UpdateBook)
-	router.DELETE("/book/:id", h.DeleteBook)
+	staff.PUT("/book/:id", h.UpdateBook)
+	staff.DELETE("/book/:id", h.DeleteBook)
 	router.GET("/books", h.GetAllBooks)
 
 	// Borrowings
-	router.POST("/borrowing", h.CreateBorrowing)
-	router.GET("/borrowing/:id", h.GetBorrowing)
-	router.PUT("/borrowing/:id", h.UpdateBorrowing)
-	router.DELETE("/borrowing/:id", h.DeleteBorrowing)
-	router.GET("/borrowings", h.GetAllBorrowings)
+	staff.POST("/borrowing", h.CreateBorrowing)
+	staff.GET("/borrowing/:id", h.GetBorrowing)
+	staff.PUT("/borrowing/:id", h.UpdateBorrowing)
+	staff.POST("/borrowing/:id/return", h.ReturnBorrowing)
+	staff.POST("/borrowing/:id/renew", h.RenewBorrowing)
+	staff.POST("/borrowing/:id/lost", h.MarkBorrowingLost)
+	staff.DELETE("/borrowing/:id", h.DeleteBorrowing)
+	staff.GET("/borrowings", h.GetAllBorrowings)
 
 	// Recommended
 	router.GET("/recommended", h.GetRecommendedBooks)
 	router.GET("/recommended/:id", h.GetRecommendedBook)
-	router.POST("/recommended", h.CreateRecommendedBook)
-	router.DELETE("/recommended/:id", h.DeleteRecommendedBook)
+	staff.POST("/recommended", h.CreateRecommendedBook)
+	staff.DELETE("/recommended/:id", h.DeleteRecommendedBook)
 
 	// Files
-	router.POST("/file", h.CreateFile)
-	router.GET("/file/:id", h.GetFile)
-	router.DELETE("/file/:id", h.DeleteFile)
-	router.GET("/files", h.GetAllFiles)
+	staff.POST("/file", h.CreateFile)
+	staff.GET("/file/:id", h.GetFile)
+	staff.DELETE("/file/:id", h.DeleteFile)
+	staff.GET("/files", h.GetAllFiles)
 	return router
+}
+
+func requireStaff(cfg *config.Config) gin.HandlerFunc {
+	expectedUser := sha256.Sum256([]byte(cfg.STAFF_USERNAME))
+	expectedPassword := sha256.Sum256([]byte(cfg.STAFF_PASSWORD))
+	enabled := cfg.STAFF_USERNAME != "" && cfg.STAFF_PASSWORD != ""
+
+	return func(c *gin.Context) {
+		if !enabled {
+			c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"error": "Staff access is not configured"})
+			return
+		}
+
+		username, password, ok := c.Request.BasicAuth()
+		userHash := sha256.Sum256([]byte(username))
+		passwordHash := sha256.Sum256([]byte(password))
+		matches := subtle.ConstantTimeCompare(userHash[:], expectedUser[:]) &
+			subtle.ConstantTimeCompare(passwordHash[:], expectedPassword[:])
+		if !ok || matches != 1 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Staff credentials are required"})
+			return
+		}
+		c.Header("Cache-Control", "no-store")
+		c.Next()
+	}
 }

@@ -1,20 +1,16 @@
-.PHONY: run stop
-
-# Variables to hold PIDs
-PIDS =
+.PHONY: run check proto_gen migrate
 
 run:
-	@echo "Starting services..."
-	@trap '$(MAKE) stop' INT TERM EXIT; \
-	( cd backend/library-service && make run ) & \
-	 LIB_PID=$$!; \
-	( cd backend/api-gateway && make run ) & \
-	 API_PID=$$!; \
-	( cd frontend && npm run dev ) & \
-	 FRONT_PID=$$!; \
-	 PIDS="$$LIB_PID $$API_PID $$FRONT_PID"; \
-	 wait
+	bash scripts/dev.sh
 
-stop:
-	@echo "Stopping services..."
-	@kill -TERM $$(jobs -p) 2>/dev/null || true
+check:
+	cd backend/library-service && go test ./...
+	cd backend/api-gateway && go test ./...
+	cd frontend && npm run lint && npm run build
+	cd librarian && npm run lint && npm run build
+
+proto_gen:
+	backend/proto/generate.sh
+
+migrate:
+	$(MAKE) -C backend/library-service migrate_up

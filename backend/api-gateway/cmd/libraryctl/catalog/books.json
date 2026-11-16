@@ -1,0 +1,317 @@
+{
+  "authors": {
+    "qodiriy": {
+      "name": "Abdulla Qodiriy",
+      "birth_date": "1894-04-10",
+      "description": "O‘zbek romanchiligining asoschilaridan biri. Toshkentda tug‘ilgan va Julqunboy taxallusi bilan ham ijod qilgan.",
+      "source": "https://exploreuzbekistan.uz/uz/faces/abdulla-qodiriy/full/"
+    },
+    "cholpon": {
+      "name": "Cho‘lpon",
+      "birth_date": null,
+      "description": "Abdulhamid Sulaymon o‘g‘li Yunusov 1897-yilda Andijonda tug‘ilgan. Jadid adabiyotining shoiri, yozuvchisi va tarjimoni.",
+      "source": "https://www.chulpon.uz/tarjimai-hol.php?lang=uz"
+    },
+    "toxtaboyev": {
+      "name": "Xudoyberdi To‘xtaboyev",
+      "birth_date": "1932-12-17",
+      "description": "Farg‘onaning Katta Tagob qishlog‘ida tug‘ilgan o‘zbek bolalar yozuvchisi. Sarguzasht va yumor uning nasrida muhim o‘rin tutadi.",
+      "source": "https://www.kutubxonachi.uz/authors/xudoyberdi-to-xtaboyev/autobiography/"
+    },
+    "gulom": {
+      "name": "G‘afur G‘ulom",
+      "birth_date": "1903-05-10",
+      "description": "Toshkentda tug‘ilgan o‘zbek shoiri, nosiri va tarjimoni. Uning nasriy asarlari orasida Shum bola qissasi bor.",
+      "source": "https://uz.wikipedia.org/wiki/G%CA%BBafur_G%CA%BBulom"
+    },
+    "hoshimov": {
+      "name": "O‘tkir Hoshimov",
+      "birth_date": "1941-08-05",
+      "description": "Do‘mbirobodda tug‘ilgan o‘zbek yozuvchisi va jurnalisti. Oilaviy hayot va urush oqibatlari uning asarlarida muhim mavzular.",
+      "source": "https://shaxs.uz/uz/persons/otkir-hoshimov"
+    },
+    "pirimqul": {
+      "name": "Pirimqul Qodirov",
+      "birth_date": "1928-10-25",
+      "description": "Kengko‘l qishlog‘ida tug‘ilgan o‘zbek yozuvchisi. Tarixiy romanlari orasida Yulduzli tunlar va Avlodlar dovoni bor.",
+      "source": "https://old.eduportal.uz/Umumiyfiles/darsliklar/6/adabiyot_2qism_6_uzb.pdf"
+    },
+    "umarbekov": {
+      "name": "O‘lmas Umarbekov",
+      "birth_date": "1934-01-25",
+      "description": "Toshkentda tug‘ilgan o‘zbek yozuvchisi va dramaturgi. Qissa, roman va sahna asarlari yozgan.",
+      "source": "https://ziyosfera.uz/ziyo/O%CA%BBlmas_Umarbekov"
+    },
+    "qahhor": {
+      "name": "Abdulla Qahhor",
+      "birth_date": "1907-09-17",
+      "description": "O‘zbek hikoyanavisi, dramaturgi va tarjimoni. Qisqa, hajviy nasri bilan tanilgan.",
+      "source": "https://shaxs.uz/uz/persons/abdulla-qahhor"
+    }
+  },
+  "publishers": {
+    "yangi-asr-avlodi": {
+      "name": "Yangi Asr Avlodi",
+      "description": "O‘zbek tilida badiiy adabiyot va tarjimalar chiqaradigan nashriyot. Ushbu katalogda Qodiriy, Cho‘lpon, To‘xtaboyev va Umarbekov nashrlari bilan qatnashadi."
+    },
+    "yoshlar-matbuoti": {
+      "name": "Yoshlar matbuoti",
+      "description": "Katalogdagi G‘afur G‘ulomning lotin yozuvidagi Shum bola nashri uchun ko‘rsatilgan nashriyot."
+    },
+    "ilm-ziyo-zakovat": {
+      "name": "Ilm-Ziyo-Zakovat",
+      "description": "Katalogda O‘tkir Hoshimovning o‘zbek tilidagi Dunyoning ishlari va Ikki eshik orasi nashrlari bilan qatnashadi."
+    },
+    "bukhara-books": {
+      "name": "Bukhara Books",
+      "description": "Katalogdagi Pirimqul Qodirovning lotin yozuvidagi Yulduzli tunlar nashrini chiqargan nashriyot."
+    },
+    "global-books": {
+      "name": "Global Book",
+      "description": "Katalogdagi Abdulla Qahhorning lotin yozuvidagi Sinchalak nashri uchun ko‘rsatilgan nashriyot."
+    }
+  },
+  "categories": {
+    "classics": {
+      "name": "O‘zbek mumtoz nasri",
+      "description": "O‘zbek adabiyoti tarixida muhim o‘rin tutgan nasriy asarlar."
+    },
+    "historical": {
+      "name": "Tarixiy roman",
+      "description": "Tarixiy davr va shaxslar tasvirlangan romanlar."
+    },
+    "social": {
+      "name": "Ijtimoiy roman",
+      "description": "Jamiyat, oila va insoniy munosabatlarni yorituvchi romanlar."
+    },
+    "children": {
+      "name": "Bolalar adabiyoti",
+      "description": "Bolalar va o‘smirlar uchun yozilgan badiiy asarlar."
+    },
+    "adventure": {
+      "name": "Sarguzasht",
+      "description": "Voqealar rivoji va qahramonlarning sarguzashtlariga qurilgan asarlar."
+    },
+    "novella": {
+      "name": "Qissa",
+      "description": "Hikoya va roman oralig‘idagi nasriy janrga mansub asarlar."
+    },
+    "satire": {
+      "name": "Hajviy nasr",
+      "description": "Kulgi va hajv orqali inson yoki jamiyat xususiyatlarini ochib beradigan asarlar."
+    }
+  },
+  "books": [
+    {
+      "title": "O‘tkan kunlar",
+      "author": "qodiriy",
+      "categories": [
+        "classics",
+        "historical"
+      ],
+      "description": "Otabek va Kumushning taqdiri orqali XIX asr Turkistonidagi oila, urf-odat va siyosiy ziddiyatlar tasvirlanadi.",
+      "publisher": "yangi-asr-avlodi",
+      "isbn": "9789943273573",
+      "publication_year": 2019,
+      "pages": 464,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/abdulla-kodirij-utgan-kunlar",
+      "cover": "covers/otkan-kunlar.jpg",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/67f65f637e6f2.jpg",
+      "sha256": "ea0003b3ad4287ca9cf019de0cc9684c3ea11f7e102efbfd59179e14a6ad1b84"
+    },
+    {
+      "title": "Mehrobdan chayon",
+      "author": "qodiriy",
+      "categories": [
+        "classics",
+        "historical"
+      ],
+      "description": "Anvar va Ra’noning muhabbati Qo‘qon xonligi saroyidagi manfaatlar va ijtimoiy tengsizlik bilan to‘qnashadi.",
+      "publisher": "yangi-asr-avlodi",
+      "isbn": "9789943277359",
+      "publication_year": 2018,
+      "pages": 336,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/abdulla-kodirij-mehrobdan-chayon",
+      "cover": "covers/mehrobdan-chayon.jpg",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/62ea1cd03c411.jpg",
+      "sha256": "20b8e625183c900b6296e50f355f088fabc19f127cd633275be556ef68bb60b6"
+    },
+    {
+      "title": "Kecha va kunduz",
+      "author": "cholpon",
+      "categories": [
+        "classics",
+        "social"
+      ],
+      "description": "Zebi hayoti orqali mustamlaka davridagi Turkiston jamiyati va ayollarning turmushini ochib beruvchi roman.",
+      "publisher": "yangi-asr-avlodi",
+      "isbn": "9789943650190",
+      "publication_year": 2023,
+      "pages": 320,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/chulpon-kecha-va-kunduz-2",
+      "cover": "covers/kecha-va-kunduz.webp",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/64de29c75fe59.jpg.webp",
+      "sha256": "f4e1099947d6b529ba3dc7ed43d5985ee0763aee7d5247473a721b5d7fa7fa1a"
+    },
+    {
+      "title": "Sariq devni minib",
+      "author": "toxtaboyev",
+      "categories": [
+        "children",
+        "adventure"
+      ],
+      "description": "Hoshimjon sehrli qalpoqcha yordamida orzulariga tez yetmoqchi bo‘ladi. Uning sarguzashtlari bilim va halol mehnatning qadrini ko‘rsatadi.",
+      "publisher": "yangi-asr-avlodi",
+      "isbn": "9789943279452",
+      "publication_year": 2017,
+      "pages": 544,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/hudojberdi-tuhtaboev-sariq-devni-minib",
+      "cover": "covers/sariq-devni-minib.webp",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/605b269faf077.png.webp",
+      "sha256": "908b8b72d7687262f42cb3d0e7c32ef5fad84e8715b44107a0ab8bb4746f9b59"
+    },
+    {
+      "title": "Shum bola",
+      "author": "gulom",
+      "categories": [
+        "children",
+        "novella",
+        "satire"
+      ],
+      "description": "Ziyrak va sho‘x bolaning boshidan kechirgan voqealari orqali eski Toshkent atrofidagi odamlar va turmush tarzi kulgi bilan tasvirlanadi.",
+      "publisher": "yoshlar-matbuoti",
+      "isbn": "9789943604056",
+      "publication_year": 2019,
+      "pages": 184,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/afur-ulom-shum-bola",
+      "cover": "covers/shum-bola.jpg",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/64d9150d9fc43.jpg",
+      "sha256": "a029ac8e3c75aa9c91c76f800f4139b49aa7a9673b8c5a2f12557790b9cd0d5d"
+    },
+    {
+      "title": "Dunyoning ishlari",
+      "author": "hoshimov",
+      "categories": [
+        "novella",
+        "classics"
+      ],
+      "description": "Ona xotirasiga bag‘ishlangan hikoyatlar farzandlik mehrini va kundalik hayotdagi insoniy yaxshilikni yoritadi.",
+      "publisher": "ilm-ziyo-zakovat",
+      "isbn": "9789943585881",
+      "publication_year": 2019,
+      "pages": 176,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/utkir-hoshimov-dunyoning-ishlari",
+      "cover": "covers/dunyoning-ishlari.jpg",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/62b54661070ff.jpg",
+      "sha256": "b045cd63c7786cacece2b68b7df36440e9df6933f7e172933668db5213f70ce4"
+    },
+    {
+      "title": "Ikki eshik orasi",
+      "author": "hoshimov",
+      "categories": [
+        "classics",
+        "social"
+      ],
+      "description": "Urush va undan keyingi yillarda qishloq ahli boshdan kechirgan ayriliq, sadoqat va sinovlar haqida ko‘p ovozli roman.",
+      "publisher": "ilm-ziyo-zakovat",
+      "isbn": "9789943597518",
+      "publication_year": 2019,
+      "pages": 528,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/tkir-oshimov-ikki-eshik-orasi-lotin-ilm-ziyo-zakovat-nashr",
+      "cover": "covers/ikki-eshik-orasi.webp",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/6049fba8b4ffc.png.webp",
+      "sha256": "3a768b4212926eed0669c930eed75dfce35023ef929e0af0d221be57c212ebc8"
+    },
+    {
+      "title": "Yulduzli tunlar",
+      "author": "pirimqul",
+      "categories": [
+        "historical",
+        "classics"
+      ],
+      "description": "Zahiriddin Muhammad Boburning yoshlik davri, saltanat uchun kurashi va yurtidan uzoqdagi hayoti badiiy talqin etiladi.",
+      "publisher": "bukhara-books",
+      "isbn": "9789910882357",
+      "publication_year": 2024,
+      "pages": 640,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/pirimqul-qodirov-yulduzli-tunlar-bukhara-books",
+      "cover": "covers/yulduzli-tunlar.webp",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/691c8c62ebfbd.jpg.webp",
+      "sha256": "b8eca03ca788ca85cfc77cea313c9d9d1c1353948e1d17c2b94534ea19aa722d"
+    },
+    {
+      "title": "Odam bo‘lish qiyin",
+      "author": "umarbekov",
+      "categories": [
+        "social",
+        "classics"
+      ],
+      "description": "Yoshlik orzulari, muhabbat va mas’uliyat haqidagi roman insoniy kamolot uchun tanlovlarning ahamiyatini ko‘rsatadi.",
+      "publisher": "yangi-asr-avlodi",
+      "isbn": "9789943275089",
+      "publication_year": 2018,
+      "pages": 352,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/lmas-umarbekov-odam-bulish-kijin",
+      "cover": "covers/odam-bolish-qiyin.webp",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/60b48d1a782da.jpg.webp",
+      "sha256": "4b25661c804c34d5257c29338b3ec6e5d0d3c6ebd708f5090254e0a74fce3c7e"
+    },
+    {
+      "title": "Sinchalak",
+      "author": "qahhor",
+      "categories": [
+        "novella",
+        "satire"
+      ],
+      "description": "Saida va Qalandarov o‘rtasidagi qarama-qarshilik orqali qishloq jamoasi, rahbarlik va eskicha qarashlar hajviy tasvirlanadi.",
+      "publisher": "global-books",
+      "isbn": "9789943675575",
+      "publication_year": 2021,
+      "pages": 208,
+      "copies": 1,
+      "location": "Demo fond · o‘zbek adabiyoti",
+      "language": "uzb",
+      "script": "Lotincha",
+      "source": "https://asaxiy.uz/product/abdulla-qahhor-sinchalak-global-books",
+      "cover": "covers/sinchalak.webp",
+      "cover_source": "https://assets.asaxiy.uz/product/main_image/desktop/68d7b7674fadf.jpg.webp",
+      "sha256": "00060f48a5aaf3db156314f0e853d6b610ddf895ca5b9baf174da3fd05180349"
+    }
+  ]
+}

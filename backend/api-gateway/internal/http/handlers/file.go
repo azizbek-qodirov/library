@@ -1,18 +1,24 @@
 package handlers
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
-	"strconv"
+	"net/url"
 	"strings"
+	"time"
 
-	"library-gateway/internal/pkg/config"
 	"library-gateway/internal/pkg/errors"
 	pb "library-gateway/internal/pkg/genproto"
 	"library-gateway/internal/pkg/validation"
 
 	"github.com/gin-gonic/gin"
 	"github.com/minio/minio-go/v7"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // CreateFile godoc
@@ -25,56 +31,95 @@ import (
 // @Success 201 {object} pb.FileGetRes "File created successfully"
 // @Failure 400 {object} string "Invalid file upload"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /file [post]
 func (h *HTTPHandler) CreateFile(c *gin.Context) {
+	const maxImageBytes = 5 << 20
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxImageBytes+(64<<10))
+	defer func() {
+		if c.Request.MultipartForm != nil {
+			_ = c.Request.MultipartForm.RemoveAll()
+		}
+	}()
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file upload", "details": err.Error()})
+		errors.BadRequest(c, "Invalid file upload or file exceeds 5 MB")
 		return
 	}
 	defer file.Close()
-
-	if header.Size > 5*1024*1024 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File size too large. Maximum allowed size is 5MB"})
+	if header.Size > maxImageBytes {
+		errors.BadRequest(c, "File exceeds 5 MB")
 		return
 	}
 
-	uniqueFileName := config.GenRandomNum() + "_" + header.Filename
+	var signature [512]byte
+	n, err := io.ReadFull(file, signature[:])
+	if err != nil && err != io.ErrUnexpectedEOF {
+		errors.BadRequest(c, "Could not read image")
+		return
+	}
+	mimeType := http.DetectContentType(signature[:n])
+	var extension string
+	switch mimeType {
+	case "image/jpeg":
+		extension = ".jpg"
+	case "image/png":
+		extension = ".png"
+	case "image/gif":
+		extension = ".gif"
+	case "image/webp":
+		extension = ".webp"
+	default:
+		errors.BadRequest(c, "Cover must be a JPEG, PNG, GIF, or WebP image")
+		return
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		errors.InternalError(c, "Read image")
+		return
+	}
 
-	uploadInfo, err := h.Minio.Client.PutObject(
-		c.Request.Context(),
-		h.Minio.DefaultBucket(),
-		uniqueFileName,
-		file,
-		header.Size,
-		minio.PutObjectOptions{ContentType: header.Header.Get("Content-Type")},
-	)
+	var randomID [16]byte
+	if _, err := rand.Read(randomID[:]); err != nil {
+		errors.InternalError(c, "Generate file key")
+		return
+	}
+	key := hex.EncodeToString(randomID[:]) + extension
+	publicURL := strings.TrimRight(h.Config.MINIO_PUBLIC_URL, "/")
+	if publicURL == "" {
+		protocol := "http"
+		if h.Config.MINIO_USE_SSL {
+			protocol = "https"
+		}
+		publicURL = protocol + "://" + h.Config.MINIO_ENDPOINT
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	// Reserve metadata first so an interrupted upload remains visible for cleanup.
+	record, err := h.FS.CreateFile(ctx, &pb.FileCreateReq{
+		Url:      fmt.Sprintf("%s/%s/%s", publicURL, h.Minio.DefaultBucket(), key),
+		MimeType: mimeType, Size: header.Size, ObjectKey: key, PendingUpload: true,
+	})
 	if err != nil {
-		h.Logger.ERROR.Printf("Error uploading file to Minio: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file to Minio", "details": err.Error()})
+		errors.HandleGRPCError(c, err, "Reserve file record")
 		return
 	}
 
-	// Construct URL using MinIO endpoint from config
-	protocol := "http"
-	if h.Config.MINIO_USE_SSL {
-		protocol = "https"
-	}
-	fileUrl := fmt.Sprintf("%s://%s/%s/%s", protocol, h.Config.MINIO_ENDPOINT, h.Minio.DefaultBucket(), uploadInfo.Key)
-	req := &pb.FileCreateReq{
-		Url:      fileUrl,
-		MimeType: header.Header.Get("Content-Type"),
-		Size:     header.Size,
-	}
-
-	res, err := h.FS.CreateFile(c.Request.Context(), req)
+	_, err = h.Minio.Client.PutObject(ctx, h.Minio.DefaultBucket(), key, file, header.Size,
+		minio.PutObjectOptions{ContentType: mimeType})
 	if err != nil {
-		h.Logger.ERROR.Printf("Error creating file record: %v", err)
-		errors.HandleGRPCError(c, err, "Create file record")
+		h.Logger.ERROR.Printf("Upload for file %s did not complete: %v", record.Id, err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "Cover upload failed", "file_id": record.Id})
 		return
 	}
-
-	c.JSON(http.StatusCreated, res)
+	ready, err := h.FS.ActivateFile(ctx, &pb.ByID{Id: record.Id})
+	if err != nil {
+		h.Logger.ERROR.Printf("Could not confirm activation for file %s: %v", record.Id, err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "Could not confirm cover upload", "file_id": record.Id})
+		return
+	}
+	c.JSON(http.StatusCreated, ready)
 }
 
 // GetFile godoc
@@ -86,6 +131,7 @@ func (h *HTTPHandler) CreateFile(c *gin.Context) {
 // @Success 200 {object} pb.FileGetRes "File retrieved successfully"
 // @Failure 404 {object} string "File not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /file/{id} [get]
 func (h *HTTPHandler) GetFile(c *gin.Context) {
 	id := c.Param("id")
@@ -96,7 +142,9 @@ func (h *HTTPHandler) GetFile(c *gin.Context) {
 		return
 	}
 
-	res, err := h.FS.GetFile(c.Request.Context(), &pb.ByID{Id: id})
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	res, err := h.FS.GetFile(ctx, &pb.ByID{Id: id})
 	if err != nil {
 		h.Logger.ERROR.Printf("Error getting file: %v", err)
 		errors.HandleGRPCError(c, err, "Get file")
@@ -114,6 +162,7 @@ func (h *HTTPHandler) GetFile(c *gin.Context) {
 // @Success 200 {object} string "File deleted successfully"
 // @Failure 404 {object} string "File not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /file/{id} [delete]
 func (h *HTTPHandler) DeleteFile(c *gin.Context) {
 	id := c.Param("id")
@@ -124,32 +173,43 @@ func (h *HTTPHandler) DeleteFile(c *gin.Context) {
 		return
 	}
 
-	// Fetch file info to know object key
-	file, err := h.FS.GetFile(c.Request.Context(), &pb.ByID{Id: id})
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
+	defer cancel()
+	req := &pb.ByID{Id: id}
+	file, err := h.FS.PrepareFileDeletion(ctx, req)
+	if status.Code(err) == codes.NotFound {
+		c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
+		return
+	}
 	if err != nil {
-		h.Logger.ERROR.Printf("Error fetching file before deletion: %v", err)
-		errors.HandleGRPCError(c, err, "Get file before deletion")
+		errors.HandleGRPCError(c, err, "Prepare file deletion")
 		return
 	}
 
-	_, err = h.FS.DeleteFile(c.Request.Context(), &pb.ByID{Id: id})
-	if err != nil {
-		h.Logger.ERROR.Printf("Error deleting file record: %v", err)
-		errors.HandleGRPCError(c, err, "Delete file record")
+	key := file.ObjectKey
+	if key == "" {
+		// Legacy records used the full URL and did not persist the object key.
+		legacyURL, err := url.Parse(file.Url)
+		prefix := "/" + h.Minio.DefaultBucket() + "/"
+		if err != nil || !strings.HasPrefix(legacyURL.Path, prefix) {
+			errors.InternalError(c, "Resolve legacy file key")
+			return
+		}
+		key = strings.TrimPrefix(legacyURL.Path, prefix)
+		if key == "" {
+			errors.InternalError(c, "Resolve legacy file key")
+			return
+		}
+	}
+	if err := h.Minio.Client.RemoveObject(ctx, h.Minio.DefaultBucket(), key, minio.RemoveObjectOptions{}); err != nil {
+		h.Logger.ERROR.Printf("Could not remove object for file %s: %v", id, err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "Could not remove the cover. Retry the same deletion."})
 		return
 	}
-
-	// Remove from Minio
-	file_name := file.Url[strings.LastIndex(file.Url, "/")+1:]
-	if err = h.Minio.Client.RemoveObject(
-		c.Request.Context(),
-		h.Minio.DefaultBucket(),
-		file_name, // ⚠️ If this is a full URL, trim bucket/key part
-		minio.RemoveObjectOptions{},
-	); err != nil {
-		h.Logger.ERROR.Printf("Error deleting file from Minio: %v", err)
+	if _, err := h.FS.DeleteFile(ctx, req); err != nil {
+		errors.HandleGRPCError(c, err, "Finalize file deletion")
+		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
 }
 
@@ -163,25 +223,18 @@ func (h *HTTPHandler) DeleteFile(c *gin.Context) {
 // @Param mime_type query string false "Filter by MIME type"
 // @Success 200 {object} pb.GetAllFilesRes "Files retrieved successfully"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /files [get]
 func (h *HTTPHandler) GetAllFiles(c *gin.Context) {
-	offset, _ := strconv.ParseInt(c.DefaultQuery("offset", "0"), 10, 64)
-	limit, _ := strconv.ParseInt(c.DefaultQuery("limit", "10"), 10, 64)
-	mimeType := c.Query("mime_type")
-
-	req := &pb.FilesGetAllReq{
-		Offset:   offset,
-		Limit:    limit,
-		MimeType: mimeType,
-	}
-
-	// Validate pagination
-	if err := validation.ValidatePagination(int32(limit), int32(offset)); err != nil {
-		errors.ValidationError(c, err)
+	limit, offset, ok := pagination(c)
+	if !ok {
 		return
 	}
+	req := &pb.FilesGetAllReq{Offset: offset, Limit: limit, MimeType: c.Query("mime_type")}
 
-	res, err := h.FS.GetAllFiles(c.Request.Context(), req)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	res, err := h.FS.GetAllFiles(ctx, req)
 	if err != nil {
 		h.Logger.ERROR.Printf("Error getting all files: %v", err)
 		errors.HandleGRPCError(c, err, "Get all files")

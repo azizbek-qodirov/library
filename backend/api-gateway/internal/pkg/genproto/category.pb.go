@@ -78,6 +78,7 @@ type CategoryGetRes struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	BookCount     int64                  `protobuf:"varint,4,opt,name=book_count,json=bookCount,proto3" json:"book_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -131,6 +132,13 @@ func (x *CategoryGetRes) GetDescription() string {
 		return x.Description
 	}
 	return ""
+}
+
+func (x *CategoryGetRes) GetBookCount() int64 {
+	if x != nil {
+		return x.BookCount
+	}
+	return 0
 }
 
 type CategoryUpdateReq struct {
@@ -238,12 +246,13 @@ func (x *CategoryUpdateBody) GetDescription() string {
 }
 
 type CategoriesGetAllReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Limit         uint64                 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        uint64                 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
-	Search        string                 `protobuf:"bytes,3,opt,name=search,proto3" json:"search,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Limit           uint64                 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset          uint64                 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Search          string                 `protobuf:"bytes,3,opt,name=search,proto3" json:"search,omitempty"`
+	SortByBookCount bool                   `protobuf:"varint,4,opt,name=sort_by_book_count,json=sortByBookCount,proto3" json:"sort_by_book_count,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *CategoriesGetAllReq) Reset() {
@@ -295,6 +304,13 @@ func (x *CategoriesGetAllReq) GetSearch() string {
 		return x.Search
 	}
 	return ""
+}
+
+func (x *CategoriesGetAllReq) GetSortByBookCount() bool {
+	if x != nil {
+		return x.SortByBookCount
+	}
+	return false
 }
 
 type GetAllCategoriesRes struct {
@@ -356,21 +372,24 @@ const file_library_submodule_category_proto_rawDesc = "" +
 	" library_submodule/category.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\"I\n" +
 	"\x11CategoryCreateReq\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"V\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"u\n" +
 	"\x0eCategoryGetRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\"S\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1d\n" +
+	"\n" +
+	"book_count\x18\x04 \x01(\x03R\tbookCount\"S\n" +
 	"\x11CategoryUpdateReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12.\n" +
 	"\x04body\x18\x02 \x01(\v2\x1a.protos.CategoryUpdateBodyR\x04body\"J\n" +
 	"\x12CategoryUpdateBody\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"[\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"\x88\x01\n" +
 	"\x13CategoriesGetAllReq\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\x04R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x16\n" +
-	"\x06search\x18\x03 \x01(\tR\x06search\"n\n" +
+	"\x06search\x18\x03 \x01(\tR\x06search\x12+\n" +
+	"\x12sort_by_book_count\x18\x04 \x01(\bR\x0fsortByBookCount\"n\n" +
 	"\x13GetAllCategoriesRes\x126\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x16.protos.CategoryGetResR\n" +

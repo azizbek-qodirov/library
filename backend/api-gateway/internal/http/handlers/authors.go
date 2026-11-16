@@ -3,11 +3,10 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
-	pb "library-gateway/internal/pkg/genproto"
 	"library-gateway/internal/pkg/errors"
+	pb "library-gateway/internal/pkg/genproto"
 	"library-gateway/internal/pkg/validation"
 
 	"github.com/gin-gonic/gin"
@@ -23,10 +22,11 @@ import (
 // @Success 201 {object} pb.Void "Author created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /author [post]
 func (h *HTTPHandler) CreateAuthor(c *gin.Context) {
 	req := &pb.AuthorCreateReq{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -91,6 +91,7 @@ func (h *HTTPHandler) GetAuthorByID(c *gin.Context) {
 // @Failure 400 {object} string "Invalid request payload or author ID"
 // @Failure 404 {object} string "Author not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /author/{id} [put]
 func (h *HTTPHandler) UpdateAuthor(c *gin.Context) {
 	id := c.Param("id")
@@ -100,7 +101,7 @@ func (h *HTTPHandler) UpdateAuthor(c *gin.Context) {
 	}
 
 	body := &pb.AuthorUpdateBody{}
-	if err := c.BindJSON(body); err != nil {
+	if err := c.ShouldBindJSON(body); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -140,6 +141,7 @@ func (h *HTTPHandler) UpdateAuthor(c *gin.Context) {
 // @Failure 400 {object} string "Invalid author ID"
 // @Failure 404 {object} string "Author not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /author/{id} [delete]
 func (h *HTTPHandler) DeleteAuthor(c *gin.Context) {
 	id := c.Param("id")
@@ -169,24 +171,13 @@ func (h *HTTPHandler) DeleteAuthor(c *gin.Context) {
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Param search query string false "Search query"
+// @Param order_by query string false "Sort by name or birth_date"
 // @Success 200 {object} pb.GetAllAuthorsRes "List of authors"
 // @Failure 500 {object} string "Server error"
 // @Router /authors [get]
 func (h *HTTPHandler) GetAllAuthors(c *gin.Context) {
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 10
-	}
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil {
-		offset = 0
-	}
-
-	if err := validation.ValidatePagination(int32(limit), int32(offset)); err != nil {
-		errors.ValidationError(c, err)
+	limit, offset, ok := pagination(c)
+	if !ok {
 		return
 	}
 
@@ -196,9 +187,10 @@ func (h *HTTPHandler) GetAllAuthors(c *gin.Context) {
 	defer cancel()
 
 	resp, err := h.AS.GetAllAuthors(ctx, &pb.AuthorsGetAllReq{
-		Limit:  uint64(limit),
-		Offset: uint64(offset),
-		Search: search,
+		Limit:   uint64(limit),
+		Offset:  uint64(offset),
+		Search:  search,
+		OrderBy: c.Query("order_by"),
 	})
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Get all authors")

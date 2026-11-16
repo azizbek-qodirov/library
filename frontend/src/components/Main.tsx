@@ -1,5 +1,7 @@
+import { API_BASE_URL } from '../api';
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import BookPopup from "./BookPopup";
 import type { Book } from "./types";
 
 interface RecommendedResponse {
@@ -10,6 +12,7 @@ interface RecommendedResponse {
 function Main() {
   const navigate = useNavigate();
   const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -23,7 +26,7 @@ function Main() {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/recommended?limit=8`, {
+        const res = await fetch(`${API_BASE_URL}/recommended?limit=8`, {
           signal: abortController.signal
         });
         if (res.ok) {
@@ -32,8 +35,8 @@ function Main() {
         } else {
           setError("Tavsiya etilgan kitoblarni yuklashda xatolik");
         }
-      } catch (err: any) {
-        if (err.name === 'AbortError') return; // Ignore abort errors
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return; // Ignore abort errors
         console.error("Failed to fetch recommended books:", err);
         setError("Tarmoq xatosi: Serverga ulanib bo'lmadi");
       } finally {
@@ -68,7 +71,7 @@ function Main() {
     if (isPaused || recommendedBooks.length === 0 || isTransitioning) return;
 
     const interval = setInterval(() => {
-      nextSlide();
+      if (window.matchMedia("(min-width: 992px) and (prefers-reduced-motion: no-preference)").matches) nextSlide();
     }, 3000);
 
     return () => clearInterval(interval);
@@ -82,16 +85,16 @@ function Main() {
   };
 
   return (
-    <div className="main-page min-vh-100 d-flex align-items-center">
+    <div className="main-page library-home">
       <div className="container-fluid">
-        <div className="row align-items-center min-vh-100">
+        <div className="row align-items-center library-home-layout">
           {/* Left Content */}
           <div className="col-lg-6 col-md-12">
-            <div className="px-4 px-lg-5">
-              <h1 className="display-3 fw-bold text-white mb-4">
+            <div className="library-home-intro px-lg-5">
+              <h1 className="display-3 fw-bold text-white library-home-heading">
                 <span className="text-gradient">Oxus Universiteti</span> kutubxonasiga xush kelibsiz!
               </h1>
-              <p className="lead text-light opacity-75 mb-5">
+              <p className="lead text-light opacity-75 library-home-copy">
                 Har bir buyuk fikr birinchi sahifadan boshlanadi — endi o'z sahifangizni tez va oson biz bilan toping!
               </p>
               <button
@@ -104,6 +107,32 @@ function Main() {
               </button>
             </div>
           </div>
+
+          <section className="col-12 d-lg-none mobile-featured" aria-labelledby="mobile-featured-title">
+            <h2 id="mobile-featured-title">Tavsiya etilgan kitoblar</h2>
+            {isLoading && <p role="status" className="mobile-featured-status">Yuklanmoqda…</p>}
+            {error && <p role="alert" className="mobile-featured-status">{error}</p>}
+            {!isLoading && !error && recommendedBooks.length === 0 && (
+              <p className="mobile-featured-status">Hozircha tavsiya etilgan kitoblar yo‘q.</p>
+            )}
+            {recommendedBooks.length > 0 && (
+              <ul className="mobile-featured-list">
+                {recommendedBooks.map(book => (
+                  <li key={book.id}>
+                    <button type="button" className="mobile-featured-book" onClick={() => setSelectedBook(book)}>
+                      <span className="mobile-featured-cover">
+                        {book.cover_image_id?.url ? (
+                          <img src={book.cover_image_id.url} alt="" loading="lazy" />
+                        ) : <span aria-hidden="true">📖</span>}
+                      </span>
+                      <span className="mobile-featured-title">{book.title}</span>
+                      {book.author_ids?.[0] && <span className="mobile-featured-author">{book.author_ids[0].name}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {/* Right Carousel - Desktop Only */}
           <div className="col-lg-6 d-none d-lg-block">
@@ -130,6 +159,7 @@ function Main() {
                 <div className="carousel-navigation">
                   <button 
                     className="carousel-nav nav-prev"
+                    aria-label="Oldingi kitob"
                     onClick={prevSlide}
                     disabled={isTransitioning}
                   >
@@ -137,6 +167,7 @@ function Main() {
                   </button>
                   <button 
                     className="carousel-nav nav-next"
+                    aria-label="Keyingi kitob"
                     onClick={nextSlide}
                     disabled={isTransitioning}
                   >
@@ -250,6 +281,7 @@ function Main() {
           </div>
         </div>
       </div>
+      {selectedBook && <BookPopup book={selectedBook} onClose={() => setSelectedBook(null)} />}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"library-gateway/internal/pkg/config"
 
@@ -17,6 +18,9 @@ type MinioClient struct {
 }
 
 func NewMinioClient(cfg *config.Config) (*MinioClient, error) {
+	if cfg.MINIO_ACCESS_KEY == "" || cfg.MINIO_SECRET_KEY == "" {
+		return nil, fmt.Errorf("MINIO_ACCESS_KEY and MINIO_SECRET_KEY are required")
+	}
 	minioClient, err := minio.New(cfg.MINIO_ENDPOINT, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.MINIO_ACCESS_KEY, cfg.MINIO_SECRET_KEY, ""),
 		Secure: cfg.MINIO_USE_SSL,
@@ -27,10 +31,12 @@ func NewMinioClient(cfg *config.Config) (*MinioClient, error) {
 	}
 
 	bucketName := cfg.MINIO_BUCKET_NAME
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	err = minioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
+	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
 	if err != nil {
-		exists, errBucketExists := minioClient.BucketExists(context.Background(), bucketName)
+		exists, errBucketExists := minioClient.BucketExists(ctx, bucketName)
 		if errBucketExists != nil {
 			return nil, errBucketExists
 		}
@@ -54,7 +60,7 @@ func NewMinioClient(cfg *config.Config) (*MinioClient, error) {
       ]
   }`, bucketName)
 
-	err = minioClient.SetBucketPolicy(context.Background(), bucketName, policy)
+	err = minioClient.SetBucketPolicy(ctx, bucketName, policy)
 	if err != nil {
 		log.Println("Error while setting bucket policy:", err)
 		return nil, err

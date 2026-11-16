@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"library-gateway/internal/pkg/errors"
@@ -23,10 +22,11 @@ import (
 // @Success 201 {object} pb.Void "Category created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /category [post]
 func (h *HTTPHandler) CreateCategory(c *gin.Context) {
 	req := &pb.CategoryCreateReq{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -94,6 +94,7 @@ func (h *HTTPHandler) GetCategoryByID(c *gin.Context) {
 // @Failure 400 {object} string "Invalid request payload or category ID"
 // @Failure 404 {object} string "Category not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /category/{id} [put]
 func (h *HTTPHandler) UpdateCategory(c *gin.Context) {
 	id := c.Param("id")
@@ -105,7 +106,7 @@ func (h *HTTPHandler) UpdateCategory(c *gin.Context) {
 	}
 
 	body := &pb.CategoryUpdateBody{}
-	if err := c.BindJSON(body); err != nil {
+	if err := c.ShouldBindJSON(body); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -146,6 +147,7 @@ func (h *HTTPHandler) UpdateCategory(c *gin.Context) {
 // @Failure 400 {object} string "Invalid category ID"
 // @Failure 404 {object} string "Category not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /category/{id} [delete]
 func (h *HTTPHandler) DeleteCategory(c *gin.Context) {
 	id := c.Param("id")
@@ -177,37 +179,32 @@ func (h *HTTPHandler) DeleteCategory(c *gin.Context) {
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Param search query string false "Search query"
+// @Param sort query string false "Use book_count to rank by title count"
 // @Success 200 {object} pb.GetAllCategoriesRes "List of categories"
 // @Failure 500 {object} string "Server error"
 // @Router /categories [get]
 func (h *HTTPHandler) GetAllCategories(c *gin.Context) {
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 10
-	}
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil {
-		offset = 0
+	limit, offset, ok := pagination(c)
+	if !ok {
+		return
 	}
 
 	search := c.Query("search")
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
-	defer cancel()
-
-	// Validate pagination
-	if err := validation.ValidatePagination(int32(limit), int32(offset)); err != nil {
-		errors.ValidationError(c, err)
+	sort := c.Query("sort")
+	if sort != "" && sort != "book_count" {
+		errors.BadRequest(c, "sort must be book_count when supplied")
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
+	defer cancel()
+
 	resp, err := h.CS.GetAllCategories(ctx, &pb.CategoriesGetAllReq{
-		Limit:  uint64(limit),
-		Offset: uint64(offset),
-		Search: search,
+		Limit:           uint64(limit),
+		Offset:          uint64(offset),
+		Search:          search,
+		SortByBookCount: sort == "book_count",
 	})
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Get all categories")

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Book } from "./types";
 
 interface Props {
@@ -9,23 +9,18 @@ interface Props {
 function BookPopup({ book, onClose }: Props) {
   const available = (book.available_copies ?? 0) > 0;
 
-  // Handle escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const [coverError, setCoverError] = useState(false);
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
-
-  // Prevent body scroll when popup is open
   useEffect(() => {
+    const dialog = dialogRef.current;
+    const previousOverflow = document.body.style.overflow;
+    dialog?.showModal();
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = 'unset';
+      dialog?.close();
+      document.body.style.overflow = previousOverflow;
     };
   }, []);
 
@@ -35,13 +30,11 @@ function BookPopup({ book, onClose }: Props) {
     }
   };
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const img = e.target as HTMLImageElement;
-    img.style.display = 'none';
-  };
-
   return (
-    <div 
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      onCancel={event => { event.preventDefault(); onClose(); }}
       className="book-popup-overlay"
       onClick={handleOverlayClick}
     >
@@ -59,12 +52,12 @@ function BookPopup({ book, onClose }: Props) {
           {/* Book Cover */}
           <div className="col-md-4">
             <div className="book-popup-image-container">
-              {book.cover_image_id?.url ? (
+              {book.cover_image_id?.url && !coverError ? (
                 <img
                   src={book.cover_image_id.url}
                   alt={book.title}
                   className="book-popup-image"
-                  onError={handleImageError}
+                  onError={() => setCoverError(true)}
                 />
               ) : (
                 <div className="book-popup-placeholder">
@@ -84,7 +77,7 @@ function BookPopup({ book, onClose }: Props) {
           <div className="col-md-8">
             <div className="book-popup-details">
               {/* Title */}
-              <h2 className="book-popup-title">{book.title}</h2>
+              <h2 className="book-popup-title" id={titleId}>{book.title}</h2>
 
               {/* Authors */}
               {book.author_ids && book.author_ids.length > 0 && (
@@ -127,11 +120,11 @@ function BookPopup({ book, onClose }: Props) {
               )}
 
               {/* Published Date */}
-              {book.published_date && (
+              {(book.published_date || book.publication_year) && (
                 <div className="book-detail-item">
                   <strong>Published:</strong>
                   <span className="ms-2">
-                    {new Date(book.published_date).toLocaleDateString()}
+                    {book.published_date ? new Date(book.published_date).toLocaleDateString(undefined, { timeZone: 'UTC' }) : book.publication_year}
                   </span>
                 </div>
               )}
@@ -191,7 +184,7 @@ function BookPopup({ book, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 

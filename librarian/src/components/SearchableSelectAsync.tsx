@@ -7,10 +7,12 @@ interface Option {
   disabled?: boolean;
 }
 
+const EMPTY_OPTIONS: Option[] = [];
+
 interface SearchableSelectAsyncProps {
   value: string | string[];
   onChange: (value: string | string[]) => void;
-  fetchOptions: (searchQuery: string) => Promise<Option[]>;
+  fetchOptions: (searchQuery: string, signal?: AbortSignal) => Promise<Option[]>;
   placeholder?: string;
   multiple?: boolean;
   disabled?: boolean;
@@ -30,7 +32,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
   className = '',
   label,
   required = false,
-  initialOptions = []
+  initialOptions = EMPTY_OPTIONS
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +43,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [error, setError] = useState(false);
 
   const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
 
@@ -73,27 +75,28 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(async () => {
-      setLoading(true);
+    const controller = new AbortController();
+    setLoading(true);
+    setError(false);
+    const timer = setTimeout(async () => {
       try {
-        const newOptions = await fetchOptions(searchQuery);
+        const newOptions = await fetchOptions(searchQuery, controller.signal);
+        if (controller.signal.aborted) return;
         setOptions(newOptions);
         setHighlightedIndex(0);
-      } catch (error) {
-        console.error('Error fetching options:', error);
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          console.error('Error fetching options:', err);
+          setError(true);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 300);
 
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
+      controller.abort();
+      clearTimeout(timer);
     };
   }, [searchQuery, isOpen, fetchOptions]);
 
@@ -255,7 +258,9 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
               zIndex: 1000
             }}
           >
-            {loading ? (
+            {error ? (
+              <p className="p-2 mb-0 text-danger" role="alert">Could not load options.</p>
+            ) : loading ? (
               <div className="p-3 text-center text-muted">
                 <div className="spinner-border spinner-border-sm me-2"></div>
                 Loading...

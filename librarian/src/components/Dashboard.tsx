@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ComponentProps } from 'react';
 
 import AuthorsSection from './Authors';
 import BooksSection from './Books';
@@ -8,12 +9,21 @@ import PublishersSection from './Publishers';
 import RecommendedSection from './Recommended';
 import UsersSection from './UsersSection';
 
-// Main Dashboard Component
-const LibrarianDashboard = () => {
-  const [activeSection, setActiveSection] = useState('users');
-  const [savedSectionData, setSavedSectionData] = useState<Record<string, any>>({});
+type SectionData = {
+  users: ComponentProps<typeof UsersSection>['savedData'];
+  categories: ComponentProps<typeof CategoriesSection>['savedData'];
+  authors: ComponentProps<typeof AuthorsSection>['savedData'];
+  publishers: ComponentProps<typeof PublishersSection>['savedData'];
+  books: ComponentProps<typeof BooksSection>['savedData'];
+  borrowings: ComponentProps<typeof BorrowingsSection>['savedData'];
+  recommended: ComponentProps<typeof RecommendedSection>['savedData'];
+};
 
-  const menuItems = [
+const LibrarianDashboard = ({ onSignOut }: { onSignOut: () => void }) => {
+  const [activeSection, setActiveSection] = useState<keyof SectionData>('users');
+  const [savedSectionData, setSavedSectionData] = useState<Partial<SectionData>>({});
+
+  const menuItems: { id: keyof SectionData; label: string; icon: string; description: string }[] = [
     { id: 'users', label: 'Users', icon: '👥', description: 'Manage students & teachers' },
     { id: 'categories', label: 'Categories', icon: '📂', description: 'Book categories' },
     { id: 'authors', label: 'Authors', icon: '✍️', description: 'Author information' },
@@ -23,12 +33,12 @@ const LibrarianDashboard = () => {
     { id: 'recommended', label: 'Recommended', icon: '⭐', description: 'Featured books' }
   ];
 
-  const handleSectionChange = (sectionId: string) => {
+  const handleSectionChange = (sectionId: keyof SectionData) => {
     setActiveSection(sectionId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSectionDataChange = (sectionId: string, data: any) => {
+  const handleSectionDataChange = <K extends keyof SectionData>(sectionId: K, data: SectionData[K]) => {
     setSavedSectionData(prev => ({
       ...prev,
       [sectionId]: data
@@ -36,28 +46,21 @@ const LibrarianDashboard = () => {
   };
 
   const renderActiveSection = () => {
-    const sectionProps = {
-      savedData: savedSectionData[activeSection],
-      onDataChange: (data: any) => handleSectionDataChange(activeSection, data)
-    };
-
     switch (activeSection) {
       case 'users':
-        return <UsersSection {...sectionProps} />;
+        return <UsersSection savedData={savedSectionData.users} onDataChange={data => handleSectionDataChange('users', data)} />;
       case 'categories':
-        return <CategoriesSection {...sectionProps} />;
+        return <CategoriesSection savedData={savedSectionData.categories ?? null} onDataChange={data => handleSectionDataChange('categories', data)} />;
       case 'authors':
-        return <AuthorsSection {...sectionProps} />;
+        return <AuthorsSection savedData={savedSectionData.authors ?? null} onDataChange={data => handleSectionDataChange('authors', data)} />;
       case 'publishers':
-        return <PublishersSection {...sectionProps} />;
+        return <PublishersSection savedData={savedSectionData.publishers} onDataChange={data => handleSectionDataChange('publishers', data)} />;
       case 'books':
-        return <BooksSection {...sectionProps} />;
+        return <BooksSection savedData={savedSectionData.books} onDataChange={data => handleSectionDataChange('books', data ?? undefined)} />;
       case 'borrowings':
-        return <BorrowingsSection {...sectionProps} />;
+        return <BorrowingsSection savedData={savedSectionData.borrowings ?? null} onDataChange={data => handleSectionDataChange('borrowings', data)} />;
       case 'recommended':
-        return <RecommendedSection {...sectionProps} />;
-      default:
-        return <ComingSoonPlaceholder section={menuItems.find(i => i.id === activeSection)!} />;
+        return <RecommendedSection savedData={savedSectionData.recommended ?? null} onDataChange={data => handleSectionDataChange('recommended', data)} />;
     }
   };
 
@@ -66,25 +69,21 @@ const LibrarianDashboard = () => {
       <div className="container-fluid p-0">
         <div className="row g-0">
           {/* Sidebar */}
-          <div className="col-md-3 col-lg-2 position-fixed" style={{ 
-            backgroundColor: '#212529', 
-            minHeight: '100vh', 
-            boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
-            zIndex: 1000 
-          }}>
+          <div className="col-md-3 col-lg-2 library-sidebar">
             {/* Header */}
             <div className="p-3 text-white border-bottom border-secondary">
               <div className="d-flex align-items-center gap-2">
                 <div style={{ fontSize: '1.5rem' }}>📚</div>
                 <div>
                   <h6 className="mb-0 fw-bold">Library Admin</h6>
+                  <button className="btn btn-link btn-sm text-white p-0" onClick={onSignOut}>Sign out</button>
                   <small className="text-muted" style={{ fontSize: '0.75rem' }}>Management Dashboard</small>
                 </div>
               </div>
             </div>
 
             {/* Navigation */}
-            <nav className="nav flex-column p-3" style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 150px)' }}>
+            <nav className="nav library-sidebar-nav p-3">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
@@ -112,6 +111,7 @@ const LibrarianDashboard = () => {
                       e.currentTarget.style.transform = 'translateX(0)';
                     }
                   }}
+                  aria-current={activeSection === item.id ? "page" : undefined}
                   title={item.description}
                 >
                   <div className="d-flex align-items-center gap-2">
@@ -138,7 +138,7 @@ const LibrarianDashboard = () => {
             </nav>
 
             {/* Footer */}
-            <div className="position-absolute bottom-0 w-100 p-3 text-center border-top border-secondary">
+            <div className="library-sidebar-footer w-100 p-3 text-center border-top border-secondary">
               <small className="text-muted" style={{ fontSize: '0.7rem' }}>
                 University Library System v1.0
               </small>
@@ -147,7 +147,7 @@ const LibrarianDashboard = () => {
 
           {/* Main Content */}
           <div className="col-md-9 col-lg-10 ms-auto">
-            <div className="p-4">
+            <div className="p-3 p-md-4">
               {/* Breadcrumb */}
               <nav aria-label="breadcrumb" className="mb-3">
                 <ol className="breadcrumb">
@@ -172,24 +172,6 @@ const LibrarianDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
-
-// Placeholder component for sections
-const ComingSoonPlaceholder = ({ section }: { section: { icon: string; label: string; description: string } }) => {
-  return (
-    <div className="text-center p-5">
-      <div className="mb-4" style={{ fontSize: '4rem', opacity: 0.5 }}>
-        {section.icon}
-      </div>
-      <h4 className="text-muted mb-2">{section.label} Section</h4>
-      <p className="text-muted">{section.description}</p>
-      <div className="alert alert-info d-inline-block mt-3">
-        <small>
-          <strong>Note:</strong> Import the actual section components to enable this feature
-        </small>
       </div>
     </div>
   );

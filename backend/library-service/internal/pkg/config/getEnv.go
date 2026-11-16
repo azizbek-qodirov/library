@@ -16,6 +16,7 @@ type Config struct {
 	PostgresUser     string
 	PostgresPassword string
 	PostgresDatabase string
+	PostgresSSLMode  string
 }
 
 func Load() Config {
@@ -25,13 +26,14 @@ func Load() Config {
 
 	config := Config{}
 
-	config.GRPCPort = cast.ToString(get("GRPC_PORT", ":"))
+	config.GRPCPort = cast.ToString(get("GRPC_BIND_ADDRESS", "127.0.0.1"+cast.ToString(get("GRPC_PORT", ":50050"))))
 
 	config.PostgresHost = cast.ToString(get("POSTGRES_HOST", "localhost"))
 	config.PostgresPort = cast.ToInt(get("POSTGRES_PORT", 5432))
 	config.PostgresUser = cast.ToString(get("POSTGRES_USER", "postgres"))
-	config.PostgresPassword = cast.ToString(get("POSTGRES_PASSWORD", "postgres"))
+	config.PostgresPassword = os.Getenv("POSTGRES_PASSWORD")
 	config.PostgresDatabase = cast.ToString(get("POSTGRES_DATABASE", "library_db"))
+	config.PostgresSSLMode = cast.ToString(get("POSTGRES_SSL_MODE", "disable"))
 
 	return config
 }

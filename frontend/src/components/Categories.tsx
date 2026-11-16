@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { API_BASE_URL } from '../api';
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import AdvancedSearchPanel from "./AdvancedSearchPanel";
 import BookList from "./BookList";
@@ -21,55 +22,28 @@ interface SelectedItem {
 function Categories() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("recommended");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get("category") || "recommended");
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get("search") || "");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    search: "",
-    categoryIds: [],
-    authorIds: [],
-    publisherId: "",
-    isReferenceOnly: "all"
-  });
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>(() => ({
+    search: searchParams.get("search") || "",
+    categoryIds: searchParams.get("categoryIds")?.split(",") ?? [],
+    authorIds: searchParams.get("authorIds")?.split(",") ?? [],
+    publisherId: searchParams.get("publisherId") || "",
+    isReferenceOnly: searchParams.get("isReferenceOnly") || "all"
+  }));
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
   // Store selected authors and publishers for display
-  const [selectedAuthors, setSelectedAuthors] = useState<SelectedItem[]>([]);
-  const [selectedPublisher, setSelectedPublisher] = useState<SelectedItem | null>(null);
-
-  // Initialize from URL parameters on mount
-  useEffect(() => {
-    const categoryParam = searchParams.get("category") || "recommended";
-    const searchParam = searchParams.get("search") || "";
-    const categoryIdsParam = searchParams.get("categoryIds");
-    const authorIdsParam = searchParams.get("authorIds");
-    const publisherIdParam = searchParams.get("publisherId") || "";
-    const referenceParam = searchParams.get("isReferenceOnly") || "all";
-    const authorNamesParam = searchParams.get("authorNames");
-    const publisherNameParam = searchParams.get("publisherName");
-
-    setSelectedCategory(categoryParam);
-    setSearchTerm(searchParam);
-    setSearchFilters({
-      search: searchParam,
-      categoryIds: categoryIdsParam ? categoryIdsParam.split(",") : [],
-      authorIds: authorIdsParam ? authorIdsParam.split(",") : [],
-      publisherId: publisherIdParam,
-      isReferenceOnly: referenceParam
-    });
-
-    // Restore selected authors and publisher names
-    if (authorIdsParam && authorNamesParam) {
-      const ids = authorIdsParam.split(",");
-      const names = authorNamesParam.split(",");
-      setSelectedAuthors(ids.map((id, index) => ({ id, name: names[index] || id })));
-    }
-    if (publisherIdParam && publisherNameParam) {
-      setSelectedPublisher({ id: publisherIdParam, name: publisherNameParam });
-    }
-  }, []); // Only run on mount
+  const [selectedAuthors, setSelectedAuthors] = useState<SelectedItem[]>(() => {
+    const names = searchParams.get("authorNames")?.split(",") ?? [];
+    return searchFilters.authorIds.map((id, index) => ({ id, name: names[index] || id }));
+  });
+  const [selectedPublisher, setSelectedPublisher] = useState<SelectedItem | null>(() => searchFilters.publisherId ? {
+    id: searchFilters.publisherId, name: searchParams.get("publisherName") || searchFilters.publisherId
+  } : null);
 
   // Update URL parameters whenever state changes
   useEffect(() => {
@@ -101,7 +75,7 @@ function Categories() {
     }
 
     setSearchParams(params, { replace: true });
-  }, [selectedCategory, searchTerm, searchFilters, selectedAuthors, selectedPublisher]);
+  }, [selectedCategory, searchTerm, searchFilters, selectedAuthors, selectedPublisher, setSearchParams]);
 
   // Debounce search input
   useEffect(() => {
@@ -112,13 +86,6 @@ function Categories() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Auto-switch to "all" category when searching
-  useEffect(() => {
-    if (debouncedSearch.trim() || hasActiveFilters()) {
-      setSelectedCategory("all");
-    }
-  }, [debouncedSearch]);
-
   // Fetch top 15 categories with most books
   useEffect(() => {
     const abortController = new AbortController();
@@ -126,42 +93,16 @@ function Categories() {
     const fetchCategories = async () => {
       setCategoriesError(null);
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/categories?limit=100&offset=0`, {
+        const res = await fetch(`${API_BASE_URL}/categories?limit=15&sort=book_count`, {
           signal: abortController.signal
         });
         if (!res.ok) {
           throw new Error(`Failed to fetch categories: ${res.statusText}`);
         }
         const data = await res.json();
-        const allCategories = data.categories || [];
-
-        // Get top 15 categories with most books
-        const categoriesWithCounts = await Promise.all(
-          allCategories.map(async (category: Category) => {
-            try {
-              const booksRes = await fetch(
-                `${import.meta.env.VITE_API_URL}/books?category_ids=${category.id}&limit=1`,
-                { signal: abortController.signal }
-              );
-              if (booksRes.ok) {
-                const booksData = await booksRes.json();
-                return { ...category, bookCount: booksData.total_count || 0 };
-              }
-              return { ...category, bookCount: 0 };
-            } catch {
-              return { ...category, bookCount: 0 };
-            }
-          })
-        );
-
-        // Sort by book count and take top 15
-        const topCategories = categoriesWithCounts
-          .sort((a, b) => b.bookCount - a.bookCount)
-          .slice(0, 15);
-
-        setCategories(topCategories);
-      } catch (err: any) {
-        if (err.name === 'AbortError') return; // Ignore abort errors
+        setCategories(data.categories || []);
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return; // Ignore abort errors
         console.error("Failed to fetch categories:", err);
         setCategoriesError(err instanceof Error ? err.message : 'Failed to load categories');
       }
@@ -182,6 +123,13 @@ function Categories() {
       searchFilters.isReferenceOnly !== "all"
     );
   }, [searchFilters]);
+
+  // Auto-switch to "all" category when searching
+  useEffect(() => {
+    if (debouncedSearch.trim() || hasActiveFilters()) {
+      setSelectedCategory("all");
+    }
+  }, [debouncedSearch, hasActiveFilters]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -243,13 +191,14 @@ function Categories() {
           categoryIds: searchFilters.categoryIds.filter(id => id !== value)
         });
         break;
-      case "author":
+      case "author": {
         const newAuthorIds = searchFilters.authorIds.filter(id => id !== value);
         updateFilters(
           { authorIds: newAuthorIds },
           { authors: selectedAuthors.filter(a => a.id !== value) }
         );
         break;
+      }
       case "publisher":
         updateFilters({ publisherId: "" }, { publisher: null });
         break;
@@ -314,10 +263,7 @@ function Categories() {
     ...categories
   ];
 
-  const currentFilters = {
-    ...searchFilters,
-    search: debouncedSearch
-  };
+  const currentFilters = useMemo(() => ({ ...searchFilters, search: debouncedSearch }), [searchFilters, debouncedSearch]);
 
   const isSearchActive = debouncedSearch.trim() || hasActiveFilters();
   const selectedFilters = getSelectedFiltersDisplay();
@@ -332,7 +278,9 @@ function Categories() {
           <div className="search-section">
             <div className="search-bar">
               <input
-                type="text"
+                type="search"
+                enterKeyHint="search"
+                aria-label="Kitoblarni qidirish"
                 className="search-input form-control"
                 placeholder="Kitoblarni nomi, muallifi yoki ISBN raqami bo'yicha qidirish..."
                 value={searchTerm}
@@ -344,6 +292,7 @@ function Categories() {
             <div className="advanced-search-toggle">
               <button
                 className={`advanced-toggle-btn ${showAdvanced ? "active" : ""}`}
+                aria-expanded={showAdvanced}
                 onClick={() => setShowAdvanced(!showAdvanced)}
               >
                 Kengaytirilgan qidiruvni {showAdvanced ? "yashirish" : "ko'rsatish"}
@@ -354,9 +303,7 @@ function Categories() {
             {showAdvanced && (
               <AdvancedSearchPanel
                 filters={searchFilters}
-                categories={categories}
                 selectedAuthors={selectedAuthors}
-                selectedPublisher={selectedPublisher}
                 onFiltersChange={updateFilters}
               />
             )}
@@ -415,6 +362,7 @@ function Categories() {
                 className={`category-tab ${selectedCategory === category.id ? "active" : ""} ${
                   isDisabled ? "disabled" : ""
                 }`}
+                aria-pressed={selectedCategory === category.id}
                 onClick={() => handleCategorySelect(category.id)}
                 disabled={isDisabled}
                 title={isDisabled ? "Clear search/filters to switch categories" : ""}

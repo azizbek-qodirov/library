@@ -77,3 +77,14 @@
     margin: 0.25rem 0;
   }
 }
+@media (max-width: 575.98px) {
+  .navbar-brand {
+    font-size: clamp(1.15rem, 5.4vw, 1.35rem) !important;
+    margin-inline-end: 0.25rem;
+  }
+
+  .navbar-toggler {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

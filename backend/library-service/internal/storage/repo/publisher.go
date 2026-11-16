@@ -4,6 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "library/internal/pkg/genproto"
 )
@@ -26,7 +30,7 @@ func (r *PublisherRepo) CreatePublisher(ctx context.Context, req *pb.PublisherCr
 }
 
 func (r *PublisherRepo) GetPublisher(ctx context.Context, req *pb.ByID) (*pb.PublisherGetRes, error) {
-	query := `SELECT id, name, description FROM publishers WHERE id = $1`
+	query := `SELECT id, name, coalesce(description, '') FROM publishers WHERE id = $1`
 	var pub pb.PublisherGetRes
 	err := r.db.QueryRowContext(ctx, query, req.Id).Scan(
 		&pub.Id,
@@ -41,8 +45,8 @@ func (r *PublisherRepo) GetPublisher(ctx context.Context, req *pb.ByID) (*pb.Pub
 
 func (r *PublisherRepo) UpdatePublisher(ctx context.Context, req *pb.PublisherUpdateReq) (*pb.Void, error) {
 	query := `UPDATE publishers SET name = $1, description = $2 WHERE id = $3`
-	_, err := r.db.ExecContext(ctx, query, req.Body.Name, req.Body.Description, req.Id)
-	if err != nil {
+	result, err := r.db.ExecContext(ctx, query, req.Body.Name, req.Body.Description, req.Id)
+	if err := requireAffected(result, err); err != nil {
 		return nil, err
 	}
 	return &pb.Void{}, nil
@@ -50,15 +54,15 @@ func (r *PublisherRepo) UpdatePublisher(ctx context.Context, req *pb.PublisherUp
 
 func (r *PublisherRepo) DeletePublisher(ctx context.Context, req *pb.ByID) (*pb.Void, error) {
 	query := `DELETE FROM publishers WHERE id = $1`
-	_, err := r.db.ExecContext(ctx, query, req.Id)
-	if err != nil {
+	result, err := r.db.ExecContext(ctx, query, req.Id)
+	if err := requireAffected(result, err); err != nil {
 		return nil, err
 	}
 	return &pb.Void{}, nil
 }
 
 func (r *PublisherRepo) GetAllPublishers(ctx context.Context, req *pb.PublishersGetAllReq) (*pb.GetAllPublishersRes, error) {
-	query := `SELECT id, name, description FROM publishers WHERE 1=1`
+	query := `SELECT id, name, coalesce(description, '') FROM publishers WHERE 1=1`
 	var args []interface{}
 	argCount := 1
 
@@ -70,10 +74,15 @@ func (r *PublisherRepo) GetAllPublishers(ctx context.Context, req *pb.Publishers
 	}
 
 	// order by
-	if req.OrderBy != "" {
-		query += fmt.Sprintf(" ORDER BY %s", req.OrderBy)
-	} else {
-		query += " ORDER BY created_at DESC"
+	switch strings.ToLower(strings.TrimSpace(req.OrderBy)) {
+	case "":
+		query += " ORDER BY created_at DESC, id"
+	case "name":
+		query += " ORDER BY name, id"
+	case "created_at":
+		query += " ORDER BY created_at, id"
+	default:
+		return nil, status.Error(codes.InvalidArgument, "unsupported sort order")
 	}
 
 	// pagination

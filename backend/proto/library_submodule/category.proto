@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+option go_package = "/internal/pkg/genproto";
+
+package protos;
+
+import "library_submodule/void.proto";
+
+service CategoryService {
+    rpc CreateCategory(CategoryCreateReq) returns (Void);
+    rpc GetCategory(ByID) returns (CategoryGetRes);
+    rpc UpdateCategory(CategoryUpdateReq) returns (Void);
+    rpc DeleteCategory(ByID) returns (Void);
+    rpc GetAllCategories(CategoriesGetAllReq) returns (GetAllCategoriesRes);
+}
+
+message CategoryCreateReq {
+    string name = 1;
+    string description = 2;
+}
+
+message CategoryGetRes {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    int64 book_count = 4;
+}
+
+message CategoryUpdateReq {
+    string id = 1;
+    CategoryUpdateBody body = 2;
+}
+
+message CategoryUpdateBody {
+    string name = 1;
+    string description = 2;
+}
+
+message CategoriesGetAllReq {
+    uint64 limit = 1;
+    uint64 offset = 2;
+    string search = 3;
+    bool sort_by_book_count = 4;
+}
+
+message GetAllCategoriesRes {
+    repeated CategoryGetRes categories = 1;
+    uint64 total_count = 2;
+}

@@ -1,27 +1,32 @@
+import { usePaginatedList } from './usePaginatedList';
+import { staffFetch } from './api';
 
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import DeleteConfirmationModal from './DeleteConfirmation';
 import type { User, UserFormData } from './types';
 import { API_BASE_URL } from './types';
 import UserForm from './UserForm';
 
 // Users Section Component
+interface SavedData {
+  showForm?: boolean;
+  editingUser?: User | null;
+  searchQuery?: string;
+  roleFilter?: string;
+  groupFilter?: string;
+}
+
 const UsersSection = ({ savedData, onDataChange }: {
-  savedData?: any;
-  onDataChange: (data: any) => void;
+  savedData?: SavedData | null;
+  onDataChange: (data: SavedData | null) => void;
 }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [roleFilter, setRoleFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; user: User | null }>({ isOpen: false, user: null });
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const actionAbortController = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -32,33 +37,13 @@ const UsersSection = ({ savedData, onDataChange }: {
     };
   }, []);
 
+
   const usersPerPage = 20;
+  const {
+    items: users, total: totalUsers, loading, error, currentPage, setCurrentPage, reload: fetchUsers,
+  } = usePaginatedList<User>('/users', 'users', 'total', searchQuery,
+    new URLSearchParams({ role: roleFilter, group_name: groupFilter.trim() }).toString(), usersPerPage);
   const totalPages = Math.ceil(totalUsers / usersPerPage);
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', usersPerPage.toString());
-      params.append('offset', ((currentPage - 1) * usersPerPage).toString());
-      if (searchQuery.trim()) params.append('search', searchQuery.trim());
-      if (roleFilter) params.append('role', roleFilter);
-      if (groupFilter.trim()) params.append('group_name', groupFilter.trim());
-
-      const response = await fetch(`${API_BASE_URL}/users?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch users');
-
-      const data = await response.json();
-      setUsers(data.users || []);
-      setTotalUsers(data.total || 0);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setError('Failed to fetch users. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchQuery, roleFilter, groupFilter, usersPerPage]);
 
   // Restore saved data
   useEffect(() => {
@@ -71,19 +56,6 @@ const UsersSection = ({ savedData, onDataChange }: {
     }
   }, [savedData]);
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-      fetchUsers();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, roleFilter, groupFilter, fetchUsers]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, fetchUsers]);
 
   const handleSaveUser = async (formData: UserFormData) => {
     // Create new AbortController for this operation
@@ -99,7 +71,7 @@ const UsersSection = ({ savedData, onDataChange }: {
       const method = editingUser ? 'PUT' : 'POST';
       const body = formData;
 
-      const response = await fetch(url, {
+      const response = await staffFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -117,8 +89,8 @@ const UsersSection = ({ savedData, onDataChange }: {
       onDataChange(null);
       fetchUsers();
       alert(`User ${editingUser ? 'updated' : 'created'} successfully!`);
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
         // Operation was cancelled, do nothing
         return;
       }
@@ -138,7 +110,7 @@ const UsersSection = ({ savedData, onDataChange }: {
 
     setActionLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/user/${deleteModal.user.id}`, {
+      const response = await staffFetch(`${API_BASE_URL}/user/${deleteModal.user.id}`, {
         method: 'DELETE',
         signal
       });
@@ -152,8 +124,8 @@ const UsersSection = ({ savedData, onDataChange }: {
       setDeleteModal({ isOpen: false, user: null });
       fetchUsers();
       alert('User deleted successfully!');
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
         // Operation was cancelled, do nothing
         return;
       }
@@ -269,7 +241,7 @@ const UsersSection = ({ savedData, onDataChange }: {
       </button>
     );
 
-    return <div className="d-flex justify-content-center align-items-center mt-4">{pages}</div>;
+    return <div className="d-flex flex-wrap row-gap-2 justify-content-center align-items-center mt-4">{pages}</div>;
   };
 
   if (showForm) {
@@ -345,7 +317,6 @@ const UsersSection = ({ savedData, onDataChange }: {
       {error && (
         <div className="alert alert-danger alert-dismissible" role="alert">
           <strong>Error!</strong> {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
         </div>
       )}
 
@@ -390,40 +361,40 @@ const UsersSection = ({ savedData, onDataChange }: {
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th className="border-0 fw-semibold">Name</th>
-                    <th className="border-0 fw-semibold">Group</th>
-                    <th className="border-0 fw-semibold">Email</th>
-                    <th className="border-0 fw-semibold">Phone</th>
-                    <th className="border-0 fw-semibold">Role</th>
-                    <th className="border-0 fw-semibold">Created</th>
-                    <th className="border-0 fw-semibold text-end">Actions</th>
+              <table className="table table-hover mb-0 library-record-table" role="table">
+                <thead role="rowgroup" className="table-light">
+                  <tr role="row">
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Name</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Group</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Email</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Phone</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Role</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Created</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {users.map((user, index) => (
-                    <tr key={user.id} style={{ borderLeft: index % 2 === 0 ? '3px solid transparent' : '3px solid #f8f9fa' }}>
-                      <td className="py-3">
+                    <tr role="row" key={user.id} style={{ borderLeft: index % 2 === 0 ? '3px solid transparent' : '3px solid #f8f9fa' }}>
+                      <td role="cell" data-label="Name" className="py-3">
                         <div className="fw-medium">{user.full_name}</div>
                       </td>
-                      <td className="py-3">
+                      <td role="cell" data-label="Group" className="py-3">
                         <span className="badge bg-light text-dark">
                           {user.group_name || 'No Group'}
                         </span>
                       </td>
-                      <td className="py-3 text-muted">{user.email || '-'}</td>
-                      <td className="py-3 text-muted">{user.phone || '-'}</td>
-                      <td className="py-3">
+                      <td role="cell" data-label="Email" className="py-3 text-muted">{user.email || '-'}</td>
+                      <td role="cell" data-label="Phone" className="py-3 text-muted">{user.phone || '-'}</td>
+                      <td role="cell" data-label="Role" className="py-3">
                         <span className={`badge ${user.role === 'teacher' ? 'bg-primary' : 'bg-secondary'}`}>
                           {user.role}
                         </span>
                       </td>
-                      <td className="py-3 text-muted small">
-                        {new Date(user.created_at).toLocaleDateString()}
+                      <td role="cell" data-label="Created" className="py-3 text-muted small">
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
                       </td>
-                      <td className="py-3 text-end">
+                      <td role="cell" data-label="Actions" className="py-3 text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"

@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
+	"strings"
 	"time"
 
 	"library-gateway/internal/pkg/errors"
@@ -11,6 +11,7 @@ import (
 	"library-gateway/internal/pkg/validation"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 )
 
 // CreateBorrowing godoc
@@ -23,10 +24,11 @@ import (
 // @Success 201 {object} pb.Void "Borrowing created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /borrowing [post]
 func (h *HTTPHandler) CreateBorrowing(c *gin.Context) {
 	req := &pb.BorrowingCreateReq{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -39,6 +41,13 @@ func (h *HTTPHandler) CreateBorrowing(c *gin.Context) {
 	if err := validation.ValidateUUID(req.UserId, "User ID"); err != nil {
 		errors.ValidationError(c, err)
 		return
+	}
+
+	if req.RequestId != "" {
+		if err := validation.ValidateUUID(req.RequestId, "Request ID"); err != nil {
+			errors.ValidationError(c, err)
+			return
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
@@ -64,6 +73,7 @@ func (h *HTTPHandler) CreateBorrowing(c *gin.Context) {
 // @Failure 400 {object} string "Invalid borrowing ID"
 // @Failure 404 {object} string "Borrowing not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /borrowing/{id} [get]
 func (h *HTTPHandler) GetBorrowing(c *gin.Context) {
 	id := c.Param("id")
@@ -96,6 +106,7 @@ func (h *HTTPHandler) GetBorrowing(c *gin.Context) {
 // @Failure 400 {object} string "Invalid request payload or borrowing ID"
 // @Failure 404 {object} string "Borrowing not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /borrowing/{id} [put]
 func (h *HTTPHandler) UpdateBorrowing(c *gin.Context) {
 	id := c.Param("id")
@@ -105,7 +116,7 @@ func (h *HTTPHandler) UpdateBorrowing(c *gin.Context) {
 	}
 
 	body := &pb.BorrowingUpdateBody{}
-	if err := c.BindJSON(body); err != nil {
+	if err := c.ShouldBindJSON(body); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -147,6 +158,7 @@ func (h *HTTPHandler) UpdateBorrowing(c *gin.Context) {
 // @Failure 400 {object} string "Invalid borrowing ID"
 // @Failure 404 {object} string "Borrowing not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /borrowing/{id} [delete]
 func (h *HTTPHandler) DeleteBorrowing(c *gin.Context) {
 	id := c.Param("id")
@@ -181,29 +193,30 @@ func (h *HTTPHandler) DeleteBorrowing(c *gin.Context) {
 // @Param status query string false "Filter by status"
 // @Success 200 {object} pb.BorrowingsGetAllRes "List of borrowings"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /borrowings [get]
 func (h *HTTPHandler) GetAllBorrowings(c *gin.Context) {
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 10
-	}
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil {
-		offset = 0
-	}
-
-	if err := validation.ValidatePagination(int32(limit), int32(offset)); err != nil {
-		errors.ValidationError(c, err)
+	limit, offset, ok := pagination(c)
+	if !ok {
 		return
 	}
 
 	search := c.Query("search")
 	fromDate := c.Query("from_date")
 	dueDate := c.Query("due_date")
-	status := c.Query("status")
+	status := strings.ToLower(strings.TrimSpace(c.Query("status")))
+	if err := validation.ValidateBorrowingStatus(status); err != nil {
+		errors.ValidationError(c, err)
+		return
+	}
+	for _, date := range []struct{ value, name string }{{fromDate, "from_date"}, {dueDate, "due_date"}} {
+		if date.value != "" {
+			if _, err := time.Parse(time.DateOnly, date.value); err != nil {
+				errors.BadRequest(c, date.name+" must use YYYY-MM-DD")
+				return
+			}
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
 	defer cancel()
@@ -222,4 +235,71 @@ func (h *HTTPHandler) GetAllBorrowings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+// ReturnBorrowing godoc
+// @Summary Return a borrowed or recovered copy
+// @Tags 06-Borrowing
+// @Param id path string true "Borrowing ID"
+// @Success 204
+// @Security StaffAuth
+// @Router /borrowing/{id}/return [post]
+func (h *HTTPHandler) ReturnBorrowing(c *gin.Context) {
+	runLoanAction(c, "Return loan", h.BS.ReturnBorrowing)
+}
+
+// MarkBorrowingLost godoc
+// @Summary Mark a checked-out copy lost
+// @Tags 06-Borrowing
+// @Param id path string true "Borrowing ID"
+// @Success 204
+// @Security StaffAuth
+// @Router /borrowing/{id}/lost [post]
+func (h *HTTPHandler) MarkBorrowingLost(c *gin.Context) {
+	runLoanAction(c, "Mark loan lost", h.BS.MarkBorrowingLost)
+}
+
+func runLoanAction(c *gin.Context, name string, call func(context.Context, *pb.ByID, ...grpc.CallOption) (*pb.Void, error)) {
+	id := c.Param("id")
+	if err := validation.ValidateUUID(id, "Borrowing ID"); err != nil {
+		errors.ValidationError(c, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	if _, err := call(ctx, &pb.ByID{Id: id}); err != nil {
+		errors.HandleGRPCError(c, err, name)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+// RenewBorrowing godoc
+// @Summary Extend an active loan
+// @Tags 06-Borrowing
+// @Accept json
+// @Param id path string true "Borrowing ID"
+// @Param request body pb.BorrowingRenewReq true "New extension date"
+// @Success 204
+// @Security StaffAuth
+// @Router /borrowing/{id}/renew [post]
+func (h *HTTPHandler) RenewBorrowing(c *gin.Context) {
+	id := c.Param("id")
+	if err := validation.ValidateUUID(id, "Borrowing ID"); err != nil {
+		errors.ValidationError(c, err)
+		return
+	}
+	req := &pb.BorrowingRenewReq{}
+	if err := c.ShouldBindJSON(req); err != nil {
+		errors.BadRequest(c, "Invalid request payload")
+		return
+	}
+	req.Id = id
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	if _, err := h.BS.RenewBorrowing(ctx, req); err != nil {
+		errors.HandleGRPCError(c, err, "Renew loan")
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

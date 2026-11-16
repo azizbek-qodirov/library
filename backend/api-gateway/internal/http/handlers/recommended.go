@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"library-gateway/internal/pkg/errors"
@@ -23,10 +22,11 @@ import (
 // @Success 201 {object} pb.Void "Recommended created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /recommended [post]
 func (h *HTTPHandler) CreateRecommendedBook(c *gin.Context) {
 	req := &pb.RecommendedCreateReq{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -93,6 +93,7 @@ func (h *HTTPHandler) GetRecommendedBook(c *gin.Context) {
 // @Failure 400 {object} string "Invalid ID"
 // @Failure 404 {object} string "Recommended not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /recommended/{id} [delete]
 func (h *HTTPHandler) DeleteRecommendedBook(c *gin.Context) {
 	id := c.Param("id")
@@ -123,25 +124,13 @@ func (h *HTTPHandler) DeleteRecommendedBook(c *gin.Context) {
 // @Produce json
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
+// @Param search query string false "Search title, ISBN, or author"
 // @Success 200 {object} pb.RecommendedsGetAllRes "List of recommended books"
 // @Failure 500 {object} string "Server error"
 // @Router /recommended [get]
 func (h *HTTPHandler) GetRecommendedBooks(c *gin.Context) {
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 10
-	}
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil {
-		offset = 0
-	}
-
-	// Validate pagination
-	if err := validation.ValidatePagination(int32(limit), int32(offset)); err != nil {
-		errors.ValidationError(c, err)
+	limit, offset, ok := pagination(c)
+	if !ok {
 		return
 	}
 
@@ -151,6 +140,7 @@ func (h *HTTPHandler) GetRecommendedBooks(c *gin.Context) {
 	resp, err := h.RS.GetAllRecommendeds(ctx, &pb.RecommendedsGetAllReq{
 		Limit:  int64(limit),
 		Offset: int64(offset),
+		Search: c.Query("search"),
 	})
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Get all recommended")

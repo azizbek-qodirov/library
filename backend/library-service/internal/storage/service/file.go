@@ -36,3 +36,11 @@ func (s *FileService) GetAllFiles(ctx context.Context, req *pb.FilesGetAllReq) (
 	}
 	return s.repo.GetAllFiles(ctx, req)
 }
+
+func (s *FileService) ActivateFile(ctx context.Context, req *pb.ByID) (*pb.FileGetRes, error) {
+	return s.repo.ActivateFile(ctx, req)
+}
+
+func (s *FileService) PrepareFileDeletion(ctx context.Context, req *pb.ByID) (*pb.FileGetRes, error) {
+	return s.repo.PrepareFileDeletion(ctx, req)
+}

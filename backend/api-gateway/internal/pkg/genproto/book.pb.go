@@ -29,14 +29,16 @@ type BookCreateReq struct {
 	IsReferenceOnly bool                   `protobuf:"varint,5,opt,name=is_reference_only,json=isReferenceOnly,proto3" json:"is_reference_only,omitempty"`
 	Description     string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	Isbn            string                 `protobuf:"bytes,7,opt,name=isbn,proto3" json:"isbn,omitempty"`
-	PublishedDate   *string                `protobuf:"bytes,8,opt,name=published_date,json=publishedDate,proto3,oneof" json:"published_date,omitempty"`
+	PublishedDate   *string                `protobuf:"bytes,8,opt,name=published_date,json=publishedDate,proto3,oneof" json:"published_date,omitempty"` // YYYY-MM-DD; omitted if unknown.
 	CategoryIds     []string               `protobuf:"bytes,9,rep,name=category_ids,json=categoryIds,proto3" json:"category_ids,omitempty"`
 	AuthorIds       []string               `protobuf:"bytes,10,rep,name=author_ids,json=authorIds,proto3" json:"author_ids,omitempty"`
 	PublisherId     string                 `protobuf:"bytes,11,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
 	Language        string                 `protobuf:"bytes,12,opt,name=language,proto3" json:"language,omitempty"`
 	PageCount       int32                  `protobuf:"varint,13,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
 	TotalCopies     int32                  `protobuf:"varint,14,opt,name=total_copies,json=totalCopies,proto3" json:"total_copies,omitempty"`
-	AvailableCopies int32                  `protobuf:"varint,15,opt,name=available_copies,json=availableCopies,proto3" json:"available_copies,omitempty"`
+	// Deprecated: Marked as deprecated in library_submodule/book.proto.
+	AvailableCopies int32  `protobuf:"varint,15,opt,name=available_copies,json=availableCopies,proto3" json:"available_copies,omitempty"`       // Computed by the library service.
+	PublicationYear *int32 `protobuf:"varint,16,opt,name=publication_year,json=publicationYear,proto3,oneof" json:"publication_year,omitempty"` // Zero clears the year; omission preserves it on update.
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -162,9 +164,17 @@ func (x *BookCreateReq) GetTotalCopies() int32 {
 	return 0
 }
 
+// Deprecated: Marked as deprecated in library_submodule/book.proto.
 func (x *BookCreateReq) GetAvailableCopies() int32 {
 	if x != nil {
 		return x.AvailableCopies
+	}
+	return 0
+}
+
+func (x *BookCreateReq) GetPublicationYear() int32 {
+	if x != nil && x.PublicationYear != nil {
+		return *x.PublicationYear
 	}
 	return 0
 }
@@ -186,6 +196,7 @@ type BookGetRes struct {
 	PageCount       int32                  `protobuf:"varint,14,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
 	TotalCopies     int32                  `protobuf:"varint,15,opt,name=total_copies,json=totalCopies,proto3" json:"total_copies,omitempty"`
 	AvailableCopies int32                  `protobuf:"varint,16,opt,name=available_copies,json=availableCopies,proto3" json:"available_copies,omitempty"`
+	PublicationYear *int32                 `protobuf:"varint,17,opt,name=publication_year,json=publicationYear,proto3,oneof" json:"publication_year,omitempty"` // Edition year when the exact date is unknown.
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -325,6 +336,13 @@ func (x *BookGetRes) GetAvailableCopies() int32 {
 	return 0
 }
 
+func (x *BookGetRes) GetPublicationYear() int32 {
+	if x != nil && x.PublicationYear != nil {
+		return *x.PublicationYear
+	}
+	return 0
+}
+
 type BookUpdateReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -385,14 +403,16 @@ type BookUpdateBody struct {
 	IsReferenceOnly bool                   `protobuf:"varint,5,opt,name=is_reference_only,json=isReferenceOnly,proto3" json:"is_reference_only,omitempty"`
 	Description     string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	Isbn            string                 `protobuf:"bytes,7,opt,name=isbn,proto3" json:"isbn,omitempty"`
-	PublishedDate   *string                `protobuf:"bytes,8,opt,name=published_date,json=publishedDate,proto3,oneof" json:"published_date,omitempty"`
+	PublishedDate   *string                `protobuf:"bytes,8,opt,name=published_date,json=publishedDate,proto3,oneof" json:"published_date,omitempty"` // YYYY-MM-DD; omitted if unknown.
 	CategoryIds     []string               `protobuf:"bytes,9,rep,name=category_ids,json=categoryIds,proto3" json:"category_ids,omitempty"`
 	AuthorIds       []string               `protobuf:"bytes,10,rep,name=author_ids,json=authorIds,proto3" json:"author_ids,omitempty"`
 	PublisherId     string                 `protobuf:"bytes,11,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
 	Language        string                 `protobuf:"bytes,12,opt,name=language,proto3" json:"language,omitempty"`
 	PageCount       int32                  `protobuf:"varint,13,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
 	TotalCopies     int32                  `protobuf:"varint,14,opt,name=total_copies,json=totalCopies,proto3" json:"total_copies,omitempty"`
-	AvailableCopies int32                  `protobuf:"varint,15,opt,name=available_copies,json=availableCopies,proto3" json:"available_copies,omitempty"`
+	// Deprecated: Marked as deprecated in library_submodule/book.proto.
+	AvailableCopies int32  `protobuf:"varint,15,opt,name=available_copies,json=availableCopies,proto3" json:"available_copies,omitempty"`       // Computed by the library service.
+	PublicationYear *int32 `protobuf:"varint,16,opt,name=publication_year,json=publicationYear,proto3,oneof" json:"publication_year,omitempty"` // Zero clears the year; omission preserves it on update.
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -518,9 +538,17 @@ func (x *BookUpdateBody) GetTotalCopies() int32 {
 	return 0
 }
 
+// Deprecated: Marked as deprecated in library_submodule/book.proto.
 func (x *BookUpdateBody) GetAvailableCopies() int32 {
 	if x != nil {
 		return x.AvailableCopies
+	}
+	return 0
+}
+
+func (x *BookUpdateBody) GetPublicationYear() int32 {
+	if x != nil && x.PublicationYear != nil {
+		return *x.PublicationYear
 	}
 	return 0
 }
@@ -536,6 +564,7 @@ type BooksGetAllReq struct {
 	Offset          int64                  `protobuf:"varint,7,opt,name=offset,proto3" json:"offset,omitempty"`
 	Limit           int64                  `protobuf:"varint,8,opt,name=limit,proto3" json:"limit,omitempty"`
 	Search          string                 `protobuf:"bytes,9,opt,name=search,proto3" json:"search,omitempty"`
+	AvailableOnly   bool                   `protobuf:"varint,10,opt,name=available_only,json=availableOnly,proto3" json:"available_only,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -633,6 +662,13 @@ func (x *BooksGetAllReq) GetSearch() string {
 	return ""
 }
 
+func (x *BooksGetAllReq) GetAvailableOnly() bool {
+	if x != nil {
+		return x.AvailableOnly
+	}
+	return false
+}
+
 type BooksGetAllRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Books         []*BookGetRes          `protobuf:"bytes,1,rep,name=books,proto3" json:"books,omitempty"`
@@ -689,7 +725,7 @@ var File_library_submodule_book_proto protoreflect.FileDescriptor
 
 const file_library_submodule_book_proto_rawDesc = "" +
 	"\n" +
-	"\x1clibrary_submodule/book.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\x1a!library_submodule/publisher.proto\x1a\x1elibrary_submodule/author.proto\x1a library_submodule/category.proto\x1a\x1clibrary_submodule/file.proto\"\xf6\x03\n" +
+	"\x1clibrary_submodule/book.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\x1a!library_submodule/publisher.proto\x1a\x1elibrary_submodule/author.proto\x1a library_submodule/category.proto\x1a\x1clibrary_submodule/file.proto\"\xbf\x04\n" +
 	"\rBookCreateReq\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12$\n" +
 	"\x0ecover_image_id\x18\x02 \x01(\tR\fcoverImageId\x12\x1a\n" +
@@ -706,9 +742,11 @@ const file_library_submodule_book_proto_rawDesc = "" +
 	"\blanguage\x18\f \x01(\tR\blanguage\x12\x1d\n" +
 	"\n" +
 	"page_count\x18\r \x01(\x05R\tpageCount\x12!\n" +
-	"\ftotal_copies\x18\x0e \x01(\x05R\vtotalCopies\x12)\n" +
-	"\x10available_copies\x18\x0f \x01(\x05R\x0favailableCopiesB\x11\n" +
-	"\x0f_published_date\"\xc6\x04\n" +
+	"\ftotal_copies\x18\x0e \x01(\x05R\vtotalCopies\x12-\n" +
+	"\x10available_copies\x18\x0f \x01(\x05B\x02\x18\x01R\x0favailableCopies\x12.\n" +
+	"\x10publication_year\x18\x10 \x01(\x05H\x01R\x0fpublicationYear\x88\x01\x01B\x11\n" +
+	"\x0f_published_dateB\x13\n" +
+	"\x11_publication_year\"\x8b\x05\n" +
 	"\n" +
 	"BookGetRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
@@ -728,10 +766,12 @@ const file_library_submodule_book_proto_rawDesc = "" +
 	"\n" +
 	"page_count\x18\x0e \x01(\x05R\tpageCount\x12!\n" +
 	"\ftotal_copies\x18\x0f \x01(\x05R\vtotalCopies\x12)\n" +
-	"\x10available_copies\x18\x10 \x01(\x05R\x0favailableCopies\"K\n" +
+	"\x10available_copies\x18\x10 \x01(\x05R\x0favailableCopies\x12.\n" +
+	"\x10publication_year\x18\x11 \x01(\x05H\x00R\x0fpublicationYear\x88\x01\x01B\x13\n" +
+	"\x11_publication_year\"K\n" +
 	"\rBookUpdateReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12*\n" +
-	"\x04body\x18\x02 \x01(\v2\x16.protos.BookUpdateBodyR\x04body\"\xf7\x03\n" +
+	"\x04body\x18\x02 \x01(\v2\x16.protos.BookUpdateBodyR\x04body\"\xc0\x04\n" +
 	"\x0eBookUpdateBody\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12$\n" +
 	"\x0ecover_image_id\x18\x02 \x01(\tR\fcoverImageId\x12\x1a\n" +
@@ -748,9 +788,11 @@ const file_library_submodule_book_proto_rawDesc = "" +
 	"\blanguage\x18\f \x01(\tR\blanguage\x12\x1d\n" +
 	"\n" +
 	"page_count\x18\r \x01(\x05R\tpageCount\x12!\n" +
-	"\ftotal_copies\x18\x0e \x01(\x05R\vtotalCopies\x12)\n" +
-	"\x10available_copies\x18\x0f \x01(\x05R\x0favailableCopiesB\x11\n" +
-	"\x0f_published_date\"\xba\x02\n" +
+	"\ftotal_copies\x18\x0e \x01(\x05R\vtotalCopies\x12-\n" +
+	"\x10available_copies\x18\x0f \x01(\x05B\x02\x18\x01R\x0favailableCopies\x12.\n" +
+	"\x10publication_year\x18\x10 \x01(\x05H\x01R\x0fpublicationYear\x88\x01\x01B\x11\n" +
+	"\x0f_published_dateB\x13\n" +
+	"\x11_publication_year\"\xe1\x02\n" +
 	"\x0eBooksGetAllReq\x12\x1a\n" +
 	"\blocation\x18\x01 \x01(\tR\blocation\x12!\n" +
 	"\fcategory_ids\x18\x02 \x03(\tR\vcategoryIds\x12\x1d\n" +
@@ -761,7 +803,9 @@ const file_library_submodule_book_proto_rawDesc = "" +
 	"\x11is_reference_only\x18\x06 \x01(\bH\x00R\x0fisReferenceOnly\x88\x01\x01\x12\x16\n" +
 	"\x06offset\x18\a \x01(\x03R\x06offset\x12\x14\n" +
 	"\x05limit\x18\b \x01(\x03R\x05limit\x12\x16\n" +
-	"\x06search\x18\t \x01(\tR\x06searchB\x14\n" +
+	"\x06search\x18\t \x01(\tR\x06search\x12%\n" +
+	"\x0eavailable_only\x18\n" +
+	" \x01(\bR\ravailableOnlyB\x14\n" +
 	"\x12_is_reference_only\"[\n" +
 	"\x0eBooksGetAllRes\x12(\n" +
 	"\x05books\x18\x01 \x03(\v2\x12.protos.BookGetResR\x05books\x12\x1f\n" +
@@ -839,6 +883,7 @@ func file_library_submodule_book_proto_init() {
 	file_library_submodule_category_proto_init()
 	file_library_submodule_file_proto_init()
 	file_library_submodule_book_proto_msgTypes[0].OneofWrappers = []any{}
+	file_library_submodule_book_proto_msgTypes[1].OneofWrappers = []any{}
 	file_library_submodule_book_proto_msgTypes[3].OneofWrappers = []any{}
 	file_library_submodule_book_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}

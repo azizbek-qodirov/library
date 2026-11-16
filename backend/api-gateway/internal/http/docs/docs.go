@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/author": {
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Creates a new author in the database",
                 "consumes": [
                     "application/json"
@@ -111,6 +116,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Updates an existing author",
                 "consumes": [
                     "application/json"
@@ -168,6 +178,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Deletes an author by ID",
                 "consumes": [
                     "application/json"
@@ -247,6 +262,12 @@ const docTemplate = `{
                         "description": "Search query",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by name or birth_date",
+                        "name": "order_by",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -267,6 +288,11 @@ const docTemplate = `{
         },
         "/book": {
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Creates a new book in the database",
                 "consumes": [
                     "application/json"
@@ -361,6 +387,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Updates an existing book",
                 "consumes": [
                     "application/json"
@@ -418,6 +449,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Deletes a book by ID",
                 "consumes": [
                     "application/json"
@@ -535,6 +571,12 @@ const docTemplate = `{
                         "description": "Filter only reference books",
                         "name": "is_reference_only",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only books available for checkout",
+                        "name": "available_only",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -561,6 +603,11 @@ const docTemplate = `{
         },
         "/borrowing": {
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Creates a new borrowing record in the database",
                 "consumes": [
                     "application/json"
@@ -607,6 +654,11 @@ const docTemplate = `{
         },
         "/borrowing/{id}": {
             "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Retrieves a borrowing record by ID",
                 "consumes": [
                     "application/json"
@@ -655,6 +707,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Updates an existing borrowing record",
                 "consumes": [
                     "application/json"
@@ -712,6 +769,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Deletes a borrowing record by ID",
                 "consumes": [
                     "application/json"
@@ -760,8 +822,106 @@ const docTemplate = `{
                 }
             }
         },
+        "/borrowing/{id}/lost": {
+            "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Mark a checked-out copy lost",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Borrowing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/borrowing/{id}/renew": {
+            "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Extend an active loan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Borrowing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New extension date",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BorrowingRenewReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/borrowing/{id}/return": {
+            "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
+                "tags": [
+                    "06-Borrowing"
+                ],
+                "summary": "Return a borrowed or recovered copy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Borrowing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/borrowings": {
             "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of borrowings with filters",
                 "consumes": [
                     "application/json"
@@ -858,6 +1018,12 @@ const docTemplate = `{
                         "description": "Search query",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Use book_count to rank by title count",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -878,6 +1044,11 @@ const docTemplate = `{
         },
         "/category": {
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Creates a new category in the database",
                 "consumes": [
                     "application/json"
@@ -972,6 +1143,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Updates an existing category",
                 "consumes": [
                     "application/json"
@@ -1029,6 +1205,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Deletes a category by ID",
                 "consumes": [
                     "application/json"
@@ -1079,6 +1260,11 @@ const docTemplate = `{
         },
         "/file": {
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Uploads a file to Minio and stores metadata in the FileService.",
                 "consumes": [
                     "multipart/form-data"
@@ -1123,6 +1309,11 @@ const docTemplate = `{
         },
         "/file/{id}": {
             "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Retrieves a file record by its ID.",
                 "produces": [
                     "application/json"
@@ -1162,6 +1353,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Deletes a file record and removes it from Minio.",
                 "tags": [
                     "08-File"
@@ -1200,6 +1396,11 @@ const docTemplate = `{
         },
         "/files": {
             "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Retrieves all files with pagination and optional MIME type filter.",
                 "produces": [
                     "application/json"
@@ -1246,6 +1447,11 @@ const docTemplate = `{
         },
         "/publisher": {
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Creates a new publisher in the database",
                 "consumes": [
                     "application/json"
@@ -1340,6 +1546,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Updates an existing publisher",
                 "consumes": [
                     "application/json"
@@ -1397,6 +1608,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Deletes a publisher by ID",
                 "consumes": [
                     "application/json"
@@ -1525,6 +1741,12 @@ const docTemplate = `{
                         "description": "Offset",
                         "name": "offset",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search title, ISBN, or author",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1543,6 +1765,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Marks a book as recommended",
                 "consumes": [
                     "application/json"
@@ -1637,6 +1864,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Removes a recommended book by ID",
                 "consumes": [
                     "application/json"
@@ -1687,6 +1919,11 @@ const docTemplate = `{
         },
         "/user": {
             "post": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Creates a new user in the database with specified roles either student or teacher",
                 "consumes": [
                     "application/json"
@@ -1745,6 +1982,11 @@ const docTemplate = `{
         },
         "/user/{id}": {
             "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Retrieves a user's information by their ID",
                 "consumes": [
                     "application/json"
@@ -1793,6 +2035,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Updates an existing user's information",
                 "consumes": [
                     "application/json"
@@ -1850,6 +2097,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Deletes a user by their ID",
                 "consumes": [
                     "application/json"
@@ -1900,6 +2152,11 @@ const docTemplate = `{
         },
         "/users": {
             "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of all users",
                 "consumes": [
                     "application/json"
@@ -2016,6 +2273,7 @@ const docTemplate = `{
                     }
                 },
                 "available_copies": {
+                    "description": "Deprecated: Marked as deprecated in library_submodule/book.proto.",
                     "type": "integer"
                 },
                 "category_ids": {
@@ -2045,7 +2303,12 @@ const docTemplate = `{
                 "page_count": {
                     "type": "integer"
                 },
+                "publication_year": {
+                    "description": "Zero clears the year; omission preserves it on update.",
+                    "type": "integer"
+                },
                 "published_date": {
+                    "description": "YYYY-MM-DD; omitted if unknown.",
                     "type": "string"
                 },
                 "publisher_id": {
@@ -2101,6 +2364,10 @@ const docTemplate = `{
                 "page_count": {
                     "type": "integer"
                 },
+                "publication_year": {
+                    "description": "Edition year when the exact date is unknown.",
+                    "type": "integer"
+                },
                 "published_date": {
                     "type": "string"
                 },
@@ -2125,6 +2392,7 @@ const docTemplate = `{
                     }
                 },
                 "available_copies": {
+                    "description": "Deprecated: Marked as deprecated in library_submodule/book.proto.",
                     "type": "integer"
                 },
                 "category_ids": {
@@ -2154,7 +2422,12 @@ const docTemplate = `{
                 "page_count": {
                     "type": "integer"
                 },
+                "publication_year": {
+                    "description": "Zero clears the year; omission preserves it on update.",
+                    "type": "integer"
+                },
                 "published_date": {
+                    "description": "YYYY-MM-DD; omitted if unknown.",
                     "type": "string"
                 },
                 "publisher_id": {
@@ -2197,6 +2470,10 @@ const docTemplate = `{
                 "notes": {
                     "type": "string"
                 },
+                "request_id": {
+                    "description": "Optional idempotency key for checkout retries.",
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "string"
                 }
@@ -2231,6 +2508,18 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/genproto.UserGetRes"
+                }
+            }
+        },
+        "genproto.BorrowingRenewReq": {
+            "type": "object",
+            "properties": {
+                "extension_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
                 }
             }
         },
@@ -2285,6 +2574,9 @@ const docTemplate = `{
         "genproto.CategoryGetRes": {
             "type": "object",
             "properties": {
+                "book_count": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -2319,8 +2611,14 @@ const docTemplate = `{
                 "mime_type": {
                     "type": "string"
                 },
+                "object_key": {
+                    "type": "string"
+                },
                 "size": {
                     "type": "integer"
+                },
+                "state": {
+                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string"
@@ -2545,6 +2843,11 @@ const docTemplate = `{
             "type": "object"
         }
     },
+    "securityDefinitions": {
+        "StaffAuth": {
+            "type": "basic"
+        }
+    },
     "tags": [
         {
             "description": "User CRUD methods",
@@ -2583,11 +2886,11 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "",
+	Title:            "University Library API",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

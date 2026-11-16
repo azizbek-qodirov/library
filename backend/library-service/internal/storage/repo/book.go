@@ -3,7 +3,9 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"strings"
 
 	pb "library/internal/pkg/genproto"
 
@@ -28,15 +30,15 @@ func (r *BookRepo) CreateBook(ctx context.Context, req *pb.BookCreateReq) (*pb.V
 	query := `
 		INSERT INTO books (
 			title, cover_image_id, location, is_reference_only, description,
-			isbn, published_date, publisher_id, language, page_count, total_copies, available_copies
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+			isbn, published_date, publisher_id, language, page_count, total_copies, available_copies, publication_year
+		) VALUES ($1,NULLIF($2,'')::uuid,$3,$4,$5,$6,NULLIF($7,'')::date,NULLIF($8,'')::uuid,$9,$10,$11,$11,NULLIF($12::int,0))
 		RETURNING id
 	`
 	var bookID string
 	err = tx.QueryRowContext(ctx, query,
 		req.Title, req.CoverImageId, req.Location, req.IsReferenceOnly,
-		req.Description, req.Isbn, req.PublishedDate, req.PublisherId,
-		req.Language, req.PageCount, req.TotalCopies, req.AvailableCopies,
+		req.Description, req.Isbn, req.GetPublishedDate(), req.PublisherId,
+		req.Language, req.PageCount, req.TotalCopies, req.PublicationYear,
 	).Scan(&bookID)
 	if err != nil {
 		return nil, err
@@ -72,91 +74,7 @@ func (r *BookRepo) CreateBook(ctx context.Context, req *pb.BookCreateReq) (*pb.V
 }
 
 func (r *BookRepo) GetBook(ctx context.Context, req *pb.ByID) (*pb.BookGetRes, error) {
-	query := `
-		SELECT id, title, cover_image_id, location, is_reference_only, description,
-		       isbn, published_date, publisher_id, language, page_count, total_copies, available_copies
-		FROM books WHERE id = $1
-	`
-	var b pb.BookGetRes
-	var publisherID string
-	var coverFileID sql.NullString
-
-	err := r.db.QueryRowContext(ctx, query, req.Id).Scan(
-		&b.Id, &b.Title, &coverFileID, &b.Location, &b.IsReferenceOnly,
-		&b.Description, &b.Isbn, &b.PublishedDate, &publisherID, &b.Language,
-		&b.PageCount, &b.TotalCopies, &b.AvailableCopies,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// load cover image object
-	if coverFileID.Valid {
-		var file pb.FileGetRes
-		err := r.db.QueryRowContext(ctx, `
-			SELECT id, url, mime_type, size, created_at, updated_at
-			FROM files WHERE id = $1
-		`, coverFileID.String).Scan(
-			&file.Id, &file.Url, &file.MimeType, &file.Size, &file.CreatedAt, &file.UpdatedAt,
-		)
-		if err == nil { // don’t fail the whole book if file missing
-			b.CoverImageId = &file
-		}
-	}
-
-	// load publisher
-	if publisherID != "" {
-		var pub pb.PublisherGetRes
-		err := r.db.QueryRowContext(ctx, `SELECT id, name FROM publishers WHERE id=$1`, publisherID).Scan(
-			&pub.Id, &pub.Name,
-		)
-		if err != nil {
-			return nil, err
-		}
-		b.PublisherId = &pub
-	}
-
-	// load categories
-	cRows, err := r.db.QueryContext(ctx, `
-		SELECT c.id, c.name
-		FROM categories c
-		JOIN book_categories bc ON bc.category_id = c.id
-		WHERE bc.book_id = $1
-	`, b.Id)
-	if err != nil {
-		return nil, err
-	}
-	for cRows.Next() {
-		var c pb.CategoryGetRes
-		if err := cRows.Scan(&c.Id, &c.Name); err != nil {
-			cRows.Close()
-			return nil, err
-		}
-		b.CategoryIds = append(b.CategoryIds, &c)
-	}
-	cRows.Close()
-
-	// load authors
-	aRows, err := r.db.QueryContext(ctx, `
-		SELECT a.id, a.name
-		FROM authors a
-		JOIN book_authors ba ON ba.author_id = a.id
-		WHERE ba.book_id = $1
-	`, b.Id)
-	if err != nil {
-		return nil, err
-	}
-	for aRows.Next() {
-		var a pb.AuthorGetRes
-		if err := aRows.Scan(&a.Id, &a.Name); err != nil {
-			aRows.Close()
-			return nil, err
-		}
-		b.AuthorIds = append(b.AuthorIds, &a)
-	}
-	aRows.Close()
-
-	return &b, nil
+	return readJSON[pb.BookGetRes](r.db.QueryRowContext(ctx, "SELECT "+bookJSON+" FROM books b WHERE b.id = $1", req.Id))
 }
 
 func (r *BookRepo) UpdateBook(ctx context.Context, req *pb.BookUpdateReq) (*pb.Void, error) {
@@ -168,22 +86,37 @@ func (r *BookRepo) UpdateBook(ctx context.Context, req *pb.BookUpdateReq) (*pb.V
 
 	query := `
 		UPDATE books
-		SET title=$1, cover_image_id=$2, location=$3, is_reference_only=$4,
-		    description=$5, isbn=$6, published_date=$7, publisher_id=$8, language=$9,
-		    page_count=$10, total_copies=$11, available_copies=$12, updated_at = NOW()
-		WHERE id=$13
+		SET title=$1, cover_image_id=NULLIF($2,'')::uuid, location=$3, is_reference_only=$4,
+		    description=$5, isbn=$6, published_date=NULLIF($7,'')::date, publisher_id=NULLIF($8,'')::uuid, language=$9,
+		    page_count=$10, total_copies=$11, available_copies=available_copies + ($11 - total_copies),
+		    publication_year=CASE WHEN $13::int IS NULL THEN publication_year ELSE NULLIF($13,0) END, updated_at = NOW()
+		WHERE id=$12 AND available_copies + ($11 - total_copies) >= 0
 	`
-	_, err = tx.ExecContext(ctx, query,
+	result, err := tx.ExecContext(ctx, query,
 		req.Body.Title, req.Body.CoverImageId, req.Body.Location, req.Body.IsReferenceOnly,
-		req.Body.Description, req.Body.Isbn, req.Body.PublishedDate, req.Body.PublisherId,
-		req.Body.Language, req.Body.PageCount, req.Body.TotalCopies, req.Body.AvailableCopies,
-		req.Id,
+		req.Body.Description, req.Body.Isbn, req.Body.GetPublishedDate(), req.Body.PublisherId,
+		req.Body.Language, req.Body.PageCount, req.Body.TotalCopies,
+		req.Id, req.Body.PublicationYear,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	// reset categories
+	if err := requireAffected(result, nil); err != nil {
+		if status.Code(err) != codes.NotFound {
+			return nil, err
+		}
+		var exists bool
+		if err := tx.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM books WHERE id = $1)", req.Id).Scan(&exists); err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, status.Error(codes.FailedPrecondition, "total copies cannot be lower than the outstanding inventory")
+		}
+		return nil, err
+	}
+
 	_, err = tx.ExecContext(ctx, `DELETE FROM book_categories WHERE book_id=$1`, req.Id)
 	if err != nil {
 		return nil, err
@@ -220,260 +153,52 @@ func (r *BookRepo) UpdateBook(ctx context.Context, req *pb.BookUpdateReq) (*pb.V
 }
 
 func (r *BookRepo) DeleteBook(ctx context.Context, req *pb.ByID) (*pb.Void, error) {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM book_categories WHERE book_id=$1`, req.Id)
-	if err != nil {
-		return nil, err
-	}
-	_, err = r.db.ExecContext(ctx, `DELETE FROM book_authors WHERE book_id=$1`, req.Id)
-	if err != nil {
-		return nil, err
-	}
-	_, err = r.db.ExecContext(ctx, `DELETE FROM books WHERE id=$1`, req.Id)
-	if err != nil {
-		return nil, err
-	}
-	return &pb.Void{}, nil
+	// Junction rows cascade in the same statement. Loan history restricts deletion.
+	return &pb.Void{}, requireAffected(r.db.ExecContext(ctx, "DELETE FROM books WHERE id = $1", req.Id))
 }
 
 func (r *BookRepo) GetAllBooks(ctx context.Context, req *pb.BooksGetAllReq) (*pb.BooksGetAllRes, error) {
-	query := `
-		SELECT b.id, b.title, b.cover_image_id, b.location, b.is_reference_only,
-		       b.description, b.isbn, b.published_date, b.publisher_id, b.language,
-		       b.page_count, b.total_copies, b.available_copies
-		FROM books b
-		LEFT JOIN book_authors ba ON b.id = ba.book_id
-		LEFT JOIN authors a ON ba.author_id = a.id
-		WHERE 1=1
-	`
-	var args []interface{}
-	argCount := 1
-
-	// --- filters ---
+	query := listQuery{where: " FROM books b WHERE TRUE"}
 	if req.Location != "" {
-		query += fmt.Sprintf(" AND b.location ILIKE $%d", argCount)
-		args = append(args, "%"+req.Location+"%")
-		argCount++
+		query.add(" AND b.location ILIKE $%d", "%"+req.Location+"%")
 	}
 	if len(req.CategoryIds) > 0 {
-		query += fmt.Sprintf(`
-			AND EXISTS (
-				SELECT 1 FROM book_categories bc
-				WHERE bc.book_id = b.id
-				  AND bc.category_id = ANY($%d)
-			)`, argCount)
-		args = append(args, pq.Array(req.CategoryIds))
-		argCount++
+		query.add(` AND EXISTS (SELECT 1 FROM book_categories bc
+			WHERE bc.book_id = b.id AND bc.category_id = ANY($%d::uuid[]))`, pq.Array(req.CategoryIds))
 	}
 	if len(req.AuthorIds) > 0 {
-		query += fmt.Sprintf(`
-			AND EXISTS (
-				SELECT 1 FROM book_authors ba2
-				WHERE ba2.book_id = b.id
-				  AND ba2.author_id = ANY($%d)
-			)`, argCount)
-		args = append(args, pq.Array(req.AuthorIds))
-		argCount++
+		query.add(` AND EXISTS (SELECT 1 FROM book_authors ba
+			WHERE ba.book_id = b.id AND ba.author_id = ANY($%d::uuid[]))`, pq.Array(req.AuthorIds))
 	}
 	if req.PublisherId != "" {
-		query += fmt.Sprintf(" AND b.publisher_id=$%d", argCount)
-		args = append(args, req.PublisherId)
-		argCount++
+		query.add(" AND b.publisher_id = $%d", req.PublisherId)
 	}
 	if req.Language != "" {
-		query += fmt.Sprintf(" AND b.language ILIKE $%d", argCount)
-		args = append(args, "%"+req.Language+"%")
-		argCount++
+		query.add(" AND b.language ILIKE $%d", "%"+req.Language+"%")
 	}
-	// Handle optional bool for is_reference_only
-	// nil = not set (show all books)
-	// true = show only reference books
-	// false = show only borrowable books
 	if req.IsReferenceOnly != nil {
-		query += fmt.Sprintf(" AND b.is_reference_only=$%d", argCount)
-		args = append(args, *req.IsReferenceOnly)
-		argCount++
+		query.add(" AND b.is_reference_only = $%d", *req.IsReferenceOnly)
 	}
-	if req.Search != "" {
-		query += fmt.Sprintf(
-			" AND (b.title ILIKE $%d OR b.description ILIKE $%d OR b.isbn ILIKE $%d OR a.name ILIKE $%d)",
-			argCount, argCount+1, argCount+2, argCount+3,
-		)
-		args = append(args,
-			"%"+req.Search+"%",
-			"%"+req.Search+"%",
-			"%"+req.Search+"%",
-			"%"+req.Search+"%",
-		)
-		argCount += 4
+	if req.AvailableOnly {
+		query.where += " AND b.available_copies > 0 AND NOT coalesce(b.is_reference_only, false)"
+	}
+	if term := strings.TrimSpace(req.Search); term != "" {
+		query.add(catalogSearch, "%"+searchApostrophes.Replace(term)+"%")
 	}
 
-	query += " GROUP BY b.id"
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, req.Limit, req.Offset)
-
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	page, args := query.page(" ORDER BY b.title, b.id", req.Limit, req.Offset)
+	rows, err := r.db.QueryContext(ctx, "SELECT "+bookJSON+page, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var books []*pb.BookGetRes
-	for rows.Next() {
-		var b pb.BookGetRes
-		var publisherID string
-		var coverFileID sql.NullString
-
-		if err := rows.Scan(
-			&b.Id, &b.Title, &coverFileID, &b.Location, &b.IsReferenceOnly,
-			&b.Description, &b.Isbn, &b.PublishedDate, &publisherID, &b.Language,
-			&b.PageCount, &b.TotalCopies, &b.AvailableCopies,
-		); err != nil {
-			return nil, err
-		}
-
-		// --- load cover file object ---
-		if coverFileID.Valid {
-			var file pb.FileGetRes
-			err := r.db.QueryRowContext(ctx, `
-				SELECT id, url, mime_type, size, created_at, updated_at
-				FROM files WHERE id = $1
-			`, coverFileID.String).Scan(
-				&file.Id, &file.Url, &file.MimeType, &file.Size, &file.CreatedAt, &file.UpdatedAt,
-			)
-			if err == nil {
-				b.CoverImageId = &file
-			}
-		}
-
-		// --- load publisher object ---
-		if publisherID != "" {
-			var pub pb.PublisherGetRes
-			err := r.db.QueryRowContext(ctx, `SELECT id, name FROM publishers WHERE id=$1`, publisherID).
-				Scan(&pub.Id, &pub.Name)
-			if err != nil {
-				return nil, err
-			}
-			b.PublisherId = &pub
-		}
-
-		// --- load categories as objects ---
-		cRows, err := r.db.QueryContext(ctx, `
-			SELECT c.id, c.name
-			FROM categories c
-			JOIN book_categories bc ON bc.category_id = c.id
-			WHERE bc.book_id=$1
-		`, b.Id)
-		if err != nil {
-			return nil, err
-		}
-		for cRows.Next() {
-			var c pb.CategoryGetRes
-			if err := cRows.Scan(&c.Id, &c.Name); err != nil {
-				cRows.Close()
-				return nil, err
-			}
-			b.CategoryIds = append(b.CategoryIds, &c)
-		}
-		cRows.Close()
-
-		// --- load authors as objects ---
-		aRows, err := r.db.QueryContext(ctx, `
-			SELECT a.id, a.name
-			FROM authors a
-			JOIN book_authors ba ON ba.author_id = a.id
-			WHERE ba.book_id=$1
-		`, b.Id)
-		if err != nil {
-			return nil, err
-		}
-		for aRows.Next() {
-			var a pb.AuthorGetRes
-			if err := aRows.Scan(&a.Id, &a.Name); err != nil {
-				aRows.Close()
-				return nil, err
-			}
-			b.AuthorIds = append(b.AuthorIds, &a)
-		}
-		aRows.Close()
-
-		books = append(books, &b)
-	}
-	if err = rows.Err(); err != nil {
+	books, err := readJSONList[pb.BookGetRes](rows)
+	if err != nil {
 		return nil, err
 	}
-
-	// --- count query ---
-	countQuery := `
-		SELECT count(DISTINCT b.id)
-		FROM books b
-		LEFT JOIN book_authors ba ON b.id = ba.book_id
-		LEFT JOIN authors a ON ba.author_id = a.id
-		WHERE 1=1
-	`
-	var countArgs []interface{}
-	argCount = 1
-
-	if req.Location != "" {
-		countQuery += fmt.Sprintf(" AND b.location ILIKE $%d", argCount)
-		countArgs = append(countArgs, "%"+req.Location+"%")
-		argCount++
-	}
-	if len(req.CategoryIds) > 0 {
-		countQuery += fmt.Sprintf(`
-			AND EXISTS (
-				SELECT 1 FROM book_categories bc
-				WHERE bc.book_id = b.id
-				  AND bc.category_id = ANY($%d)
-			)`, argCount)
-		countArgs = append(countArgs, pq.Array(req.CategoryIds))
-		argCount++
-	}
-	if len(req.AuthorIds) > 0 {
-		countQuery += fmt.Sprintf(`
-			AND EXISTS (
-				SELECT 1 FROM book_authors ba2
-				WHERE ba2.book_id = b.id
-				  AND ba2.author_id = ANY($%d)
-			)`, argCount)
-		countArgs = append(countArgs, pq.Array(req.AuthorIds))
-		argCount++
-	}
-	if req.PublisherId != "" {
-		countQuery += fmt.Sprintf(" AND b.publisher_id=$%d", argCount)
-		countArgs = append(countArgs, req.PublisherId)
-		argCount++
-	}
-	if req.Language != "" {
-		countQuery += fmt.Sprintf(" AND b.language ILIKE $%d", argCount)
-		countArgs = append(countArgs, "%"+req.Language+"%")
-		argCount++
-	}
-	if req.IsReferenceOnly != nil {
-		countQuery += fmt.Sprintf(" AND b.is_reference_only=$%d", argCount)
-		countArgs = append(countArgs, *req.IsReferenceOnly)
-		argCount++
-	}
-	if req.Search != "" {
-		countQuery += fmt.Sprintf(
-			" AND (b.title ILIKE $%d OR b.description ILIKE $%d OR b.isbn ILIKE $%d OR a.name ILIKE $%d)",
-			argCount, argCount+1, argCount+2, argCount+3,
-		)
-		countArgs = append(countArgs,
-			"%"+req.Search+"%",
-			"%"+req.Search+"%",
-			"%"+req.Search+"%",
-			"%"+req.Search+"%",
-		)
-		argCount += 4
-	}
-
 	var total int64
-	if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+	err = r.db.QueryRowContext(ctx, "SELECT count(*)"+query.where, query.args...).Scan(&total)
+	if err != nil {
 		return nil, err
 	}
-
-	return &pb.BooksGetAllRes{
-		Books:      books,
-		TotalCount: total,
-	}, nil
+	return &pb.BooksGetAllRes{Books: books, TotalCount: total}, nil
 }

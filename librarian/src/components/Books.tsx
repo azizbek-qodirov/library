@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
-import type { Author, Book, BookFormData, Category, Publisher } from './types';
+import { usePaginatedList } from './usePaginatedList';
+import { readAPI, staffFetch } from './api';
+import React, { useEffect, useState, useRef } from 'react';
+import type { Book, BookFormData } from './types';
 import { API_BASE_URL } from './types';
-import SearchableSelect from './SearchableSelect';
+import BookEditor from './BookEditor';
 
 interface SavedData {
     showForm?: boolean;
@@ -17,15 +19,7 @@ interface Props {
 }
 
 const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
-    const [books, setBooks] = useState<Book[]>([]);
-    const [authors, setAuthors] = useState<Author[]>([]);
-    const [publishers, setPublishers] = useState<Publisher[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [dataLoading, setDataLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalBooks, setTotalBooks] = useState(0);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<BookFormData>({
         title: '',
@@ -34,11 +28,11 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         is_reference_only: false,
         description: '',
         published_date: '',
+        publication_year: '',
         publisher_id: '',
         language: '',
         page_count: 0,
         total_copies: 0,
-        available_copies: 0,
         category_ids: [],
         author_ids: [],
         cover_image_file: null,
@@ -50,14 +44,13 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         book: null
     });
     const [actionLoading, setActionLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const isMountedRef = useRef(true);
+    const previewReader = useRef<FileReader | null>(null);
     const actionAbortController = useRef<AbortController | null>(null);
 
     useEffect(() => {
         return () => {
-            isMountedRef.current = false;
+            previewReader.current?.abort();
             if (actionAbortController.current) {
                 actionAbortController.current.abort();
             }
@@ -65,6 +58,9 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     }, []);
 
     const itemsPerPage = 20;
+    const {
+      items: books, total: totalBooks, loading, error, currentPage, setCurrentPage, reload: fetchBooks,
+    } = usePaginatedList<Book>('/books', 'books', 'total_count', searchQuery);
     const totalPages = Math.ceil(totalBooks / itemsPerPage);
 
     // Restore saved data
@@ -78,104 +74,13 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         }
     }, [savedData]);
 
-    const fetchAuthors = useCallback(async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/authors?limit=100&offset=0`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch authors: ${response.statusText}`);
-            }
-            const data = await response.json();
-            setAuthors(data.authors || []);
-        } catch (error) {
-            console.error('Error fetching authors:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load authors. Some features may be limited.');
-        }
-    }, []);
-
-    const fetchPublishers = useCallback(async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/publishers?limit=100&offset=0`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch publishers: ${response.statusText}`);
-            }
-            const data = await response.json();
-            setPublishers(data.publishers || []);
-        } catch (error) {
-            console.error('Error fetching publishers:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load publishers. Some features may be limited.');
-        }
-    }, []);
-
-    const fetchCategories = useCallback(async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/categories?limit=100&offset=0`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch categories: ${response.statusText}`);
-            }
-            const data = await response.json();
-            setCategories(data.categories || []);
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load categories. Some features may be limited.');
-        }
-    }, []);
-
-    const fetchBooks = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const params = new URLSearchParams();
-            params.append('limit', itemsPerPage.toString());
-            params.append('offset', ((currentPage - 1) * itemsPerPage).toString());
-            if (searchQuery.trim()) params.append('search', searchQuery.trim());
-
-            const response = await fetch(`${API_BASE_URL}/books?${params.toString()}`);
-            if (!response.ok) throw new Error('Failed to fetch books');
-
-            const data = await response.json();
-            setBooks(data.books || []);
-            setTotalBooks(data.total_count || 0);
-        } catch (error) {
-            console.error('Error fetching books:', error);
-            setError('Failed to fetch books. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    }, [currentPage, searchQuery, itemsPerPage]);
-
-    // Fetch initial data
-    useEffect(() => {
-        const loadData = async () => {
-            setDataLoading(true);
-            await Promise.all([
-                fetchAuthors(),
-                fetchPublishers(),
-                fetchCategories()
-            ]);
-            setDataLoading(false);
-        };
-        loadData();
-    }, [fetchAuthors, fetchPublishers, fetchCategories]);
-
-    // Debounced search
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setCurrentPage(1);
-            fetchBooks();
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, [searchQuery, fetchBooks]);
-
-    useEffect(() => {
-        fetchBooks();
-    }, [currentPage, fetchBooks]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             // Validate file type
-            if (!file.type.startsWith('image/')) {
-                alert('Please select an image file');
+            if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+                alert('Choose a JPEG, PNG, GIF, or WebP image.');
                 return;
             }
 
@@ -188,11 +93,11 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             setFormData(prev => ({ ...prev, cover_image_file: file }));
 
             // Create preview
+            previewReader.current?.abort();
             const reader = new FileReader();
-            reader.onloadend = () => {
-                if (isMountedRef.current) {
-                    setImagePreview(reader.result as string);
-                }
+            previewReader.current = reader;
+            reader.onload = () => {
+                if (typeof reader.result === 'string') setImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
@@ -202,22 +107,21 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         const formDataFile = new FormData();
         formDataFile.append('file', file);
 
-        const response = await fetch(`${API_BASE_URL}/file`, {
+        const record = await readAPI<{ id: string }>('/file', {
             method: 'POST',
             body: formDataFile,
             signal
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || 'Failed to upload file');
-        }
-
-        const data = await response.json();
-        return data.id;
+        return record.id;
     };
 
     const handleSave = async () => {
+        const year = Number(formData.publication_year);
+        if (formData.publication_year && (!Number.isInteger(year) || year < 1 || year > 9999)) {
+            alert('Edition year must be between 1 and 9999.');
+            return;
+        }
         if (!formData.title.trim() || !formData.isbn.trim()) {
             alert('Title and ISBN are required');
             return;
@@ -228,12 +132,14 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         const signal = actionAbortController.current.signal;
 
         setActionLoading(true);
+        let uploadedCoverID: string | undefined;
         try {
             let coverImageId = formData.cover_image_id;
 
             // Upload file first if new file is selected
             if (formData.cover_image_file) {
-                coverImageId = await uploadFile(formData.cover_image_file, signal);
+                uploadedCoverID = await uploadFile(formData.cover_image_file, signal);
+                coverImageId = uploadedCoverID;
             }
 
             const bookData = {
@@ -243,41 +149,37 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                 is_reference_only: formData.is_reference_only,
                 description: formData.description,
                 published_date: formData.published_date || undefined,
+                publication_year: formData.publication_year ? Number(formData.publication_year) : 0,
                 publisher_id: formData.publisher_id,
                 language: formData.language,
                 page_count: parseInt(formData.page_count.toString()) || 0,
                 total_copies: parseInt(formData.total_copies.toString()) || 0,
-                available_copies: parseInt(formData.available_copies.toString()) || 0,
                 category_ids: formData.category_ids,
                 author_ids: formData.author_ids,
                 cover_image_id: coverImageId
             };
 
-            const url = editingBook
-                ? `${API_BASE_URL}/book/${editingBook.id}`
-                : `${API_BASE_URL}/book`;
-
-            const method = editingBook ? 'PUT' : 'POST';
-            const body = bookData;
-
-            const response = await fetch(url, {
-                method,
+            await readAPI(editingBook ? `/book/${editingBook.id}` : '/book', {
+                method: editingBook ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-                signal
+                body: JSON.stringify(bookData),
+                signal,
             });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Failed to save book');
-            }
 
             actionAbortController.current = null;
             handleCancelForm();
             fetchBooks();
             alert(`Book ${editingBook ? 'updated' : 'created'} successfully!`);
-        } catch (error: any) {
-            if (error.name === 'AbortError') {
+        } catch (error) {
+            if (uploadedCoverID) {
+                // A timed-out save may have committed. The API refuses to delete attached covers.
+                try {
+                    await readAPI(`/file/${uploadedCoverID}`, { method: 'DELETE', signal: AbortSignal.timeout(16000) });
+                } catch (cleanupError) {
+                    console.warn('Could not clean up unused cover', uploadedCoverID, cleanupError);
+                }
+            }
+            if (error instanceof Error && error.name === 'AbortError') {
                 // Operation was cancelled, do nothing
                 return;
             }
@@ -297,7 +199,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
 
         setActionLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/book/${deleteModal.book.id}`, {
+            const response = await staffFetch(`${API_BASE_URL}/book/${deleteModal.book.id}`, {
                 method: 'DELETE',
                 signal
             });
@@ -311,8 +213,8 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             setDeleteModal({ isOpen: false, book: null });
             fetchBooks();
             alert('Book deleted successfully!');
-        } catch (error: any) {
-            if (error.name === 'AbortError') {
+        } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
                 // Operation was cancelled, do nothing
                 return;
             }
@@ -329,6 +231,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             actionAbortController.current.abort();
             actionAbortController.current = null;
         }
+        previewReader.current?.abort();
         setActionLoading(false);
         setShowForm(false);
         setEditingBook(null);
@@ -339,12 +242,12 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             is_reference_only: false,
             description: '',
             published_date: '',
+            publication_year: '',
             publisher_id: '',
             language: '',
             page_count: 0,
             total_copies: 0,
-            available_copies: 0,
-            category_ids: [],
+                category_ids: [],
             author_ids: [],
             cover_image_file: null,
             cover_image_id: ''
@@ -445,255 +348,20 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             </button>
         );
 
-        return <div className="d-flex justify-content-center align-items-center mt-4">{pages}</div>;
+        return <div className="d-flex flex-wrap row-gap-2 justify-content-center align-items-center mt-4">{pages}</div>;
     };
 
     if (showForm) {
-        return (
-            <div>
-                <div className="card shadow-sm">
-                    <div className="card-header bg-primary text-white">
-                        <h5 className="mb-0">{editingBook ? 'Edit Book' : 'Add New Book'}</h5>
-                    </div>
-                    <div className="card-body">
-                        {dataLoading && (
-                            <div className="alert alert-info mb-3">
-                                <div className="d-flex align-items-center gap-2">
-                                    <div className="spinner-border spinner-border-sm"></div>
-                                    <span>Loading form data...</span>
-                                </div>
-                            </div>
-                        )}
-                        {/* Cover Image Upload */}
-                        <div className="mb-4">
-                            <label className="form-label fw-semibold">Cover Image</label>
-                            <div className="row">
-                                <div className="col-md-8">
-                                    <input
-                                        type="file"
-                                        className="form-control"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                    />
-                                    <small className="text-muted">Upload a book cover image (JPG, PNG, max 5MB)</small>
-                                </div>
-                                <div className="col-md-4">
-                                    {(imagePreview || editingBook?.cover_image_id?.url) && (
-                                        <div className="text-center">
-                                            <img
-                                                src={imagePreview || editingBook?.cover_image_id?.url}
-                                                alt="Cover preview"
-                                                className="img-thumbnail"
-                                                style={{ maxHeight: '150px', maxWidth: '100%', objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Basic Info */}
-                        <div className="row">
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label fw-semibold">Title *</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    placeholder="Enter book title"
-                                />
-                            </div>
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label fw-semibold">ISBN *</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={formData.isbn}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, isbn: e.target.value }))}
-                                    placeholder="Enter ISBN number"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label fw-semibold">Location</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="e.g., Shelf A-12"
-                                    value={formData.location}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                                />
-                            </div>
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label fw-semibold">Language</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="e.g., eng, uzb, rus"
-                                    value={formData.language}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-md-4 mb-3">
-                                <label className="form-label fw-semibold">Published Date</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    value={formData.published_date}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, published_date: e.target.value }))}
-                                />
-                            </div>
-                            <div className="col-md-4 mb-3">
-                                <label className="form-label fw-semibold">Page Count</label>
-                                <input
-                                    type="number"
-                                    className="form-control"
-                                    min="0"
-                                    value={formData.page_count}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, page_count: parseInt(e.target.value) || 0 }))}
-                                />
-                            </div>
-                            <div className="col-md-4 mb-3">
-                                <SearchableSelect
-                                    label="Publisher"
-                                    options={publishers.map(pub => ({
-                                        id: pub.id,
-                                        label: pub.name,
-                                        subtitle: pub.country
-                                    }))}
-                                    value={formData.publisher_id}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, publisher_id: value as string }))}
-                                    placeholder="Search publisher..."
-                                    multiple={false}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-md-4 mb-3">
-                                <label className="form-label fw-semibold">Total Copies</label>
-                                <input
-                                    type="number"
-                                    className="form-control"
-                                    min="0"
-                                    value={formData.total_copies}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, total_copies: parseInt(e.target.value) || 0 }))}
-                                />
-                            </div>
-                            <div className="col-md-4 mb-3">
-                                <label className="form-label fw-semibold">Available Copies</label>
-                                <input
-                                    type="number"
-                                    className="form-control"
-                                    min="0"
-                                    value={formData.available_copies}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, available_copies: parseInt(e.target.value) || 0 }))}
-                                />
-                            </div>
-                            <div className="col-md-4 mb-3">
-                                <label className="form-label fw-semibold d-block">Reference Only</label>
-                                <div className="form-check mt-2">
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        id="referenceOnly"
-                                        checked={formData.is_reference_only}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, is_reference_only: e.target.checked }))}
-                                    />
-                                    <label className="form-check-label" htmlFor="referenceOnly">
-                                        Cannot be borrowed
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold">Description</label>
-                            <textarea
-                                className="form-control"
-                                rows={3}
-                                value={formData.description}
-                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                placeholder="Enter book description"
-                            />
-                        </div>
-
-                        {/* Authors Selection */}
-                        <div className="mb-3">
-                            <SearchableSelect
-                                label="Authors"
-                                options={authors.map(author => ({
-                                    id: author.id,
-                                    label: author.name,
-                                    subtitle: author.bio ? author.bio.substring(0, 50) + '...' : undefined
-                                }))}
-                                value={formData.author_ids}
-                                onChange={(value) => setFormData(prev => ({ ...prev, author_ids: value as string[] }))}
-                                placeholder={authors.length === 0 ? "No authors available" : "Search and select authors..."}
-                                multiple={true}
-                                disabled={authors.length === 0}
-                            />
-                            {authors.length === 0 && (
-                                <small className="text-muted">No authors available. Please add authors first.</small>
-                            )}
-                        </div>
-
-                        {/* Categories Selection */}
-                        <div className="mb-4">
-                            <SearchableSelect
-                                label="Categories"
-                                options={categories.map(cat => ({
-                                    id: cat.id,
-                                    label: cat.name,
-                                    subtitle: cat.description ? cat.description.substring(0, 50) + '...' : undefined
-                                }))}
-                                value={formData.category_ids}
-                                onChange={(value) => setFormData(prev => ({ ...prev, category_ids: value as string[] }))}
-                                placeholder={categories.length === 0 ? "No categories available" : "Search and select categories..."}
-                                multiple={true}
-                                disabled={categories.length === 0}
-                            />
-                            {categories.length === 0 && (
-                                <small className="text-muted">No categories available. Please add categories first.</small>
-                            )}
-                        </div>
-
-                        <div className="d-flex gap-2">
-                            <button
-                                className="btn btn-primary px-4"
-                                onClick={handleSave}
-                                disabled={actionLoading || !formData.title.trim() || !formData.isbn.trim()}
-                            >
-                                {actionLoading ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm me-2"></span>
-                                        {formData.cover_image_file ? 'Uploading & Saving...' : 'Saving...'}
-                                    </>
-                                ) : (
-                                    editingBook ? 'Update Book' : 'Create Book'
-                                )}
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary px-4"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCancelForm();
-                                }}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <BookEditor
+            editingBook={editingBook}
+            formData={formData}
+            setFormData={setFormData}
+            imagePreview={imagePreview}
+            actionLoading={actionLoading}
+            handleFileChange={handleFileChange}
+            handleSave={handleSave}
+            handleCancelForm={handleCancelForm}
+        />;
     }
 
     return (
@@ -729,7 +397,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             {error && (
                 <div className="alert alert-danger alert-dismissible" role="alert">
                     <strong>Error!</strong> {error}
-                    <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+                    <button type="button" className="btn btn-outline-danger btn-sm ms-2" onClick={fetchBooks}>Retry</button>
                 </div>
             )}
 
@@ -774,22 +442,22 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                         </div>
                     ) : (
                         <div className="table-responsive">
-                            <table className="table table-hover mb-0">
-                                <thead className="table-light">
-                                    <tr>
-                                        <th className="border-0 fw-semibold" style={{ width: '80px' }}>Cover</th>
-                                        <th className="border-0 fw-semibold">Title</th>
-                                        <th className="border-0 fw-semibold">Authors</th>
-                                        <th className="border-0 fw-semibold">ISBN</th>
-                                        <th className="border-0 fw-semibold">Location</th>
-                                        <th className="border-0 fw-semibold">Copies</th>
-                                        <th className="border-0 fw-semibold text-end">Actions</th>
+                            <table className="table table-hover mb-0 library-record-table" role="table">
+                                <thead role="rowgroup" className="table-light">
+                                    <tr role="row">
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold" style={{ width: '80px' }}>Cover</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Title</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Authors</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">ISBN</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Location</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Copies</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody role="rowgroup">
                                     {books.map((book) => (
-                                        <tr key={book.id}>
-                                            <td className="py-3">
+                                        <tr role="row" key={book.id}>
+                                            <td role="cell" data-label="Cover" className="py-3">
                                                 {book.cover_image_id?.url ? (
                                                     <img
                                                         src={book.cover_image_id.url}
@@ -806,23 +474,23 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="py-3">
+                                            <td role="cell" data-label="Title" className="py-3">
                                                 <div className="fw-medium">{book.title}</div>
                                                 {book.is_reference_only && (
                                                     <span className="badge bg-warning text-dark small mt-1">Reference Only</span>
                                                 )}
                                             </td>
-                                            <td className="py-3 text-muted small">
-                                                {book.author_ids?.length > 0 ? book.author_ids?.map(a => a.name).join(', ') : '-'}
+                                            <td role="cell" data-label="Authors" className="py-3 text-muted small">
+                                                {(book.author_ids?.length ?? 0) > 0 ? book.author_ids?.map(a => a.name).join(', ') : '-'}
                                             </td>
-                                            <td className="py-3 text-muted">{book.isbn}</td>
-                                            <td className="py-3 text-muted">{book.location || '-'}</td>
-                                            <td className="py-3">
-                                                <span className={`badge ${book.available_copies > 0 ? 'bg-success' : 'bg-danger'}`}>
-                                                    {book.available_copies}/{book.total_copies}
+                                            <td role="cell" data-label="ISBN" className="py-3 text-muted">{book.isbn}</td>
+                                            <td role="cell" data-label="Location" className="py-3 text-muted">{book.location || '-'}</td>
+                                            <td role="cell" data-label="Copies" className="py-3">
+                                                <span className={`badge ${(book.available_copies ?? 0) > 0 ? 'bg-success' : 'bg-danger'}`}>
+                                                    {book.available_copies ?? 0}/{book.total_copies ?? 0}
                                                 </span>
                                             </td>
-                                            <td className="py-3 text-end">
+                                            <td role="cell" data-label="Actions" className="py-3 text-end">
                                                 <div className="btn-group btn-group-sm">
                                                     <button
                                                         className="btn btn-outline-primary"
@@ -831,17 +499,17 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                                                             setFormData({
                                                                 title: book.title,
                                                                 isbn: book.isbn,
-                                                                location: book.location,
-                                                                is_reference_only: book.is_reference_only,
-                                                                description: book.description,
+                                                                location: book.location ?? '',
+                                                                is_reference_only: book.is_reference_only ?? false,
+                                                                description: book.description ?? '',
                                                                 published_date: book.published_date ? book.published_date.split('T')[0] : '',
+                                                                publication_year: book.publication_year?.toString() ?? '',
                                                                 publisher_id: book.publisher_id?.id || '',
-                                                                language: book.language,
-                                                                page_count: book.page_count,
-                                                                total_copies: book.total_copies,
-                                                                available_copies: book.available_copies,
-                                                                category_ids: book.category_ids?.map(c => c.id),
-                                                                author_ids: book.author_ids?.map(a => a.id),
+                                                                language: book.language ?? '',
+                                                                page_count: book.page_count ?? 0,
+                                                                total_copies: book.total_copies ?? 0,
+                                                                category_ids: book.category_ids?.map(c => c.id) ?? [],
+                                                                author_ids: book.author_ids?.map(a => a.id) ?? [],
                                                                 cover_image_file: null,
                                                                 cover_image_id: book.cover_image_id?.id || ''
                                                             });

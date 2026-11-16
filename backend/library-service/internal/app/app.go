@@ -42,7 +42,7 @@ func Run(cfg *cf.Config) {
 	defer lis.Close()
 
 	// gRPC server
-	server := grpc.NewServer()
+	server := grpc.NewServer(grpc.UnaryInterceptor(handleRPC))
 	pb.RegisterUserServiceServer(server, userService)
 	pb.RegisterCategoryServiceServer(server, categoryService)
 	pb.RegisterPublisherServiceServer(server, publisherService)

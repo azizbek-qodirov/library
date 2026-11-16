@@ -33,7 +33,7 @@ func Run(cf config.Config) {
 
 	// Connect to gRPC
 	LibraryServiceConn, err := grpc.NewClient(
-		fmt.Sprintf("localhost%s", cf.LIBRARY_GRPC_PORT),
+		cf.LIBRARY_GRPC_ADDRESS,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
@@ -51,8 +51,12 @@ func Run(cf config.Config) {
 
 	// Create http.Server wrapping Gin
 	srv := &http.Server{
-		Addr:    cf.GATEWAY_HTTP_PORT,
-		Handler: router,
+		Addr:              cf.GATEWAY_HTTP_PORT,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       20 * time.Second,
+		WriteTimeout:      45 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	// Run server in goroutine

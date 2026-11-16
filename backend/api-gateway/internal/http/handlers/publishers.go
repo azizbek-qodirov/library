@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"library-gateway/internal/pkg/errors"
@@ -23,10 +22,11 @@ import (
 // @Success 201 {object} pb.Void "Publisher created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /publisher [post]
 func (h *HTTPHandler) CreatePublisher(c *gin.Context) {
 	req := &pb.PublisherCreateReq{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -91,6 +91,7 @@ func (h *HTTPHandler) GetPublisherByID(c *gin.Context) {
 // @Failure 400 {object} string "Invalid request payload or publisher ID"
 // @Failure 404 {object} string "Publisher not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /publisher/{id} [put]
 func (h *HTTPHandler) UpdatePublisher(c *gin.Context) {
 	id := c.Param("id")
@@ -100,7 +101,7 @@ func (h *HTTPHandler) UpdatePublisher(c *gin.Context) {
 	}
 
 	body := &pb.PublisherUpdateBody{}
-	if err := c.BindJSON(body); err != nil {
+	if err := c.ShouldBindJSON(body); err != nil {
 		errors.BadRequest(c, "Invalid request payload", err.Error())
 		return
 	}
@@ -140,6 +141,7 @@ func (h *HTTPHandler) UpdatePublisher(c *gin.Context) {
 // @Failure 400 {object} string "Invalid publisher ID"
 // @Failure 404 {object} string "Publisher not found"
 // @Failure 500 {object} string "Server error"
+// @Security StaffAuth
 // @Router /publisher/{id} [delete]
 func (h *HTTPHandler) DeletePublisher(c *gin.Context) {
 	id := c.Param("id")
@@ -174,20 +176,8 @@ func (h *HTTPHandler) DeletePublisher(c *gin.Context) {
 // @Failure 500 {object} string "Server error"
 // @Router /publishers [get]
 func (h *HTTPHandler) GetAllPublishers(c *gin.Context) {
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 10
-	}
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil {
-		offset = 0
-	}
-
-	if err := validation.ValidatePagination(int32(limit), int32(offset)); err != nil {
-		errors.ValidationError(c, err)
+	limit, offset, ok := pagination(c)
+	if !ok {
 		return
 	}
 
@@ -195,10 +185,6 @@ func (h *HTTPHandler) GetAllPublishers(c *gin.Context) {
 	search := c.Query("search")
 
 	// Validate orderBy to prevent SQL injection
-	if err := validation.ValidateOrderBy(orderBy); err != nil {
-		errors.ValidationError(c, err)
-		return
-	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
 	defer cancel()

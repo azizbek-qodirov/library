@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 var (
@@ -12,7 +13,7 @@ var (
 	emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
 	// Phone regex pattern (flexible, allows various formats)
-	phoneRegex = regexp.MustCompile(`^[\d\s\-\+\(\)]+$`)
+	phoneRegex = regexp.MustCompile(`^\+?[0-9]+$`)
 
 	// ISBN regex patterns
 	isbn10Regex = regexp.MustCompile(`^\d{9}[\dX]$`)
@@ -20,24 +21,12 @@ var (
 
 	// UUID regex pattern
 	uuidRegex = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
-
-	// OrderBy field whitelist for common sortable fields
-	allowedOrderByFields = map[string]bool{
-		"created_at":     true,
-		"updated_at":     true,
-		"name":           true,
-		"title":          true,
-		"published_date": true,
-		"from_date":      true,
-		"due_date":       true,
-		"full_name":      true,
-	}
 )
 
 // ValidateEmail validates email format
 func ValidateEmail(email string) error {
 	if email == "" {
-		return errors.New("email is required")
+		return nil
 	}
 	if !emailRegex.MatchString(email) {
 		return errors.New("invalid email format")
@@ -45,19 +34,22 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
-// ValidatePhone validates phone number format
-func ValidatePhone(phone string) error {
+var phoneFormatting = strings.NewReplacer(" ", "", "-", "", "(", "", ")", "")
+
+// NormalizePhone validates and formats an optional phone number.
+func NormalizePhone(phone string) (string, error) {
 	if phone == "" {
-		return nil // Phone is optional in most cases
+		return "", nil
 	}
-	phone = strings.ReplaceAll(phone, " ", "")
-	if len(phone) < 10 || len(phone) > 15 {
-		return errors.New("phone number must be between 10 and 15 digits")
-	}
+	phone = phoneFormatting.Replace(phone)
 	if !phoneRegex.MatchString(phone) {
-		return errors.New("invalid phone number format")
+		return "", errors.New("invalid phone number format")
 	}
-	return nil
+	digits := strings.TrimPrefix(phone, "+")
+	if len(digits) < 9 || len(digits) > 15 {
+		return "", errors.New("phone number must be between 9 and 15 digits")
+	}
+	return phone, nil
 }
 
 // ValidateStringNotEmpty validates that a string is not empty
@@ -71,12 +63,12 @@ func ValidateStringNotEmpty(value, fieldName string) error {
 
 // ValidateStringLength validates string length
 func ValidateStringLength(value, fieldName string, min, max int) error {
-	length := len(strings.TrimSpace(value))
+	length := utf8.RuneCountInString(strings.TrimSpace(value))
 	if length < min {
-		return errors.New(fieldName + " must be at least " + string(rune(min)) + " characters")
+		return fmt.Errorf("%s must be at least %d characters", fieldName, min)
 	}
 	if max > 0 && length > max {
-		return errors.New(fieldName + " must not exceed " + string(rune(max)) + " characters")
+		return fmt.Errorf("%s must not exceed %d characters", fieldName, max)
 	}
 	return nil
 }
@@ -92,7 +84,7 @@ func ValidatePositiveInt(value int, fieldName string) error {
 // ValidateISBN validates ISBN-10 or ISBN-13 format
 func ValidateISBN(isbn string) error {
 	if isbn == "" {
-		return nil // ISBN is optional
+		return errors.New("ISBN is required")
 	}
 
 	// Remove hyphens and spaces
@@ -107,25 +99,14 @@ func ValidateISBN(isbn string) error {
 
 // ValidateRole validates user role
 func ValidateRole(role string) error {
-	validRoles := map[string]bool{
-		"student": true,
-		"teacher": true,
-		"admin":   true,
-		"librarian": true,
-	}
-
-	if role == "" {
-		return errors.New("role is required")
-	}
-
-	if !validRoles[strings.ToLower(role)] {
-		return errors.New("invalid role (must be: student, teacher, admin, or librarian)")
+	if role != "student" && role != "teacher" {
+		return errors.New("role must be student or teacher")
 	}
 	return nil
 }
 
 // ValidatePagination validates pagination parameters
-func ValidatePagination(limit, offset int32) error {
+func ValidatePagination(limit, offset int64) error {
 	if limit <= 0 {
 		return errors.New("limit must be greater than 0")
 	}
@@ -162,18 +143,6 @@ func ValidateUUIDArray(ids []string, fieldName string) error {
 		if err := ValidateUUID(id, fmt.Sprintf("%s[%d]", fieldName, i)); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-// ValidateOrderBy validates orderBy parameter against whitelist
-func ValidateOrderBy(orderBy string) error {
-	if orderBy == "" {
-		return nil // Empty orderBy is allowed (will use default)
-	}
-	orderBy = strings.ToLower(strings.TrimSpace(orderBy))
-	if !allowedOrderByFields[orderBy] {
-		return errors.New("invalid orderBy field")
 	}
 	return nil
 }

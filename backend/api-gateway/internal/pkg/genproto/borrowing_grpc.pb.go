@@ -19,11 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BorrowingService_CreateBorrowing_FullMethodName  = "/protos.BorrowingService/CreateBorrowing"
-	BorrowingService_GetBorrowing_FullMethodName     = "/protos.BorrowingService/GetBorrowing"
-	BorrowingService_UpdateBorrowing_FullMethodName  = "/protos.BorrowingService/UpdateBorrowing"
-	BorrowingService_DeleteBorrowing_FullMethodName  = "/protos.BorrowingService/DeleteBorrowing"
-	BorrowingService_GetAllBorrowings_FullMethodName = "/protos.BorrowingService/GetAllBorrowings"
+	BorrowingService_CreateBorrowing_FullMethodName   = "/protos.BorrowingService/CreateBorrowing"
+	BorrowingService_GetBorrowing_FullMethodName      = "/protos.BorrowingService/GetBorrowing"
+	BorrowingService_UpdateBorrowing_FullMethodName   = "/protos.BorrowingService/UpdateBorrowing"
+	BorrowingService_ReturnBorrowing_FullMethodName   = "/protos.BorrowingService/ReturnBorrowing"
+	BorrowingService_RenewBorrowing_FullMethodName    = "/protos.BorrowingService/RenewBorrowing"
+	BorrowingService_MarkBorrowingLost_FullMethodName = "/protos.BorrowingService/MarkBorrowingLost"
+	BorrowingService_DeleteBorrowing_FullMethodName   = "/protos.BorrowingService/DeleteBorrowing"
+	BorrowingService_GetAllBorrowings_FullMethodName  = "/protos.BorrowingService/GetAllBorrowings"
 )
 
 // BorrowingServiceClient is the client API for BorrowingService service.
@@ -33,6 +36,9 @@ type BorrowingServiceClient interface {
 	CreateBorrowing(ctx context.Context, in *BorrowingCreateReq, opts ...grpc.CallOption) (*Void, error)
 	GetBorrowing(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*BorrowingGetRes, error)
 	UpdateBorrowing(ctx context.Context, in *BorrowingUpdateReq, opts ...grpc.CallOption) (*Void, error)
+	ReturnBorrowing(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
+	RenewBorrowing(ctx context.Context, in *BorrowingRenewReq, opts ...grpc.CallOption) (*Void, error)
+	MarkBorrowingLost(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
 	DeleteBorrowing(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
 	GetAllBorrowings(ctx context.Context, in *BorrowingsGetAllReq, opts ...grpc.CallOption) (*BorrowingsGetAllRes, error)
 }
@@ -75,6 +81,36 @@ func (c *borrowingServiceClient) UpdateBorrowing(ctx context.Context, in *Borrow
 	return out, nil
 }
 
+func (c *borrowingServiceClient) ReturnBorrowing(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Void)
+	err := c.cc.Invoke(ctx, BorrowingService_ReturnBorrowing_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *borrowingServiceClient) RenewBorrowing(ctx context.Context, in *BorrowingRenewReq, opts ...grpc.CallOption) (*Void, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Void)
+	err := c.cc.Invoke(ctx, BorrowingService_RenewBorrowing_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *borrowingServiceClient) MarkBorrowingLost(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Void)
+	err := c.cc.Invoke(ctx, BorrowingService_MarkBorrowingLost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *borrowingServiceClient) DeleteBorrowing(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Void)
@@ -102,6 +138,9 @@ type BorrowingServiceServer interface {
 	CreateBorrowing(context.Context, *BorrowingCreateReq) (*Void, error)
 	GetBorrowing(context.Context, *ByID) (*BorrowingGetRes, error)
 	UpdateBorrowing(context.Context, *BorrowingUpdateReq) (*Void, error)
+	ReturnBorrowing(context.Context, *ByID) (*Void, error)
+	RenewBorrowing(context.Context, *BorrowingRenewReq) (*Void, error)
+	MarkBorrowingLost(context.Context, *ByID) (*Void, error)
 	DeleteBorrowing(context.Context, *ByID) (*Void, error)
 	GetAllBorrowings(context.Context, *BorrowingsGetAllReq) (*BorrowingsGetAllRes, error)
 	mustEmbedUnimplementedBorrowingServiceServer()
@@ -122,6 +161,15 @@ func (UnimplementedBorrowingServiceServer) GetBorrowing(context.Context, *ByID) 
 }
 func (UnimplementedBorrowingServiceServer) UpdateBorrowing(context.Context, *BorrowingUpdateReq) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateBorrowing not implemented")
+}
+func (UnimplementedBorrowingServiceServer) ReturnBorrowing(context.Context, *ByID) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReturnBorrowing not implemented")
+}
+func (UnimplementedBorrowingServiceServer) RenewBorrowing(context.Context, *BorrowingRenewReq) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RenewBorrowing not implemented")
+}
+func (UnimplementedBorrowingServiceServer) MarkBorrowingLost(context.Context, *ByID) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkBorrowingLost not implemented")
 }
 func (UnimplementedBorrowingServiceServer) DeleteBorrowing(context.Context, *ByID) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteBorrowing not implemented")
@@ -204,6 +252,60 @@ func _BorrowingService_UpdateBorrowing_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BorrowingService_ReturnBorrowing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BorrowingServiceServer).ReturnBorrowing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BorrowingService_ReturnBorrowing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BorrowingServiceServer).ReturnBorrowing(ctx, req.(*ByID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BorrowingService_RenewBorrowing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BorrowingRenewReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BorrowingServiceServer).RenewBorrowing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BorrowingService_RenewBorrowing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BorrowingServiceServer).RenewBorrowing(ctx, req.(*BorrowingRenewReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BorrowingService_MarkBorrowingLost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BorrowingServiceServer).MarkBorrowingLost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BorrowingService_MarkBorrowingLost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BorrowingServiceServer).MarkBorrowingLost(ctx, req.(*ByID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BorrowingService_DeleteBorrowing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ByID)
 	if err := dec(in); err != nil {
@@ -258,6 +360,18 @@ var BorrowingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateBorrowing",
 			Handler:    _BorrowingService_UpdateBorrowing_Handler,
+		},
+		{
+			MethodName: "ReturnBorrowing",
+			Handler:    _BorrowingService_ReturnBorrowing_Handler,
+		},
+		{
+			MethodName: "RenewBorrowing",
+			Handler:    _BorrowingService_RenewBorrowing_Handler,
+		},
+		{
+			MethodName: "MarkBorrowingLost",
+			Handler:    _BorrowingService_MarkBorrowingLost_Handler,
 		},
 		{
 			MethodName: "DeleteBorrowing",

@@ -53,11 +53,14 @@ func HandleGRPCError(c *gin.Context, err error, operation string) {
 		httpStatus = http.StatusUnauthorized
 		errorMessage = "Authentication required"
 	case codes.FailedPrecondition:
-		httpStatus = http.StatusBadRequest
+		httpStatus = http.StatusConflict
 		errorMessage = "Precondition failed"
 	case codes.Unimplemented:
 		httpStatus = http.StatusNotImplemented
 		errorMessage = "Feature not implemented"
+	case codes.DeadlineExceeded:
+		httpStatus = http.StatusGatewayTimeout
+		errorMessage = "Library operation timed out"
 	case codes.Unavailable:
 		httpStatus = http.StatusServiceUnavailable
 		errorMessage = "Service unavailable"
@@ -68,7 +71,7 @@ func HandleGRPCError(c *gin.Context, err error, operation string) {
 
 	c.JSON(httpStatus, ErrorResponse{
 		Error:   errorMessage,
-		Details: st.Message(),
+		Details: grpcDetails(httpStatus, st.Message()),
 	})
 }
 
@@ -116,4 +119,11 @@ func joinDetails(details []string) string {
 		return ""
 	}
 	return strings.Join(details, "; ")
+}
+
+func grpcDetails(httpStatus int, message string) string {
+	if httpStatus >= 500 {
+		return ""
+	}
+	return message
 }

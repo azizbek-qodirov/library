@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../api';
 import { useEffect, useState } from "react";
 import BookCard from "./BookCard";
 import type { Book } from "./types";
@@ -58,9 +59,9 @@ function BookList({ category, filters, onBookClick }: Props) {
         params.append("offset", offset.toString());
 
         if (category === "recommended") {
-          endpoint = `${import.meta.env.VITE_API_URL}/recommended`;
+          endpoint = `${API_BASE_URL}/recommended`;
         } else {
-          endpoint = `${import.meta.env.VITE_API_URL}/books`;
+          endpoint = `${API_BASE_URL}/books`;
 
           // Add search parameter
           if (filters.search.trim()) {
@@ -101,6 +102,7 @@ function BookList({ category, filters, onBookClick }: Props) {
         }
 
         const data = await res.json();
+        if (abortController.signal.aborted) return;
 
         if (category === "recommended") {
           const recommendedData = data as RecommendedResponse;
@@ -111,14 +113,14 @@ function BookList({ category, filters, onBookClick }: Props) {
           setBooks(bookData.books || []);
           setTotalBooks(bookData.total_count || 0);
         }
-      } catch (err: any) {
-        if (err.name === 'AbortError') return; // Ignore abort errors
+      } catch (err) {
+        if (abortController.signal.aborted) return;
         console.error("Failed to fetch books:", err);
         setError(err instanceof Error ? err.message : "Failed to load books");
         setBooks([]);
         setTotalBooks(0);
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) setLoading(false);
       }
     };
 

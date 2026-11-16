@@ -28,6 +28,7 @@ type BorrowingCreateReq struct {
 	FromDate      string                 `protobuf:"bytes,3,opt,name=from_date,json=fromDate,proto3" json:"from_date,omitempty"`
 	DueDate       string                 `protobuf:"bytes,4,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"`
 	Notes         string                 `protobuf:"bytes,5,opt,name=notes,proto3" json:"notes,omitempty"`
+	RequestId     string                 `protobuf:"bytes,6,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // Optional idempotency key for checkout retries.
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -97,6 +98,65 @@ func (x *BorrowingCreateReq) GetNotes() string {
 	return ""
 }
 
+func (x *BorrowingCreateReq) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+type BorrowingRenewReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ExtensionDate string                 `protobuf:"bytes,2,opt,name=extension_date,json=extensionDate,proto3" json:"extension_date,omitempty"` // YYYY-MM-DD
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BorrowingRenewReq) Reset() {
+	*x = BorrowingRenewReq{}
+	mi := &file_library_submodule_borrowing_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BorrowingRenewReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BorrowingRenewReq) ProtoMessage() {}
+
+func (x *BorrowingRenewReq) ProtoReflect() protoreflect.Message {
+	mi := &file_library_submodule_borrowing_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BorrowingRenewReq.ProtoReflect.Descriptor instead.
+func (*BorrowingRenewReq) Descriptor() ([]byte, []int) {
+	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *BorrowingRenewReq) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *BorrowingRenewReq) GetExtensionDate() string {
+	if x != nil {
+		return x.ExtensionDate
+	}
+	return ""
+}
+
 type BorrowingGetRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -114,7 +174,7 @@ type BorrowingGetRes struct {
 
 func (x *BorrowingGetRes) Reset() {
 	*x = BorrowingGetRes{}
-	mi := &file_library_submodule_borrowing_proto_msgTypes[1]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -126,7 +186,7 @@ func (x *BorrowingGetRes) String() string {
 func (*BorrowingGetRes) ProtoMessage() {}
 
 func (x *BorrowingGetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_library_submodule_borrowing_proto_msgTypes[1]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -139,7 +199,7 @@ func (x *BorrowingGetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowingGetRes.ProtoReflect.Descriptor instead.
 func (*BorrowingGetRes) Descriptor() ([]byte, []int) {
-	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{1}
+	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BorrowingGetRes) GetId() string {
@@ -215,7 +275,7 @@ type BorrowingUpdateReq struct {
 
 func (x *BorrowingUpdateReq) Reset() {
 	*x = BorrowingUpdateReq{}
-	mi := &file_library_submodule_borrowing_proto_msgTypes[2]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -227,7 +287,7 @@ func (x *BorrowingUpdateReq) String() string {
 func (*BorrowingUpdateReq) ProtoMessage() {}
 
 func (x *BorrowingUpdateReq) ProtoReflect() protoreflect.Message {
-	mi := &file_library_submodule_borrowing_proto_msgTypes[2]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -240,7 +300,7 @@ func (x *BorrowingUpdateReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowingUpdateReq.ProtoReflect.Descriptor instead.
 func (*BorrowingUpdateReq) Descriptor() ([]byte, []int) {
-	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{2}
+	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *BorrowingUpdateReq) GetId() string {
@@ -271,7 +331,7 @@ type BorrowingUpdateBody struct {
 
 func (x *BorrowingUpdateBody) Reset() {
 	*x = BorrowingUpdateBody{}
-	mi := &file_library_submodule_borrowing_proto_msgTypes[3]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -283,7 +343,7 @@ func (x *BorrowingUpdateBody) String() string {
 func (*BorrowingUpdateBody) ProtoMessage() {}
 
 func (x *BorrowingUpdateBody) ProtoReflect() protoreflect.Message {
-	mi := &file_library_submodule_borrowing_proto_msgTypes[3]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -296,7 +356,7 @@ func (x *BorrowingUpdateBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowingUpdateBody.ProtoReflect.Descriptor instead.
 func (*BorrowingUpdateBody) Descriptor() ([]byte, []int) {
-	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{3}
+	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *BorrowingUpdateBody) GetFromDate() string {
@@ -355,7 +415,7 @@ type BorrowingsGetAllReq struct {
 
 func (x *BorrowingsGetAllReq) Reset() {
 	*x = BorrowingsGetAllReq{}
-	mi := &file_library_submodule_borrowing_proto_msgTypes[4]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -367,7 +427,7 @@ func (x *BorrowingsGetAllReq) String() string {
 func (*BorrowingsGetAllReq) ProtoMessage() {}
 
 func (x *BorrowingsGetAllReq) ProtoReflect() protoreflect.Message {
-	mi := &file_library_submodule_borrowing_proto_msgTypes[4]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,7 +440,7 @@ func (x *BorrowingsGetAllReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowingsGetAllReq.ProtoReflect.Descriptor instead.
 func (*BorrowingsGetAllReq) Descriptor() ([]byte, []int) {
-	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{4}
+	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *BorrowingsGetAllReq) GetSearch() string {
@@ -435,7 +495,7 @@ type BorrowingsGetAllRes struct {
 
 func (x *BorrowingsGetAllRes) Reset() {
 	*x = BorrowingsGetAllRes{}
-	mi := &file_library_submodule_borrowing_proto_msgTypes[5]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -447,7 +507,7 @@ func (x *BorrowingsGetAllRes) String() string {
 func (*BorrowingsGetAllRes) ProtoMessage() {}
 
 func (x *BorrowingsGetAllRes) ProtoReflect() protoreflect.Message {
-	mi := &file_library_submodule_borrowing_proto_msgTypes[5]
+	mi := &file_library_submodule_borrowing_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -460,7 +520,7 @@ func (x *BorrowingsGetAllRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BorrowingsGetAllRes.ProtoReflect.Descriptor instead.
 func (*BorrowingsGetAllRes) Descriptor() ([]byte, []int) {
-	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{5}
+	return file_library_submodule_borrowing_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *BorrowingsGetAllRes) GetBorrowings() []*BorrowingGetRes {
@@ -481,13 +541,18 @@ var File_library_submodule_borrowing_proto protoreflect.FileDescriptor
 
 const file_library_submodule_borrowing_proto_rawDesc = "" +
 	"\n" +
-	"!library_submodule/borrowing.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\x1a\x1clibrary_submodule/book.proto\x1a\x1clibrary_submodule/user.proto\"\x94\x01\n" +
+	"!library_submodule/borrowing.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\x1a\x1clibrary_submodule/book.proto\x1a\x1clibrary_submodule/user.proto\"\xb3\x01\n" +
 	"\x12BorrowingCreateReq\x12\x17\n" +
 	"\abook_id\x18\x01 \x01(\tR\x06bookId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
 	"\tfrom_date\x18\x03 \x01(\tR\bfromDate\x12\x19\n" +
 	"\bdue_date\x18\x04 \x01(\tR\adueDate\x12\x14\n" +
-	"\x05notes\x18\x05 \x01(\tR\x05notes\"\x9f\x02\n" +
+	"\x05notes\x18\x05 \x01(\tR\x05notes\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x06 \x01(\tR\trequestId\"J\n" +
+	"\x11BorrowingRenewReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
+	"\x0eextension_date\x18\x02 \x01(\tR\rextensionDate\"\x9f\x02\n" +
 	"\x0fBorrowingGetRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12&\n" +
 	"\x04book\x18\x02 \x01(\v2\x12.protos.BookGetResR\x04book\x12&\n" +
@@ -524,11 +589,14 @@ const file_library_submodule_borrowing_proto_rawDesc = "" +
 	"borrowings\x18\x01 \x03(\v2\x17.protos.BorrowingGetResR\n" +
 	"borrowings\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
-	"totalCount2\xc0\x02\n" +
+	"totalCount2\xdb\x03\n" +
 	"\x10BorrowingService\x12;\n" +
 	"\x0fCreateBorrowing\x12\x1a.protos.BorrowingCreateReq\x1a\f.protos.Void\x125\n" +
 	"\fGetBorrowing\x12\f.protos.ByID\x1a\x17.protos.BorrowingGetRes\x12;\n" +
 	"\x0fUpdateBorrowing\x12\x1a.protos.BorrowingUpdateReq\x1a\f.protos.Void\x12-\n" +
+	"\x0fReturnBorrowing\x12\f.protos.ByID\x1a\f.protos.Void\x129\n" +
+	"\x0eRenewBorrowing\x12\x19.protos.BorrowingRenewReq\x1a\f.protos.Void\x12/\n" +
+	"\x11MarkBorrowingLost\x12\f.protos.ByID\x1a\f.protos.Void\x12-\n" +
 	"\x0fDeleteBorrowing\x12\f.protos.ByID\x1a\f.protos.Void\x12L\n" +
 	"\x10GetAllBorrowings\x12\x1b.protos.BorrowingsGetAllReq\x1a\x1b.protos.BorrowingsGetAllResB\x18Z\x16/internal/pkg/genprotob\x06proto3"
 
@@ -544,39 +612,46 @@ func file_library_submodule_borrowing_proto_rawDescGZIP() []byte {
 	return file_library_submodule_borrowing_proto_rawDescData
 }
 
-var file_library_submodule_borrowing_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_library_submodule_borrowing_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_library_submodule_borrowing_proto_goTypes = []any{
 	(*BorrowingCreateReq)(nil),  // 0: protos.BorrowingCreateReq
-	(*BorrowingGetRes)(nil),     // 1: protos.BorrowingGetRes
-	(*BorrowingUpdateReq)(nil),  // 2: protos.BorrowingUpdateReq
-	(*BorrowingUpdateBody)(nil), // 3: protos.BorrowingUpdateBody
-	(*BorrowingsGetAllReq)(nil), // 4: protos.BorrowingsGetAllReq
-	(*BorrowingsGetAllRes)(nil), // 5: protos.BorrowingsGetAllRes
-	(*BookGetRes)(nil),          // 6: protos.BookGetRes
-	(*UserGetRes)(nil),          // 7: protos.UserGetRes
-	(*ByID)(nil),                // 8: protos.ByID
-	(*Void)(nil),                // 9: protos.Void
+	(*BorrowingRenewReq)(nil),   // 1: protos.BorrowingRenewReq
+	(*BorrowingGetRes)(nil),     // 2: protos.BorrowingGetRes
+	(*BorrowingUpdateReq)(nil),  // 3: protos.BorrowingUpdateReq
+	(*BorrowingUpdateBody)(nil), // 4: protos.BorrowingUpdateBody
+	(*BorrowingsGetAllReq)(nil), // 5: protos.BorrowingsGetAllReq
+	(*BorrowingsGetAllRes)(nil), // 6: protos.BorrowingsGetAllRes
+	(*BookGetRes)(nil),          // 7: protos.BookGetRes
+	(*UserGetRes)(nil),          // 8: protos.UserGetRes
+	(*ByID)(nil),                // 9: protos.ByID
+	(*Void)(nil),                // 10: protos.Void
 }
 var file_library_submodule_borrowing_proto_depIdxs = []int32{
-	6, // 0: protos.BorrowingGetRes.book:type_name -> protos.BookGetRes
-	7, // 1: protos.BorrowingGetRes.user:type_name -> protos.UserGetRes
-	3, // 2: protos.BorrowingUpdateReq.body:type_name -> protos.BorrowingUpdateBody
-	1, // 3: protos.BorrowingsGetAllRes.borrowings:type_name -> protos.BorrowingGetRes
-	0, // 4: protos.BorrowingService.CreateBorrowing:input_type -> protos.BorrowingCreateReq
-	8, // 5: protos.BorrowingService.GetBorrowing:input_type -> protos.ByID
-	2, // 6: protos.BorrowingService.UpdateBorrowing:input_type -> protos.BorrowingUpdateReq
-	8, // 7: protos.BorrowingService.DeleteBorrowing:input_type -> protos.ByID
-	4, // 8: protos.BorrowingService.GetAllBorrowings:input_type -> protos.BorrowingsGetAllReq
-	9, // 9: protos.BorrowingService.CreateBorrowing:output_type -> protos.Void
-	1, // 10: protos.BorrowingService.GetBorrowing:output_type -> protos.BorrowingGetRes
-	9, // 11: protos.BorrowingService.UpdateBorrowing:output_type -> protos.Void
-	9, // 12: protos.BorrowingService.DeleteBorrowing:output_type -> protos.Void
-	5, // 13: protos.BorrowingService.GetAllBorrowings:output_type -> protos.BorrowingsGetAllRes
-	9, // [9:14] is the sub-list for method output_type
-	4, // [4:9] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	7,  // 0: protos.BorrowingGetRes.book:type_name -> protos.BookGetRes
+	8,  // 1: protos.BorrowingGetRes.user:type_name -> protos.UserGetRes
+	4,  // 2: protos.BorrowingUpdateReq.body:type_name -> protos.BorrowingUpdateBody
+	2,  // 3: protos.BorrowingsGetAllRes.borrowings:type_name -> protos.BorrowingGetRes
+	0,  // 4: protos.BorrowingService.CreateBorrowing:input_type -> protos.BorrowingCreateReq
+	9,  // 5: protos.BorrowingService.GetBorrowing:input_type -> protos.ByID
+	3,  // 6: protos.BorrowingService.UpdateBorrowing:input_type -> protos.BorrowingUpdateReq
+	9,  // 7: protos.BorrowingService.ReturnBorrowing:input_type -> protos.ByID
+	1,  // 8: protos.BorrowingService.RenewBorrowing:input_type -> protos.BorrowingRenewReq
+	9,  // 9: protos.BorrowingService.MarkBorrowingLost:input_type -> protos.ByID
+	9,  // 10: protos.BorrowingService.DeleteBorrowing:input_type -> protos.ByID
+	5,  // 11: protos.BorrowingService.GetAllBorrowings:input_type -> protos.BorrowingsGetAllReq
+	10, // 12: protos.BorrowingService.CreateBorrowing:output_type -> protos.Void
+	2,  // 13: protos.BorrowingService.GetBorrowing:output_type -> protos.BorrowingGetRes
+	10, // 14: protos.BorrowingService.UpdateBorrowing:output_type -> protos.Void
+	10, // 15: protos.BorrowingService.ReturnBorrowing:output_type -> protos.Void
+	10, // 16: protos.BorrowingService.RenewBorrowing:output_type -> protos.Void
+	10, // 17: protos.BorrowingService.MarkBorrowingLost:output_type -> protos.Void
+	10, // 18: protos.BorrowingService.DeleteBorrowing:output_type -> protos.Void
+	6,  // 19: protos.BorrowingService.GetAllBorrowings:output_type -> protos.BorrowingsGetAllRes
+	12, // [12:20] is the sub-list for method output_type
+	4,  // [4:12] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_library_submodule_borrowing_proto_init() }
@@ -587,14 +662,14 @@ func file_library_submodule_borrowing_proto_init() {
 	file_library_submodule_void_proto_init()
 	file_library_submodule_book_proto_init()
 	file_library_submodule_user_proto_init()
-	file_library_submodule_borrowing_proto_msgTypes[3].OneofWrappers = []any{}
+	file_library_submodule_borrowing_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_library_submodule_borrowing_proto_rawDesc), len(file_library_submodule_borrowing_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

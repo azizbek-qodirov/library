@@ -1,3 +1,5 @@
+import { usePaginatedList } from './usePaginatedList';
+import { readAPI, staffFetch } from './api';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Book, Borrowing, User } from './types';
 import { API_BASE_URL } from './types';
@@ -8,7 +10,8 @@ interface BorrowingFormData {
   user_id: string;
   from_date: string;
   due_date: string;
-  extension_date?: string;
+  extension_date: string;
+  returned_at: string;
   status: 'borrowed' | 'returned' | 'lost';
   notes: string;
 }
@@ -28,11 +31,7 @@ interface Props {
 
 // Borrowings Section
 const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
-  const [borrowings, setBorrowings] = useState<Borrowing[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalBorrowings, setTotalBorrowings] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [statusFilter, setStatusFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,8 +47,13 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
   const [editingBorrowing, setEditingBorrowing] = useState<Borrowing | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; borrowing: Borrowing | null }>({ isOpen: false, borrowing: null });
   const [actionLoading, setActionLoading] = useState(false);
+  const hasLoadedRef = useRef(false);
+  const checkoutRequest = useRef<{ details: string; id: string } | null>(null);
   const actionAbortController = useRef<AbortController | null>(null);
 
+  const {
+    items: borrowings, total: totalBorrowings, loading, error, currentPage, setCurrentPage, reload: fetchBorrowings,
+  } = usePaginatedList<Borrowing>('/borrowings', 'borrowings', 'total_count', searchQuery, new URLSearchParams({ status: statusFilter }).toString());
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -60,79 +64,25 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
     };
   }, []);
 
-  const fetchBooks = useCallback(async (searchQuery: string = '') => {
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', '100');
-      params.append('offset', '0');
-      params.append('available_only', 'true');
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
-      }
-      const response = await fetch(`${API_BASE_URL}/books?${params.toString()}`);
-      const data = await response.json();
-      const books = data.books || [];
-
-      const options = books
-        .filter((b: Book) => !b.is_reference_only && b.available_copies > 0)
-        .map((book: Book) => ({
-          id: book.id,
-          label: book.title,
-          subtitle: `Available: ${book.available_copies} | ISBN: ${book.isbn}`,
-          disabled: false
-        }));
-
-      return options;
-    } catch (error) {
-      console.error('Error fetching books:', error);
-      return [];
-    }
+  const fetchBooks = useCallback(async (search: string, signal?: AbortSignal) => {
+    const params = new URLSearchParams({ limit: '50', available_only: 'true', search });
+    const { books = [] } = await readAPI<{ books?: Book[] }>(`/books?${params}`, { signal });
+    return books.map(book => ({
+      id: book.id,
+      label: book.title,
+      subtitle: `Available: ${book.available_copies} | ISBN: ${book.isbn}`,
+    }));
   }, []);
 
-  const fetchUsers = useCallback(async (searchQuery: string = '') => {
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', '100');
-      params.append('offset', '0');
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
-      }
-      const response = await fetch(`${API_BASE_URL}/users?${params.toString()}`);
-      const data = await response.json();
-      const users = data.users || [];
-
-      return users.map((user: User) => ({
-        id: user.id,
-        label: user.full_name,
-        subtitle: `${user.role}${user.group_name ? ' | ' + user.group_name : ''}${user.email ? ' | ' + user.email : ''}`
-      }));
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      return [];
-    }
+  const fetchUsers = useCallback(async (search: string, signal?: AbortSignal) => {
+    const params = new URLSearchParams({ limit: '50', search });
+    const { users = [] } = await readAPI<{ users?: User[] }>(`/users?${params}`, { signal });
+    return users.map(user => ({
+      id: user.id,
+      label: user.full_name,
+      subtitle: [user.role, user.group_name, user.email].filter(Boolean).join(' | '),
+    }));
   }, []);
-
-  const fetchBorrowings = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', itemsPerPage.toString());
-      params.append('offset', ((currentPage - 1) * itemsPerPage).toString());
-      if (searchQuery.trim()) params.append('search', searchQuery.trim());
-      if (statusFilter) params.append('status', statusFilter);
-
-      const response = await fetch(`${API_BASE_URL}/borrowings?${params.toString()}`);
-      const data = await response.json();
-      setBorrowings(data.borrowings || []);
-      setTotalBorrowings(data.total_count || 0);
-    } catch (error) {
-      console.error('Error fetching borrowings:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchQuery, statusFilter, itemsPerPage]);
-
-  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (savedData && !hasLoadedRef.current) {
@@ -146,17 +96,6 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
   }, [savedData]);
 
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-      fetchBorrowings();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter, fetchBorrowings]);
-
-  useEffect(() => {
-    fetchBorrowings();
-  }, [currentPage, fetchBorrowings]);
 
   const handleSave = async () => {
     if (!formData.book_id || !formData.user_id || !formData.from_date || !formData.due_date) {
@@ -168,42 +107,52 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
     actionAbortController.current = new AbortController();
     const signal = actionAbortController.current.signal;
     try {
-      const url = editingBorrowing
-        ? `${API_BASE_URL}/borrowing/${editingBorrowing.id}`
-        : `${API_BASE_URL}/borrowing`;
-
-      const method = editingBorrowing ? 'PUT' : 'POST';
       const body = editingBorrowing ? {
         from_date: formData.from_date,
         due_date: formData.due_date,
         extension_date: formData.extension_date || undefined,
         status: formData.status,
-        returned_at: formData.returned_at || undefined,
-        notes: formData.notes
+        returned_at: formData.status === 'returned' ? formData.returned_at || undefined : undefined,
+        notes: formData.notes,
       } : {
         book_id: formData.book_id,
         user_id: formData.user_id,
         from_date: formData.from_date,
         due_date: formData.due_date,
-        notes: formData.notes
+        notes: formData.notes,
       };
-
-      const response = await fetch(url, {
-        method,
+      const details = JSON.stringify(body);
+      if (!editingBorrowing && checkoutRequest.current?.details !== details) {
+        checkoutRequest.current = { details, id: crypto.randomUUID() };
+      }
+      await readAPI(editingBorrowing ? `/borrowing/${editingBorrowing.id}` : '/borrowing', {
+        method: editingBorrowing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal
+        body: JSON.stringify({ ...body, request_id: editingBorrowing ? undefined : checkoutRequest.current?.id }),
+        signal,
       });
-
-      if (!response.ok) throw new Error('Failed to save borrowing');
 
       actionAbortController.current = null;
       handleCancelForm();
       fetchBorrowings();
       alert(`Borrowing ${editingBorrowing ? 'updated' : 'created'} successfully!`);
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
-      alert('Failed to save borrowing. Please try again.');
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
+      alert(error instanceof Error ? error.message : 'Failed to save borrowing.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const updateLoanStatus = async (loan: Borrowing, action: 'return' | 'lost') => {
+    const instruction = action === 'return' ? 'Return this copy?' : 'Mark this copy as lost?';
+    if (!window.confirm(instruction)) return;
+    setActionLoading(true);
+    try {
+      await readAPI(`/borrowing/${loan.id}/${action}`, { method: 'POST' });
+      fetchBorrowings();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not update loan status.');
     } finally {
       setActionLoading(false);
     }
@@ -216,7 +165,7 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
     actionAbortController.current = new AbortController();
     const signal = actionAbortController.current.signal;
     try {
-      const response = await fetch(`${API_BASE_URL}/borrowing/${deleteModal.borrowing.id}`, {
+      const response = await staffFetch(`${API_BASE_URL}/borrowing/${deleteModal.borrowing.id}`, {
         method: 'DELETE',
         signal
       });
@@ -227,8 +176,8 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
       setDeleteModal({ isOpen: false, borrowing: null });
       fetchBorrowings();
       alert('Borrowing deleted successfully!');
-    } catch (error: any) {
-      if (error.name === 'AbortError') return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       alert('Failed to delete borrowing. Please try again.');
     } finally {
       setActionLoading(false);
@@ -240,6 +189,7 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
       actionAbortController.current.abort();
       actionAbortController.current = null;
     }
+    checkoutRequest.current = null;
     setActionLoading(false);
     setShowForm(false);
     setEditingBorrowing(null);
@@ -331,11 +281,11 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
                     <select
                       className="form-select"
                       value={formData.status}
-                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as BorrowingFormData["status"] }))}
                     >
-                      <option value="borrowed">Borrowed</option>
+                      <option value="borrowed" disabled={editingBorrowing?.status !== 'borrowed'}>Borrowed</option>
                       <option value="returned">Returned</option>
-                      <option value="lost">Lost</option>
+                      <option value="lost" disabled={editingBorrowing?.status === 'returned'}>Lost</option>
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
@@ -441,6 +391,7 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
           <span className="small text-muted">Total: <strong>{totalBorrowings}</strong></span>
         </div>
         <div className="card-body p-0">
+          {error && <div className="alert alert-danger" role="alert">{error}</div>}
           {loading ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary"></div>
@@ -451,33 +402,33 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>Book</th>
-                    <th>Borrower</th>
-                    <th>From Date</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th className="text-end">Actions</th>
+              <table className="table table-hover mb-0 library-record-table" role="table">
+                <thead role="rowgroup" className="table-light">
+                  <tr role="row">
+                    <th role="columnheader" scope="col">Book</th>
+                    <th role="columnheader" scope="col">Borrower</th>
+                    <th role="columnheader" scope="col">From Date</th>
+                    <th role="columnheader" scope="col">Due Date</th>
+                    <th role="columnheader" scope="col">Status</th>
+                    <th role="columnheader" scope="col" className="text-end">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {borrowings.map((borrowing) => (
-                    <tr key={borrowing.id}>
-                      <td className="fw-medium">{borrowing.book.title}</td>
-                      <td>
+                    <tr role="row" key={borrowing.id}>
+                      <td role="cell" data-label="Book" className="fw-medium">{borrowing.book.title}</td>
+                      <td role="cell" data-label="Borrower">
                         <div>{borrowing.user.full_name}</div>
                         <small className="text-muted">{borrowing.user.role}</small>
                       </td>
-                      <td>{new Date(borrowing.from_date).toLocaleDateString()}</td>
-                      <td>{new Date(borrowing.due_date).toLocaleDateString()}</td>
-                      <td>
+                      <td role="cell" data-label="From date">{new Date(borrowing.from_date).toLocaleDateString()}</td>
+                      <td role="cell" data-label="Due date">{new Date(borrowing.due_date).toLocaleDateString()}</td>
+                      <td role="cell" data-label="Status">
                         <span className={`badge ${getStatusBadgeClass(borrowing.status)}`}>
                           {borrowing.status}
                         </span>
                       </td>
-                      <td className="text-end">
+                      <td role="cell" data-label="Actions" className="text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
@@ -491,19 +442,28 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
                                 extension_date: borrowing.extension_date ? borrowing.extension_date.split('T')[0] : '',
                                 status: borrowing.status,
                                 returned_at: borrowing.returned_at ? borrowing.returned_at.split('T')[0] : '',
-                                notes: borrowing.notes
+                                notes: borrowing.notes ?? ''
                               });
                               setShowForm(true);
                             }}
                           >
                             Edit
                           </button>
-                          <button
-                            className="btn btn-outline-danger"
-                            onClick={() => setDeleteModal({ isOpen: true, borrowing })}
-                          >
-                            Delete
-                          </button>
+                          {borrowing.status !== 'returned' && (
+                            <button className="btn btn-outline-success" disabled={actionLoading} onClick={() => void updateLoanStatus(borrowing, 'return')}>
+                              Return
+                            </button>
+                          )}
+                          {borrowing.status === 'borrowed' && (
+                            <button className="btn btn-outline-warning" disabled={actionLoading} onClick={() => void updateLoanStatus(borrowing, 'lost')}>
+                              Mark lost
+                            </button>
+                          )}
+                          {borrowing.status === 'returned' && (
+                            <button className="btn btn-outline-danger" onClick={() => setDeleteModal({ isOpen: true, borrowing })}>
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -514,6 +474,16 @@ const BorrowingsSection = ({ savedData, onDataChange }: Props) => {
           )}
         </div>
       </div>
+
+      {!showForm && totalBorrowings > itemsPerPage && (
+        <nav className="d-flex align-items-center justify-content-center gap-3 mt-3" aria-label="Loan pages">
+          <button className="btn btn-outline-primary btn-sm" disabled={currentPage === 1}
+            onClick={() => setCurrentPage(page => page - 1)}>Previous</button>
+          <span>Page {currentPage} of {Math.ceil(totalBorrowings / itemsPerPage)}</span>
+          <button className="btn btn-outline-primary btn-sm" disabled={currentPage >= Math.ceil(totalBorrowings / itemsPerPage)}
+            onClick={() => setCurrentPage(page => page + 1)}>Next</button>
+        </nav>
+      )}
 
       {deleteModal.isOpen && (
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>

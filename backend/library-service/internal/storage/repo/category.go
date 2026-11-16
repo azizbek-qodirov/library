@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	pb "library/internal/pkg/genproto"
 )
@@ -26,7 +25,7 @@ func (r *CategoryRepo) CreateCategory(ctx context.Context, req *pb.CategoryCreat
 }
 
 func (r *CategoryRepo) GetCategory(ctx context.Context, req *pb.ByID) (*pb.CategoryGetRes, error) {
-	query := `SELECT id, name, description FROM categories WHERE id = $1`
+	query := `SELECT id, name, coalesce(description, '') FROM categories WHERE id = $1`
 	var cat pb.CategoryGetRes
 	err := r.db.QueryRowContext(ctx, query, req.Id).Scan(
 		&cat.Id,
@@ -41,8 +40,8 @@ func (r *CategoryRepo) GetCategory(ctx context.Context, req *pb.ByID) (*pb.Categ
 
 func (r *CategoryRepo) UpdateCategory(ctx context.Context, req *pb.CategoryUpdateReq) (*pb.Void, error) {
 	query := `UPDATE categories SET name = $1, description = $2 WHERE id = $3`
-	_, err := r.db.ExecContext(ctx, query, req.Body.Name, req.Body.Description, req.Id)
-	if err != nil {
+	result, err := r.db.ExecContext(ctx, query, req.Body.Name, req.Body.Description, req.Id)
+	if err := requireAffected(result, err); err != nil {
 		return nil, err
 	}
 	return &pb.Void{}, nil
@@ -50,30 +49,26 @@ func (r *CategoryRepo) UpdateCategory(ctx context.Context, req *pb.CategoryUpdat
 
 func (r *CategoryRepo) DeleteCategory(ctx context.Context, req *pb.ByID) (*pb.Void, error) {
 	query := `DELETE FROM categories WHERE id = $1`
-	_, err := r.db.ExecContext(ctx, query, req.Id)
-	if err != nil {
+	result, err := r.db.ExecContext(ctx, query, req.Id)
+	if err := requireAffected(result, err); err != nil {
 		return nil, err
 	}
 	return &pb.Void{}, nil
 }
 
 func (r *CategoryRepo) GetAllCategories(ctx context.Context, req *pb.CategoriesGetAllReq) (*pb.GetAllCategoriesRes, error) {
-	query := `SELECT id, name, description FROM categories WHERE 1=1`
-	var args []interface{}
-	argCount := 1
-
-	// search
+	query := listQuery{where: " FROM categories c WHERE TRUE"}
 	if req.Search != "" {
-		query += fmt.Sprintf(" AND (name ILIKE $%d OR description ILIKE $%d)", argCount, argCount+1)
-		args = append(args, "%"+req.Search+"%", "%"+req.Search+"%")
-		argCount += 2
+		query.add(" AND (c.name ILIKE $%[1]d OR c.description ILIKE $%[1]d)", "%"+req.Search+"%")
 	}
-
-	// pagination
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, req.Limit, req.Offset)
-
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	order := " ORDER BY c.name, c.id"
+	bookCount := "0"
+	if req.SortByBookCount {
+		bookCount = "(SELECT count(*) FROM book_categories bc WHERE bc.category_id = c.id)"
+		order = " ORDER BY book_count DESC, c.name, c.id"
+	}
+	page, args := query.page(order, int64(req.Limit), int64(req.Offset))
+	rows, err := r.db.QueryContext(ctx, "SELECT c.id, c.name, coalesce(c.description, ''), "+bookCount+" AS book_count"+page, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,34 +76,19 @@ func (r *CategoryRepo) GetAllCategories(ctx context.Context, req *pb.CategoriesG
 
 	var categories []*pb.CategoryGetRes
 	for rows.Next() {
-		var cat pb.CategoryGetRes
-		if err := rows.Scan(&cat.Id, &cat.Name, &cat.Description); err != nil {
+		var category pb.CategoryGetRes
+		if err := rows.Scan(&category.Id, &category.Name, &category.Description, &category.BookCount); err != nil {
 			return nil, err
 		}
-		categories = append(categories, &cat)
+		categories = append(categories, &category)
 	}
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
-	}
-
-	// Count for pagination
-	countQuery := "SELECT count(id) FROM categories WHERE 1=1"
-	var countArgs []interface{}
-	argCount = 1
-
-	if req.Search != "" {
-		countQuery += fmt.Sprintf(" AND (name ILIKE $%d OR description ILIKE $%d)", argCount, argCount+1)
-		countArgs = append(countArgs, "%"+req.Search+"%", "%"+req.Search+"%")
-		argCount += 2
 	}
 
 	var total uint64
-	if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, "SELECT count(*)"+query.where, query.args...).Scan(&total); err != nil {
 		return nil, err
 	}
-
-	return &pb.GetAllCategoriesRes{
-		Categories: categories,
-		TotalCount: total,
-	}, nil
+	return &pb.GetAllCategoriesRes{Categories: categories, TotalCount: total}, nil
 }

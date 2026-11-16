@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	pb "library/internal/pkg/genproto"
 	"library/internal/storage/repo"
 )
@@ -18,7 +21,7 @@ func NewAuthorService(db *sql.DB) *AuthorService {
 }
 
 func (s *AuthorService) CreateAuthor(ctx context.Context, req *pb.AuthorCreateReq) (*pb.Void, error) {
-	if *req.BirthDate == "" {
+	if req.GetBirthDate() == "" {
 		req.BirthDate = nil
 	}
 	return s.repo.CreateAuthor(ctx, req)
@@ -29,6 +32,9 @@ func (s *AuthorService) GetAuthor(ctx context.Context, req *pb.ByID) (*pb.Author
 }
 
 func (s *AuthorService) UpdateAuthor(ctx context.Context, req *pb.AuthorUpdateReq) (*pb.Void, error) {
+	if req.Body == nil {
+		return nil, status.Error(codes.InvalidArgument, "author update body is required")
+	}
 	if req.Body.BirthDate != nil && *req.Body.BirthDate == "" {
 		req.Body.BirthDate = nil
 	}

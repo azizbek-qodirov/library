@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { API_BASE_URL } from '../api';
+import { useEffect, useState } from "react";
 import type { Author, Category, Publisher } from "./types";
 
 interface SearchFilters {
@@ -16,16 +17,14 @@ interface SelectedItem {
 
 interface Props {
     filters: SearchFilters;
-    categories: Category[];
     selectedAuthors: SelectedItem[];
-    selectedPublisher: SelectedItem | null;
     onFiltersChange: (filters: Partial<SearchFilters>, selectedItems?: {
         authors?: Author[];
         publisher?: Publisher | null;
     }) => void;
 }
 
-function AdvancedSearchPanel({ filters, categories, selectedAuthors, selectedPublisher, onFiltersChange }: Props) {
+function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Props) {
     const [categorySearch, setCategorySearch] = useState("");
     const [authorSearch, setAuthorSearch] = useState("");
     const [publisherSearch, setPublisherSearch] = useState("");
@@ -38,17 +37,13 @@ function AdvancedSearchPanel({ filters, categories, selectedAuthors, selectedPub
     const [authorsError, setAuthorsError] = useState<string | null>(null);
     const [publishersError, setPublishersError] = useState<string | null>(null);
 
-    // Refs to store current AbortControllers
-    const authorsAbortController = useRef<AbortController | null>(null);
-    const publishersAbortController = useRef<AbortController | null>(null);
-
     // Fetch ALL categories for the dropdown
     useEffect(() => {
         const abortController = new AbortController();
 
         const fetchAllCategories = async () => {
             try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/categories?limit=100&offset=0`, {
+                const res = await fetch(`${API_BASE_URL}/categories?limit=100&offset=0`, {
                     signal: abortController.signal
                 });
                 if (!res.ok) {
@@ -56,8 +51,8 @@ function AdvancedSearchPanel({ filters, categories, selectedAuthors, selectedPub
                 }
                 const data = await res.json();
                 setAllCategories(data.categories || []);
-            } catch (err: any) {
-                if (err.name === 'AbortError') return;
+            } catch (err) {
+                if (err instanceof Error && err.name === 'AbortError') return;
                 console.error("Failed to fetch all categories:", err);
             }
         };
@@ -69,108 +64,61 @@ function AdvancedSearchPanel({ filters, categories, selectedAuthors, selectedPub
         };
     }, []);
 
-    const fetchAuthors = useCallback(async (search: string) => {
-        // Abort previous request if exists
-        if (authorsAbortController.current) {
-            authorsAbortController.current.abort();
-        }
-
-        // Create new controller for this request
-        authorsAbortController.current = new AbortController();
-
-        setAuthorsLoading(true);
+    useEffect(() => {
+        const controller = new AbortController();
+        setAuthors([]);
         setAuthorsError(null);
-        try {
-            const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/authors?search=${encodeURIComponent(search)}&limit=50`,
-                { signal: authorsAbortController.current.signal }
-            );
-            if (!res.ok) {
-                throw new Error(`Failed to fetch authors: ${res.statusText}`);
+        setAuthorsLoading(Boolean(authorSearch.trim()));
+        if (!authorSearch.trim()) return;
+
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(
+                    `${API_BASE_URL}/authors?search=${encodeURIComponent(authorSearch)}&limit=50`,
+                    { signal: controller.signal }
+                );
+                if (!res.ok) throw new Error(`Failed to fetch authors: ${res.statusText}`);
+                const data = await res.json();
+                if (!controller.signal.aborted) setAuthors(data.authors || []);
+            } catch (err) {
+                if (!controller.signal.aborted) setAuthorsError(err instanceof Error ? err.message : 'Failed to load authors');
+            } finally {
+                if (!controller.signal.aborted) setAuthorsLoading(false);
             }
-            const data = await res.json();
-            setAuthors(data.authors || []);
-        } catch (err: any) {
-            if (err.name === 'AbortError') return; // Ignore abort errors
-            console.error("Failed to fetch authors:", err);
-            setAuthorsError(err instanceof Error ? err.message : 'Failed to load authors');
-        } finally {
-            setAuthorsLoading(false);
-        }
-    }, []);
-
-    const fetchPublishers = useCallback(async (search: string) => {
-        // Abort previous request if exists
-        if (publishersAbortController.current) {
-            publishersAbortController.current.abort();
-        }
-
-        // Create new controller for this request
-        publishersAbortController.current = new AbortController();
-
-        setPublishersLoading(true);
-        setPublishersError(null);
-        try {
-            const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/publishers?search=${encodeURIComponent(search)}&limit=50`,
-                { signal: publishersAbortController.current.signal }
-            );
-            if (!res.ok) {
-                throw new Error(`Failed to fetch publishers: ${res.statusText}`);
-            }
-            const data = await res.json();
-            setPublishers(data.publishers || []);
-        } catch (err: any) {
-            if (err.name === 'AbortError') return; // Ignore abort errors
-            console.error("Failed to fetch publishers:", err);
-            setPublishersError(err instanceof Error ? err.message : 'Failed to load publishers');
-        } finally {
-            setPublishersLoading(false);
-        }
-    }, []);
-
-    // Debounced search functions
-    const debouncedAuthorSearch = useCallback(
-        debounce((searchTerm: string) => {
-            if (searchTerm.trim()) {
-                fetchAuthors(searchTerm);
-            } else {
-                setAuthors([]);
-            }
-        }, 500),
-        [fetchAuthors]
-    );
-
-    const debouncedPublisherSearch = useCallback(
-        debounce((searchTerm: string) => {
-            if (searchTerm.trim()) {
-                fetchPublishers(searchTerm);
-            } else {
-                setPublishers([]);
-            }
-        }, 500),
-        [fetchPublishers]
-    );
-
-    useEffect(() => {
-        debouncedAuthorSearch(authorSearch);
-    }, [authorSearch, debouncedAuthorSearch]);
-
-    useEffect(() => {
-        debouncedPublisherSearch(publisherSearch);
-    }, [publisherSearch, debouncedPublisherSearch]);
-
-    // Cleanup: abort any pending requests on unmount
-    useEffect(() => {
+        }, 500);
         return () => {
-            if (authorsAbortController.current) {
-                authorsAbortController.current.abort();
-            }
-            if (publishersAbortController.current) {
-                publishersAbortController.current.abort();
-            }
+            clearTimeout(timer);
+            controller.abort();
         };
-    }, []);
+    }, [authorSearch]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        setPublishers([]);
+        setPublishersError(null);
+        setPublishersLoading(Boolean(publisherSearch.trim()));
+        if (!publisherSearch.trim()) return;
+
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(
+                    `${API_BASE_URL}/publishers?search=${encodeURIComponent(publisherSearch)}&limit=50`,
+                    { signal: controller.signal }
+                );
+                if (!res.ok) throw new Error(`Failed to fetch publishers: ${res.statusText}`);
+                const data = await res.json();
+                if (!controller.signal.aborted) setPublishers(data.publishers || []);
+            } catch (err) {
+                if (!controller.signal.aborted) setPublishersError(err instanceof Error ? err.message : 'Failed to load publishers');
+            } finally {
+                if (!controller.signal.aborted) setPublishersLoading(false);
+            }
+        }, 500);
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [publisherSearch]);
 
     const filteredCategories = allCategories.filter(category =>
         category.name.toLowerCase().includes(categorySearch.toLowerCase())
@@ -452,15 +400,4 @@ function AdvancedSearchPanel({ filters, categories, selectedAuthors, selectedPub
 }
 
 // Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
-    func: T,
-    wait: number
-): (...args: Parameters<T>) => void {
-    let timeout: NodeJS.Timeout;
-    return (...args: Parameters<T>) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), wait);
-    };
-}
-
 export default AdvancedSearchPanel;

@@ -1,9 +1,12 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
 	"library/internal/pkg/config"
+	"net"
+	"net/url"
+	"strconv"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -14,23 +17,28 @@ type Postgres struct {
 }
 
 func New(cfg *config.Config) (*Postgres, error) {
-	dbConn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		cfg.PostgresUser,
-		cfg.PostgresPassword,
-		cfg.PostgresHost,
-		cfg.PostgresPort,
-		cfg.PostgresDatabase)
-	db, err := sql.Open("postgres", dbConn)
+	dsn := url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(cfg.PostgresUser, cfg.PostgresPassword),
+		Host:   net.JoinHostPort(cfg.PostgresHost, strconv.Itoa(cfg.PostgresPort)),
+		Path:   "/" + cfg.PostgresDatabase,
+	}
+	options := dsn.Query()
+	options.Set("sslmode", cfg.PostgresSSLMode)
+	dsn.RawQuery = options.Encode()
+	db, err := sql.Open("postgres", dsn.String())
 	if err != nil {
 		return nil, err
 	}
 
 	// Configure connection pool
-	db.SetMaxOpenConns(25)                // Maximum number of open connections
-	db.SetMaxIdleConns(5)                 // Maximum number of idle connections
+	db.SetMaxOpenConns(25)                 // Maximum number of open connections
+	db.SetMaxIdleConns(5)                  // Maximum number of idle connections
 	db.SetConnMaxLifetime(5 * time.Minute) // 5 minutes
 
-	err = db.Ping()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = db.PingContext(ctx)
 	if err != nil {
 		return nil, err
 	}

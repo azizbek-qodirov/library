@@ -1,4 +1,3 @@
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -48,7 +47,7 @@ function Navigation() {
           type="button"
           aria-controls="navbarNav"
           aria-expanded={isMenuOpen}
-          aria-label="Toggle navigation"
+          aria-label="Menyuni ochish yoki yopish"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <span className="navbar-toggler-icon"></span>
@@ -63,6 +62,7 @@ function Navigation() {
             <li className="nav-item">
               <Link
                 to="/"
+                aria-current={location.pathname === "/" ? "page" : undefined}
                 className={`nav-link fw-semibold text-decoration-none ${
                   location.pathname === "/" ? "active" : ""
                 }`}
@@ -74,6 +74,7 @@ function Navigation() {
             <li className="nav-item">
               <Link
                 to="/categories"
+                aria-current={location.pathname === "/categories" ? "page" : undefined}
                 className={`nav-link fw-semibold text-decoration-none ${
                   location.pathname === "/categories" ? "active" : ""
                 }`}

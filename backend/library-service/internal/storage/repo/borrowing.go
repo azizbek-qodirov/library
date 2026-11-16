@@ -3,9 +3,13 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
+	"time"
 
 	pb "library/internal/pkg/genproto"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type BorrowingRepo struct {
@@ -17,375 +21,214 @@ func NewBorrowingRepo(db *sql.DB) *BorrowingRepo {
 }
 
 func (r *BorrowingRepo) Create(ctx context.Context, req *pb.BorrowingCreateReq) (*pb.Void, error) {
-	query := `
-		INSERT INTO borrowings (book_id, user_id, from_date, due_date, notes)
-		VALUES ($1, $2, $3, $4, $5)
-	`
-	_, err := r.db.ExecContext(ctx, query,
-		req.BookId,
-		req.UserId,
-		req.FromDate,
-		req.DueDate,
-		req.Notes,
-	)
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Void{}, nil
+	defer tx.Rollback()
+
+	var id string
+	err = tx.QueryRowContext(ctx, `
+		INSERT INTO borrowings (book_id, user_id, from_date, due_date, notes, request_id, checkout_payload)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::uuid,
+			CASE WHEN $6 <> '' THEN jsonb_build_array($1::uuid, $2::uuid, $3::date, $4::date, $5::text) END)
+		ON CONFLICT (request_id) DO NOTHING RETURNING id`,
+		req.BookId, req.UserId, req.FromDate, req.DueDate, req.Notes, req.RequestId).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		var same bool
+		err = tx.QueryRowContext(ctx, `
+			SELECT checkout_payload = jsonb_build_array($1::uuid, $2::uuid, $3::date, $4::date, $5::text)
+			FROM borrowings WHERE request_id = $6`, req.BookId, req.UserId, req.FromDate,
+			req.DueDate, req.Notes, req.RequestId).Scan(&same)
+		if err != nil {
+			return nil, err
+		}
+		if !same {
+			return nil, status.Error(codes.AlreadyExists, "checkout request ID was used with different details")
+		}
+		return &pb.Void{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := tx.ExecContext(ctx, `
+		UPDATE books SET available_copies = available_copies - 1, updated_at = now()
+		WHERE id = $1 AND NOT coalesce(is_reference_only, false) AND available_copies > 0`, req.BookId)
+	if err != nil {
+		return nil, err
+	}
+	if err := requireAffected(result, nil); err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, status.Error(codes.FailedPrecondition, "book is unavailable for checkout")
+		}
+		return nil, err
+	}
+	return &pb.Void{}, tx.Commit()
 }
 
+const borrowingJSON = `jsonb_build_object(
+	'id', l.id, 'book', ` + bookJSON + `, 'user', to_jsonb(u),
+	'from_date', l.from_date, 'due_date', l.due_date, 'extension_date', l.extension_date,
+	'status', l.status, 'returned_at', l.returned_at, 'notes', l.notes
+)`
+const borrowingsFrom = " FROM borrowings l JOIN books b ON b.id = l.book_id JOIN users u ON u.id = l.user_id"
+
 func (r *BorrowingRepo) Get(ctx context.Context, req *pb.ByID) (*pb.BorrowingGetRes, error) {
-	query := `
-		SELECT 
-			b.id, b.from_date, b.due_date, b.extension_date, b.status, b.returned_at, b.notes,
-			bo.id, bo.title, bo.cover_image_id, bo.location, bo.is_reference_only,
-			bo.description, bo.isbn, bo.published_date, bo.publisher_id, bo.language,
-			bo.page_count, bo.total_copies, bo.available_copies,
-			u.id, u.full_name, u.group_name, u.email, u.phone, u.role, u.created_at, u.updated_at
-		FROM borrowings b
-		JOIN books bo ON bo.id = b.book_id
-		JOIN users u ON u.id = b.user_id
-		WHERE b.id = $1
-	`
-
-	row := r.db.QueryRowContext(ctx, query, req.Id)
-
-	var res pb.BorrowingGetRes
-	var book pb.BookGetRes
-	var user pb.UserGetRes
-	var extension_date, returned_at, updated_at sql.NullString
-	var publisherID, coverFileID string
-
-	err := row.Scan(
-		&res.Id, &res.FromDate, &res.DueDate, &extension_date, &res.Status, &returned_at, &res.Notes,
-		&book.Id, &book.Title, &coverFileID, &book.Location, &book.IsReferenceOnly,
-		&book.Description, &book.Isbn, &book.PublishedDate, &publisherID, &book.Language,
-		&book.PageCount, &book.TotalCopies, &book.AvailableCopies,
-		&user.Id, &user.FullName, &user.GroupName, &user.Email, &user.Phone, &user.Role, &user.CreatedAt, &updated_at,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if extension_date.Valid {
-		res.ExtensionDate = extension_date.String
-	}
-	if returned_at.Valid {
-		res.ReturnedAt = returned_at.String
-	}
-	if updated_at.Valid {
-		user.UpdatedAt = updated_at.String
-	}
-
-	// Load cover image as FileGetRes object
-	if coverFileID != "" {
-		var file pb.FileGetRes
-		err = r.db.QueryRowContext(ctx, `
-			SELECT id, url, mime_type, size, created_at, updated_at
-			FROM files
-			WHERE id = $1
-		`, coverFileID).Scan(
-			&file.Id, &file.Url, &file.MimeType, &file.Size, &file.CreatedAt, &file.UpdatedAt,
-		)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, err
-		}
-		book.CoverImageId = &file
-	}
-
-	// Load publisher as object
-	if publisherID != "" {
-		var pub pb.PublisherGetRes
-		err = r.db.QueryRowContext(ctx, `SELECT id, name FROM publishers WHERE id = $1`, publisherID).Scan(&pub.Id, &pub.Name)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, err
-		}
-		book.PublisherId = &pub
-	}
-
-	// Load categories
-	cRows, err := r.db.QueryContext(ctx, `
-		SELECT c.id, c.name 
-		FROM book_categories bc 
-		JOIN categories c ON bc.category_id = c.id 
-		WHERE bc.book_id = $1
-	`, book.Id)
-	if err != nil {
-		return nil, err
-	}
-	for cRows.Next() {
-		var cat pb.CategoryGetRes
-		if err := cRows.Scan(&cat.Id, &cat.Name); err != nil {
-			cRows.Close()
-			return nil, err
-		}
-		book.CategoryIds = append(book.CategoryIds, &cat)
-	}
-	cRows.Close()
-
-	// Load authors
-	aRows, err := r.db.QueryContext(ctx, `
-		SELECT a.id, a.name 
-		FROM book_authors ba 
-		JOIN authors a ON ba.author_id = a.id 
-		WHERE ba.book_id = $1
-	`, book.Id)
-	if err != nil {
-		return nil, err
-	}
-	for aRows.Next() {
-		var author pb.AuthorGetRes
-		if err := aRows.Scan(&author.Id, &author.Name); err != nil {
-			aRows.Close()
-			return nil, err
-		}
-		book.AuthorIds = append(book.AuthorIds, &author)
-	}
-	aRows.Close()
-
-	res.Book = &book
-	res.User = &user
-	return &res, nil
+	return readJSON[pb.BorrowingGetRes](r.db.QueryRowContext(ctx, "SELECT "+borrowingJSON+borrowingsFrom+" WHERE l.id = $1", req.Id))
 }
 
 func (r *BorrowingRepo) Update(ctx context.Context, req *pb.BorrowingUpdateReq) (*pb.Void, error) {
-	query := `
-		UPDATE borrowings
-		SET from_date = $1,
-		    due_date = $2,
-		    extension_date = $3,
-		    status = $4,
-		    returned_at = $5,
-		    notes = $6,
-		    updated_at = NOW()
-		WHERE id = $7
-	`
-	_, err := r.db.ExecContext(ctx, query,
-		req.Body.FromDate,
-		req.Body.DueDate,
-		req.Body.ExtensionDate,
-		req.Body.Status,
-		req.Body.ReturnedAt,
-		req.Body.Notes,
-		req.Id,
-	)
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Void{}, nil
+	defer tx.Rollback()
+
+	body := req.Body
+	var bookID, previousStatus string
+	err = tx.QueryRowContext(ctx, "SELECT book_id, status FROM borrowings WHERE id = $1 FOR UPDATE", req.Id).
+		Scan(&bookID, &previousStatus)
+	if err != nil {
+		return nil, err
+	}
+	if err := adjustLoanInventory(ctx, tx, bookID, previousStatus, body.Status); err != nil {
+		return nil, err
+	}
+
+	_, err = tx.ExecContext(ctx, `
+		UPDATE borrowings
+		SET from_date = $1, due_date = $2, extension_date = NULLIF($3, '')::date,
+		    status = $4::borrowing_status_type, notes = $6, updated_at = now(),
+		    returned_at = CASE WHEN $4::borrowing_status_type = 'returned'
+		        THEN coalesce(NULLIF($5, '')::date, CASE WHEN returned_at IS NOT NULL THEN greatest($1::date, returned_at) END, greatest($1::date, current_date)) ELSE NULL END
+		WHERE id = $7`, body.FromDate, body.DueDate, body.GetExtensionDate(),
+		body.Status, body.GetReturnedAt(), body.Notes, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Void{}, tx.Commit()
+}
+
+// adjustLoanInventory is called while the loan row is locked.
+func adjustLoanInventory(ctx context.Context, tx *sql.Tx, bookID, previous, next string) error {
+	if previous == next {
+		return nil
+	}
+	if previous == "returned" || (previous == "lost" && next != "returned") {
+		return status.Error(codes.FailedPrecondition, "invalid loan status transition")
+	}
+	if next == "returned" {
+		_, err := tx.ExecContext(ctx, `
+			UPDATE books SET available_copies = available_copies + 1, updated_at = now()
+			WHERE id = $1`, bookID)
+		return err
+	}
+	return nil
+}
+
+func (r *BorrowingRepo) SetStatus(ctx context.Context, id, next string) (*pb.Void, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var bookID, previous string
+	err = tx.QueryRowContext(ctx, "SELECT book_id, status FROM borrowings WHERE id = $1 FOR UPDATE", id).
+		Scan(&bookID, &previous)
+	if err != nil {
+		return nil, err
+	}
+	if previous == next {
+		return &pb.Void{}, nil
+	}
+	if err := adjustLoanInventory(ctx, tx, bookID, previous, next); err != nil {
+		return nil, err
+	}
+	_, err = tx.ExecContext(ctx, `
+		UPDATE borrowings SET status = $1::borrowing_status_type, updated_at = now(),
+		    returned_at = CASE WHEN $1::borrowing_status_type = 'returned'
+		        THEN greatest(from_date, current_date) ELSE NULL END
+		WHERE id = $2`, next, id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Void{}, tx.Commit()
+}
+
+func (r *BorrowingRepo) Renew(ctx context.Context, id string, extension time.Time) (*pb.Void, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var loanStatus string
+	var deadline time.Time
+	if err := tx.QueryRowContext(ctx, `
+		SELECT status, coalesce(extension_date, due_date) FROM borrowings
+		WHERE id = $1 FOR UPDATE`, id).Scan(&loanStatus, &deadline); err != nil {
+		return nil, err
+	}
+	if loanStatus != "borrowed" || extension.Before(deadline) {
+		return nil, status.Error(codes.FailedPrecondition, "only active loans can be extended and the deadline cannot move earlier")
+	}
+	if extension.Equal(deadline) {
+		return &pb.Void{}, nil
+	}
+	if _, err := tx.ExecContext(ctx, "UPDATE borrowings SET extension_date = $1, updated_at = now() WHERE id = $2", extension.Format(time.DateOnly), id); err != nil {
+		return nil, err
+	}
+	return &pb.Void{}, tx.Commit()
 }
 
 func (r *BorrowingRepo) Delete(ctx context.Context, req *pb.ByID) (*pb.Void, error) {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM borrowings WHERE id = $1`, req.Id)
-	if err != nil {
+	result, err := r.db.ExecContext(ctx, "DELETE FROM borrowings WHERE id = $1 AND status = 'returned'", req.Id)
+	if err := requireAffected(result, err); err != nil {
+		if status.Code(err) != codes.NotFound {
+			return nil, err
+		}
+		var exists bool
+		if err := r.db.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM borrowings WHERE id = $1)", req.Id).Scan(&exists); err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, status.Error(codes.FailedPrecondition, "only returned loans can be deleted")
+		}
 		return nil, err
 	}
 	return &pb.Void{}, nil
 }
 
-// GetAll retrieves all borrowings with filters and pagination
-// TODO: Optimize N+1 queries - currently makes separate queries for each borrowing's
-// files, publishers, categories, and authors. Consider using:
-// 1. Batch queries with IN clauses after collecting all IDs
-// 2. PostgreSQL JSON aggregation functions
-// 3. Single query with LEFT JOINs and array_agg()
 func (r *BorrowingRepo) GetAll(ctx context.Context, req *pb.BorrowingsGetAllReq) (*pb.BorrowingsGetAllRes, error) {
-	query := `
-		SELECT 
-			b.id, b.from_date, b.due_date, b.extension_date, b.status, b.returned_at, b.notes,
-			bo.id, bo.title, bo.cover_image_id, bo.location, bo.is_reference_only,
-			bo.description, bo.isbn, bo.published_date, bo.publisher_id, bo.language,
-			bo.page_count, bo.total_copies, bo.available_copies,
-			u.id, u.full_name, u.group_name, u.email, u.phone, u.role, u.created_at, u.updated_at
-		FROM borrowings b
-		JOIN books bo ON bo.id = b.book_id
-		JOIN users u ON u.id = b.user_id
-		WHERE 1=1
-	`
-	args := []interface{}{}
-	argCount := 1
-
-	// --- filters ---
+	query := listQuery{where: borrowingsFrom + " WHERE TRUE"}
 	if req.Search != "" {
-		query += fmt.Sprintf(` AND (
-			bo.title ILIKE $%d OR
-			u.full_name ILIKE $%d OR
-			EXISTS (
-				SELECT 1 FROM book_authors ba 
-				JOIN authors a ON a.id = ba.author_id 
-				WHERE ba.book_id = bo.id AND a.name ILIKE $%d
-			)
-		)`, argCount, argCount, argCount)
-		args = append(args, "%"+req.Search+"%")
-		argCount++
+		query.add(` AND (b.title ILIKE $%[1]d OR u.full_name ILIKE $%[1]d OR EXISTS (
+			SELECT 1 FROM book_authors ba JOIN authors a ON a.id = ba.author_id
+			WHERE ba.book_id = b.id AND a.name ILIKE $%[1]d))`, "%"+req.Search+"%")
 	}
 	if req.FromDate != "" {
-		query += fmt.Sprintf(" AND b.from_date >= $%d", argCount)
-		args = append(args, req.FromDate)
-		argCount++
+		query.add(" AND l.from_date >= $%d", req.FromDate)
 	}
 	if req.DueDate != "" {
-		query += fmt.Sprintf(" AND b.due_date <= $%d", argCount)
-		args = append(args, req.DueDate)
-		argCount++
+		query.add(" AND l.due_date <= $%d", req.DueDate)
 	}
 	if req.Status != "" {
-		query += fmt.Sprintf(" AND b.status = $%d", argCount)
-		args = append(args, req.Status)
-		argCount++
+		query.add(" AND l.status = $%d", req.Status)
 	}
-
-	// Pagination
-	query += fmt.Sprintf(" ORDER BY b.created_at DESC LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, req.Limit, req.Offset)
-
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	page, args := query.page(" ORDER BY l.created_at DESC, l.id", req.Limit, req.Offset)
+	rows, err := r.db.QueryContext(ctx, "SELECT "+borrowingJSON+page, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var res pb.BorrowingsGetAllRes
-	for rows.Next() {
-		var b pb.BorrowingGetRes
-		var book pb.BookGetRes
-		var user pb.UserGetRes
-		var publisherID, coverFileID string
-		var extension_date, returned_at, updated_at sql.NullString
-
-		err := rows.Scan(
-			&b.Id, &b.FromDate, &b.DueDate, &extension_date, &b.Status, &returned_at, &b.Notes,
-			&book.Id, &book.Title, &coverFileID, &book.Location, &book.IsReferenceOnly,
-			&book.Description, &book.Isbn, &book.PublishedDate, &publisherID, &book.Language,
-			&book.PageCount, &book.TotalCopies, &book.AvailableCopies,
-			&user.Id, &user.FullName, &user.GroupName, &user.Email, &user.Phone, &user.Role, &user.CreatedAt, &updated_at,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		if extension_date.Valid {
-			b.ExtensionDate = extension_date.String
-		}
-		if returned_at.Valid {
-			b.ReturnedAt = returned_at.String
-		}
-		if updated_at.Valid {
-			user.UpdatedAt = updated_at.String
-		}
-
-		// --- load cover image ---
-		if coverFileID != "" {
-			var file pb.FileGetRes
-			err = r.db.QueryRowContext(ctx, `
-				SELECT id, url, mime_type, size, created_at, updated_at
-				FROM files
-				WHERE id = $1
-			`, coverFileID).Scan(
-				&file.Id, &file.Url, &file.MimeType, &file.Size, &file.CreatedAt, &file.UpdatedAt,
-			)
-			if err != nil && err != sql.ErrNoRows {
-				return nil, err
-			}
-			book.CoverImageId = &file
-		}
-
-		// --- load publisher ---
-		if publisherID != "" {
-			var pub pb.PublisherGetRes
-			err = r.db.QueryRowContext(ctx, `SELECT id, name FROM publishers WHERE id = $1`, publisherID).Scan(&pub.Id, &pub.Name)
-			if err != nil && err != sql.ErrNoRows {
-				return nil, err
-			}
-			book.PublisherId = &pub
-		}
-
-		// --- load categories ---
-		cRows, err := r.db.QueryContext(ctx, `
-			SELECT c.id, c.name 
-			FROM book_categories bc 
-			JOIN categories c ON bc.category_id = c.id 
-			WHERE bc.book_id = $1
-		`, book.Id)
-		if err != nil {
-			return nil, err
-		}
-		for cRows.Next() {
-			var cat pb.CategoryGetRes
-			if err := cRows.Scan(&cat.Id, &cat.Name); err != nil {
-				cRows.Close()
-				return nil, err
-			}
-			book.CategoryIds = append(book.CategoryIds, &cat)
-		}
-		cRows.Close()
-
-		// --- load authors ---
-		aRows, err := r.db.QueryContext(ctx, `
-			SELECT a.id, a.name 
-			FROM book_authors ba 
-			JOIN authors a ON ba.author_id = a.id 
-			WHERE ba.book_id = $1
-		`, book.Id)
-		if err != nil {
-			return nil, err
-		}
-		for aRows.Next() {
-			var author pb.AuthorGetRes
-			if err := aRows.Scan(&author.Id, &author.Name); err != nil {
-				aRows.Close()
-				return nil, err
-			}
-			book.AuthorIds = append(book.AuthorIds, &author)
-		}
-		aRows.Close()
-
-		b.Book = &book
-		b.User = &user
-		res.Borrowings = append(res.Borrowings, &b)
-	}
-
-	// --- count query ---
-	countQuery := `SELECT COUNT(*) FROM borrowings b
-		JOIN books bo ON bo.id = b.book_id
-		JOIN users u ON u.id = b.user_id
-		WHERE 1=1`
-	countArgs := []interface{}{}
-	argCount = 1
-
-	if req.Search != "" {
-		countQuery += fmt.Sprintf(` AND (
-			bo.title ILIKE $%d OR
-			u.full_name ILIKE $%d OR
-			EXISTS (
-				SELECT 1 FROM book_authors ba 
-				JOIN authors a ON a.id = ba.author_id 
-				WHERE ba.book_id = bo.id AND a.name ILIKE $%d
-			)
-		)`, argCount, argCount, argCount)
-		countArgs = append(countArgs, "%"+req.Search+"%")
-		argCount++
-	}
-	if req.FromDate != "" {
-		countQuery += fmt.Sprintf(" AND b.from_date >= $%d", argCount)
-		countArgs = append(countArgs, req.FromDate)
-		argCount++
-	}
-	if req.DueDate != "" {
-		countQuery += fmt.Sprintf(" AND b.due_date <= $%d", argCount)
-		countArgs = append(countArgs, req.DueDate)
-		argCount++
-	}
-	if req.Status != "" {
-		countQuery += fmt.Sprintf(" AND b.status = $%d", argCount)
-		countArgs = append(countArgs, req.Status)
-		argCount++
-	}
-
-	err = r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&res.TotalCount)
+	borrowings, err := readJSONList[pb.BorrowingGetRes](rows)
 	if err != nil {
 		return nil, err
 	}
-
-	return &res, nil
+	var total int64
+	if err := r.db.QueryRowContext(ctx, "SELECT count(*)"+query.where, query.args...).Scan(&total); err != nil {
+		return nil, err
+	}
+	return &pb.BorrowingsGetAllRes{Borrowings: borrowings, TotalCount: total}, nil
 }

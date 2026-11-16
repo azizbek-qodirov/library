@@ -31,8 +31,9 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
         <form onSubmit={handleSubmit}>
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold">Full Name *</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-full-name">Full Name *</label>
               <input
+                id="borrower-full-name"
                 type="text"
                 className="form-control"
                 value={formData.full_name}
@@ -41,8 +42,9 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold">Group Name</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-group-name">Group Name</label>
               <input
+                id="borrower-group-name"
                 type="text"
                 className="form-control"
                 value={formData.group_name}
@@ -52,8 +54,9 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
           </div>
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold">Email</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-email">Email</label>
               <input
+                id="borrower-email"
                 type="email"
                 className="form-control"
                 value={formData.email}
@@ -61,8 +64,9 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold">Phone</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-phone">Phone</label>
               <input
+                id="borrower-phone"
                 type="tel"
                 className="form-control"
                 value={formData.phone}
@@ -71,8 +75,9 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
             </div>
           </div>
           <div className="mb-4">
-            <label className="form-label fw-semibold">Role *</label>
+            <label className="form-label fw-semibold" htmlFor="borrower-role">Role *</label>
             <select
+              id="borrower-role"
               className="form-select"
               value={formData.role}
               onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'student' | 'teacher' }))}
