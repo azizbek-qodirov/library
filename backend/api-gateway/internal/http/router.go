@@ -118,6 +118,8 @@ func NewRouter(h *handlers.HTTPHandler, logger *l.Logger, cfg *config.Config) *g
 	// Books
 	staff.POST("/book", h.CreateBook)
 	router.GET("/book/:id", h.GetBookByID)
+	staff.GET("/book/:id/copies", h.ListBookCopies)
+	staff.GET("/copy/:barcode", h.GetCopyByBarcode)
 	staff.PUT("/book/:id", h.UpdateBook)
 	staff.DELETE("/book/:id", h.DeleteBook)
 	router.GET("/books", h.GetAllBooks)

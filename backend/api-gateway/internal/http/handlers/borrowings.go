@@ -43,6 +43,12 @@ func (h *HTTPHandler) CreateBorrowing(c *gin.Context) {
 		return
 	}
 
+	if req.CopyId != "" {
+		if err := validation.ValidateUUID(req.CopyId, "Copy ID"); err != nil {
+			errors.ValidationError(c, err)
+			return
+		}
+	}
 	if req.RequestId != "" {
 		if err := validation.ValidateUUID(req.RequestId, "Request ID"); err != nil {
 			errors.ValidationError(c, err)

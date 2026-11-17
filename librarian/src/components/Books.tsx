@@ -1,9 +1,12 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { usePaginatedList } from './usePaginatedList';
 import { readAPI, staffFetch } from './api';
 import React, { useEffect, useState, useRef } from 'react';
 import type { Book, BookFormData } from './types';
 import { API_BASE_URL } from './types';
 import BookEditor from './BookEditor';
+import CopyLabels from './CopyLabels';
 
 interface SavedData {
     showForm?: boolean;
@@ -19,6 +22,7 @@ interface Props {
 }
 
 const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
+  const { t } = useI18n();
     const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<BookFormData>({
@@ -38,6 +42,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         cover_image_file: null,
         cover_image_id: ''
     });
+    const [labelBook, setLabelBook] = useState<Book | null>(null);
     const [editingBook, setEditingBook] = useState<Book | null>(null);
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; book: Book | null }>({
         isOpen: false,
@@ -60,7 +65,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     const itemsPerPage = 20;
     const {
       items: books, total: totalBooks, loading, error, currentPage, setCurrentPage, reload: fetchBooks,
-    } = usePaginatedList<Book>('/books', 'books', 'total_count', searchQuery);
+    } = usePaginatedList<Book>('/books', t("books"), 'total_count', searchQuery);
     const totalPages = Math.ceil(totalBooks / itemsPerPage);
 
     // Restore saved data
@@ -80,13 +85,13 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         if (file) {
             // Validate file type
             if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
-                alert('Choose a JPEG, PNG, GIF, or WebP image.');
+                alert(t("Choose a JPEG, PNG, GIF, or WebP image."));
                 return;
             }
 
             // Validate file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert('File size must be less than 5MB');
+                alert(t("File size must be less than 5MB"));
                 return;
             }
 
@@ -119,11 +124,11 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     const handleSave = async () => {
         const year = Number(formData.publication_year);
         if (formData.publication_year && (!Number.isInteger(year) || year < 1 || year > 9999)) {
-            alert('Edition year must be between 1 and 9999.');
+            alert(t("Edition year must be between 1 and 9999."));
             return;
         }
-        if (!formData.title.trim() || !formData.isbn.trim()) {
-            alert('Title and ISBN are required');
+        if (!formData.title.trim()) {
+            alert(t("Title is required"));
             return;
         }
 
@@ -169,7 +174,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             actionAbortController.current = null;
             handleCancelForm();
             fetchBooks();
-            alert(`Book ${editingBook ? 'updated' : 'created'} successfully!`);
+            alert(t(editingBook ? "Book updated successfully!" : "Book created successfully!"));
         } catch (error) {
             if (uploadedCoverID) {
                 // A timed-out save may have committed. The API refuses to delete attached covers.
@@ -184,7 +189,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                 return;
             }
             console.error('Error saving book:', error);
-            alert(`Failed to save book. ${error instanceof Error ? error.message : 'Please try again.'}`);
+            alert(t("Failed to save book.") + " " + (error instanceof Error ? error.message : t("Please try again.")));
         } finally {
             setActionLoading(false);
         }
@@ -206,20 +211,20 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(errorText || 'Failed to delete book');
+                throw new Error(errorText || t("Failed to delete book"));
             }
 
             actionAbortController.current = null;
             setDeleteModal({ isOpen: false, book: null });
             fetchBooks();
-            alert('Book deleted successfully!');
+            alert(t("Book deleted successfully!"));
         } catch (error) {
             if (error instanceof Error && error.name === 'AbortError') {
                 // Operation was cancelled, do nothing
                 return;
             }
             console.error('Error deleting book:', error);
-            alert(`Failed to delete book. ${error instanceof Error ? error.message : 'Please try again.'}`);
+            alert(t("Failed to delete book") + " " + (error instanceof Error ? error.message : t("Please try again.")));
         } finally {
             setActionLoading(false);
         }
@@ -281,7 +286,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
             >
-                « Prev
+                {t("« Prev")}
             </button>
         );
 
@@ -344,7 +349,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
             >
-                Next »
+                {t("Next »")}
             </button>
         );
 
@@ -368,25 +373,25 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         <div onClick={saveCurrentState}>
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 className="mb-1">Books Management</h3>
-                    <p className="text-muted mb-0">Manage library book inventory</p>
+                    <h3 className="mb-1">{t("Books Management")}</h3>
+                    <p className="text-muted mb-0">{t("Manage library book inventory")}</p>
                 </div>
                 <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => setShowForm(true)}>
-                    <span>+</span>
-                    Add New Book
+                    <span aria-hidden="true">+</span>
+                    {t("Add New Book")}
                 </button>
             </div>
 
             {/* Search Card */}
             <div className="card mb-4 shadow-sm">
                 <div className="card-header bg-light">
-                    <h6 className="mb-0">Search Books</h6>
+                    <h6 className="mb-0">{t("Search Books")}</h6>
                 </div>
                 <div className="card-body">
                     <input
                         type="text"
                         className="form-control"
-                        placeholder="Search by title, ISBN, or author name..."
+                        placeholder={t("Search by title, author, ISBN, or barcode…")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -396,22 +401,24 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             {/* Error Alert */}
             {error && (
                 <div className="alert alert-danger alert-dismissible" role="alert">
-                    <strong>Error!</strong> {error}
-                    <button type="button" className="btn btn-outline-danger btn-sm ms-2" onClick={fetchBooks}>Retry</button>
+                    <strong>{t("Error!")}</strong> {t("Could not load records.")}
+                    <button type="button" className="btn btn-outline-danger btn-sm ms-2" onClick={fetchBooks}>{t("Retry")}</button>
                 </div>
             )}
+
+            {labelBook && <CopyLabels key={labelBook.id} book={labelBook} onClose={() => setLabelBook(null)} />}
 
             {/* Books Table */}
             <div className="card shadow-sm">
                 <div className="card-header bg-white">
                     <div className="row align-items-center">
                         <div className="col">
-                            <h6 className="mb-0">All Books</h6>
+                            <h6 className="mb-0">{t("All Books")}</h6>
                         </div>
                         <div className="col-auto">
                             <div className="d-flex gap-4 small text-muted">
-                                <span>Total: <strong>{totalBooks}</strong></span>
-                                <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+                                <span>{t("Total:")} <strong>{totalBooks}</strong></span>
+                                {totalPages > 1 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
                             </div>
                         </div>
                     </div>
@@ -420,23 +427,23 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                     {loading ? (
                         <div className="text-center p-5">
                             <div className="spinner-border text-primary" role="status">
-                                <span className="visually-hidden">Loading...</span>
+                                <span className="visually-hidden">{t("Loading...")}</span>
                             </div>
-                            <p className="mt-3 text-muted">Loading books...</p>
+                            <p className="mt-3 text-muted">{t("Loading books...")}</p>
                         </div>
                     ) : books.length === 0 ? (
                         <div className="text-center p-5">
-                            <div className="text-muted mb-3" style={{ fontSize: '3rem' }}>📚</div>
-                            <h5>No Books Found</h5>
+                            <div className="text-muted mb-3" style={{ fontSize: '3rem' }}><Icon name="library" size={28} /></div>
+                            <h5>{t("No Books Found")}</h5>
                             <p className="text-muted mb-4">
                                 {searchQuery
-                                    ? 'No books match your search query.'
-                                    : 'No books have been added yet.'
+                                    ? t("No books match your search query.")
+                                    : t("No books have been added yet.")
                                 }
                             </p>
                             {!searchQuery && (
                                 <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                                    Add First Book
+                                    {t("Add First Book")}
                                 </button>
                             )}
                         </div>
@@ -445,19 +452,19 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                             <table className="table table-hover mb-0 library-record-table" role="table">
                                 <thead role="rowgroup" className="table-light">
                                     <tr role="row">
-                                        <th role="columnheader" scope="col" className="border-0 fw-semibold" style={{ width: '80px' }}>Cover</th>
-                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Title</th>
-                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Authors</th>
-                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">ISBN</th>
-                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Location</th>
-                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">Copies</th>
-                                        <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">Actions</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold" style={{ width: '80px' }}>{t("Cover")}</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Title")}</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Authors")}</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("ISBN")}</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Location")}</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Copies")}</th>
+                                        <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">{t("Actions")}</th>
                                     </tr>
                                 </thead>
                                 <tbody role="rowgroup">
                                     {books.map((book) => (
                                         <tr role="row" key={book.id}>
-                                            <td role="cell" data-label="Cover" className="py-3">
+                                            <td role="cell" data-label={t("Cover")} className="py-3">
                                                 {book.cover_image_id?.url ? (
                                                     <img
                                                         src={book.cover_image_id.url}
@@ -470,27 +477,27 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                                                         className="bg-light d-flex align-items-center justify-content-center rounded border"
                                                         style={{ width: '50px', height: '70px', fontSize: '1.5rem' }}
                                                     >
-                                                        📖
+                                                        <Icon name="book" size={28} />
                                                     </div>
                                                 )}
                                             </td>
-                                            <td role="cell" data-label="Title" className="py-3">
+                                            <td role="cell" data-label={t("Title")} className="py-3">
                                                 <div className="fw-medium">{book.title}</div>
                                                 {book.is_reference_only && (
-                                                    <span className="badge bg-warning text-dark small mt-1">Reference Only</span>
+                                                    <span className="badge bg-warning text-dark small mt-1">{t("Reference Only")}</span>
                                                 )}
                                             </td>
-                                            <td role="cell" data-label="Authors" className="py-3 text-muted small">
+                                            <td role="cell" data-label={t("Authors")} className="py-3 text-muted small">
                                                 {(book.author_ids?.length ?? 0) > 0 ? book.author_ids?.map(a => a.name).join(', ') : '-'}
                                             </td>
-                                            <td role="cell" data-label="ISBN" className="py-3 text-muted">{book.isbn}</td>
-                                            <td role="cell" data-label="Location" className="py-3 text-muted">{book.location || '-'}</td>
-                                            <td role="cell" data-label="Copies" className="py-3">
+                                            <td role="cell" data-label={t("ISBN")} className="py-3 text-muted">{book.isbn || "—"}</td>
+                                            <td role="cell" data-label={t("Location")} className="py-3 text-muted">{book.location || '-'}</td>
+                                            <td role="cell" data-label={t("Copies")} className="py-3">
                                                 <span className={`badge ${(book.available_copies ?? 0) > 0 ? 'bg-success' : 'bg-danger'}`}>
                                                     {book.available_copies ?? 0}/{book.total_copies ?? 0}
                                                 </span>
                                             </td>
-                                            <td role="cell" data-label="Actions" className="py-3 text-end">
+                                            <td role="cell" data-label={t("Actions")} className="py-3 text-end">
                                                 <div className="btn-group btn-group-sm">
                                                     <button
                                                         className="btn btn-outline-primary"
@@ -498,7 +505,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                                                             setEditingBook(book);
                                                             setFormData({
                                                                 title: book.title,
-                                                                isbn: book.isbn,
+                                                                isbn: book.isbn ?? '',
                                                                 location: book.location ?? '',
                                                                 is_reference_only: book.is_reference_only ?? false,
                                                                 description: book.description ?? '',
@@ -516,16 +523,19 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                                                             setImagePreview(book.cover_image_id?.url || null);
                                                             setShowForm(true);
                                                         }}
-                                                        title="Edit book"
+                                                        title={t("Edit book")}
                                                     >
-                                                        Edit
+                                                        {t("Edit")}
+                                                    </button>
+                                                    <button className="btn btn-outline-secondary" onClick={() => setLabelBook(book)}>
+                                                        {t("Labels")}
                                                     </button>
                                                     <button
                                                         className="btn btn-outline-danger"
                                                         onClick={() => setDeleteModal({ isOpen: true, book })}
-                                                        title="Delete book"
+                                                        title={t("Delete book")}
                                                     >
-                                                        Delete
+                                                        {t("Delete")}
                                                     </button>
                                                 </div>
                                             </td>
@@ -546,14 +556,14 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content shadow">
                             <div className="modal-header border-0 pb-0">
-                                <h5 className="modal-title text-danger">Confirm Delete</h5>
-                                <button type="button" className="btn-close" onClick={() => setDeleteModal({ isOpen: false, book: null })}></button>
+                                <h5 className="modal-title text-danger">{t("Confirm Delete")}</h5>
+                                <button type="button" className="btn-close" aria-label={t("Close")} onClick={() => setDeleteModal({ isOpen: false, book: null })}></button>
                             </div>
                             <div className="modal-body">
                                 <div className="text-center mb-3">
-                                    <div className="text-danger mb-3" style={{ fontSize: '3rem' }}>⚠️</div>
-                                    <p className="mb-2">Are you sure you want to delete <strong>{deleteModal.book?.title}</strong>?</p>
-                                    <p className="text-muted small">This action cannot be undone.</p>
+                                    <div className="text-danger mb-3" style={{ fontSize: '3rem' }}><Icon name="warning" size={28} /></div>
+                                    <p className="mb-2">{t("Are you sure you want to delete “{name}”?", { name: deleteModal.book?.title ?? "" })}</p>
+                                    <p className="text-muted small">{t("This action cannot be undone.")}</p>
                                 </div>
                             </div>
                             <div className="modal-footer border-0 pt-0">
@@ -569,7 +579,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                                         setDeleteModal({ isOpen: false, book: null });
                                     }}
                                 >
-                                    Cancel
+                                    {t("Cancel")}
                                 </button>
                                 <button
                                     type="button"
@@ -580,10 +590,10 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                                     {actionLoading ? (
                                         <>
                                             <span className="spinner-border spinner-border-sm me-2"></span>
-                                            Deleting...
+                                            {t("Deleting...")}
                                         </>
                                     ) : (
-                                        'Delete'
+                                        t("Delete")
                                     )}
                                 </button>
                             </div>

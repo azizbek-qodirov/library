@@ -23,7 +23,7 @@ func NewBookService(db *sql.DB) *BookService {
 }
 
 func (s *BookService) CreateBook(ctx context.Context, req *pb.BookCreateReq) (*pb.Void, error) {
-	if err := validateBook(req.Title, req.Isbn, req.GetPublishedDate(), req.PageCount, req.TotalCopies, req.GetPublicationYear()); err != nil {
+	if err := validateBook(req.Title, req.GetPublishedDate(), req.PageCount, req.TotalCopies, req.GetPublicationYear()); err != nil {
 		return nil, err
 	}
 	return s.repo.CreateBook(ctx, req)
@@ -38,7 +38,7 @@ func (s *BookService) UpdateBook(ctx context.Context, req *pb.BookUpdateReq) (*p
 	if body == nil {
 		return nil, status.Error(codes.InvalidArgument, "book update body is required")
 	}
-	if err := validateBook(body.Title, body.Isbn, body.GetPublishedDate(), body.PageCount, body.TotalCopies, body.GetPublicationYear()); err != nil {
+	if err := validateBook(body.Title, body.GetPublishedDate(), body.PageCount, body.TotalCopies, body.GetPublicationYear()); err != nil {
 		return nil, err
 	}
 	return s.repo.UpdateBook(ctx, req)
@@ -52,9 +52,9 @@ func (s *BookService) GetAllBooks(ctx context.Context, req *pb.BooksGetAllReq) (
 	return s.repo.GetAllBooks(ctx, req)
 }
 
-func validateBook(title, isbn, publishedDate string, pages, copies, year int32) error {
-	if strings.TrimSpace(title) == "" || strings.TrimSpace(isbn) == "" {
-		return status.Error(codes.InvalidArgument, "title and ISBN are required")
+func validateBook(title, publishedDate string, pages, copies, year int32) error {
+	if strings.TrimSpace(title) == "" {
+		return status.Error(codes.InvalidArgument, "title is required")
 	}
 	if pages <= 0 || copies < 0 {
 		return status.Error(codes.InvalidArgument, "page count must be positive and total copies cannot be negative")
@@ -72,4 +72,12 @@ func validateBook(title, isbn, publishedDate string, pages, copies, year int32) 
 		}
 	}
 	return nil
+}
+
+func (s *BookService) GetCopyByBarcode(ctx context.Context, req *pb.CopyBarcodeReq) (*pb.CopyLookupRes, error) {
+	return s.repo.GetCopyByBarcode(ctx, strings.ToUpper(strings.TrimSpace(req.GetBarcode())))
+}
+
+func (s *BookService) ListBookCopies(ctx context.Context, req *pb.ByID) (*pb.BookCopiesRes, error) {
+	return s.repo.ListBookCopies(ctx, req.Id)
 }

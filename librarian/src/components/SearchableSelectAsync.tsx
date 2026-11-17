@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import React, { useState, useRef, useEffect } from 'react';
 
 interface Option {
@@ -26,7 +27,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
   value,
   onChange,
   fetchOptions,
-  placeholder = 'Search and select...',
+  placeholder,
   multiple = false,
   disabled = false,
   className = '',
@@ -34,6 +35,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
   required = false,
   initialOptions = EMPTY_OPTIONS
 }) => {
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -184,7 +186,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
 
     // If option not found and loading, show truncated UUID
     if (options.length === 0) {
-      return 'Loading...';
+      return t("Loading...");
     }
 
     // Show truncated UUID with ellipsis
@@ -220,7 +222,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
                     className="btn-close btn-close-white"
                     style={{ fontSize: '0.5rem', padding: '0.25rem' }}
                     onClick={(e) => handleRemove(val, e)}
-                    aria-label="Remove"
+                    aria-label={t("Remove")}
                   />
                 )}
               </span>
@@ -259,15 +261,15 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
             }}
           >
             {error ? (
-              <p className="p-2 mb-0 text-danger" role="alert">Could not load options.</p>
+              <p className="p-2 mb-0 text-danger" role="alert">{t("Could not load options.")}</p>
             ) : loading ? (
               <div className="p-3 text-center text-muted">
                 <div className="spinner-border spinner-border-sm me-2"></div>
-                Loading...
+                {t("Loading...")}
               </div>
             ) : options.length === 0 ? (
               <div className="p-3 text-center text-muted">
-                No options found
+                {t("No options found")}
               </div>
             ) : (
               options.map((option, index) => {
@@ -315,7 +317,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
         )}
       </div>
       <small className="text-muted">
-        {multiple && selectedValues.length > 0 && `${selectedValues.length} selected`}
+        {multiple && selectedValues.length > 0 && t("Selected: {count}", { count: selectedValues.length })}
       </small>
     </div>
   );

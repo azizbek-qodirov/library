@@ -9,7 +9,7 @@ export function usePaginatedList<T>(
   const [items, setItems] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(search.trim());
   const [pageState, setPageState] = useState({ filter: '', number: 1 });
   const [revision, setRevision] = useState(0);
@@ -44,7 +44,7 @@ export function usePaginatedList<T>(
 
     async function load() {
       setLoading(true);
-      setError(null);
+      setError(false);
       try {
         const data = await readAPI<Record<string, T[] | number | undefined>>(`${path}?${params}`, { signal });
         if (signal.aborted) return;
@@ -56,7 +56,10 @@ export function usePaginatedList<T>(
         const lastPage = Math.max(1, Math.ceil(count / pageSize));
         if (currentPage > lastPage) setCurrentPage(lastPage);
       } catch (err) {
-        if (!signal.aborted) setError(err instanceof Error ? err.message : 'Could not load records.');
+        if (!signal.aborted) {
+          console.error('Failed to load records:', err);
+          setError(true);
+        }
       } finally {
         if (!signal.aborted) setLoading(false);
       }

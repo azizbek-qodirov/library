@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import React, { useState, useRef, useEffect } from 'react';
 
 interface Option {
@@ -23,13 +24,14 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   options,
   value,
   onChange,
-  placeholder = 'Search and select...',
+  placeholder,
   multiple = false,
   disabled = false,
   className = '',
   label,
   required = false
 }) => {
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -122,7 +124,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     }
     // If option not found and loading, show truncated UUID
     if (options.length === 0) {
-      return 'Loading...';
+      return t("Loading...");
     }
     // Show truncated UUID with ellipsis
     return id.length > 8 ? id.substring(0, 8) + '...' : id;
@@ -157,7 +159,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     className="btn-close btn-close-white"
                     style={{ fontSize: '0.5rem', padding: '0.25rem' }}
                     onClick={(e) => handleRemove(val, e)}
-                    aria-label="Remove"
+                    aria-label={t("Remove")}
                   />
                 )}
               </span>
@@ -198,7 +200,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           >
             {filteredOptions.length === 0 ? (
               <div className="p-3 text-center text-muted">
-                No options found
+                {t("No options found")}
               </div>
             ) : (
               filteredOptions.map((option, index) => {
@@ -246,7 +248,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         )}
       </div>
       <small className="text-muted">
-        {multiple && selectedValues.length > 0 && `${selectedValues.length} selected`}
+        {multiple && selectedValues.length > 0 && t("Selected: {count}", { count: selectedValues.length })}
       </small>
     </div>
   );

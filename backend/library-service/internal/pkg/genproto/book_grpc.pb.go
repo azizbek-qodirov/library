@@ -19,11 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BookService_CreateBook_FullMethodName  = "/protos.BookService/CreateBook"
-	BookService_GetBook_FullMethodName     = "/protos.BookService/GetBook"
-	BookService_UpdateBook_FullMethodName  = "/protos.BookService/UpdateBook"
-	BookService_DeleteBook_FullMethodName  = "/protos.BookService/DeleteBook"
-	BookService_GetAllBooks_FullMethodName = "/protos.BookService/GetAllBooks"
+	BookService_CreateBook_FullMethodName       = "/protos.BookService/CreateBook"
+	BookService_GetBook_FullMethodName          = "/protos.BookService/GetBook"
+	BookService_GetCopyByBarcode_FullMethodName = "/protos.BookService/GetCopyByBarcode"
+	BookService_ListBookCopies_FullMethodName   = "/protos.BookService/ListBookCopies"
+	BookService_UpdateBook_FullMethodName       = "/protos.BookService/UpdateBook"
+	BookService_DeleteBook_FullMethodName       = "/protos.BookService/DeleteBook"
+	BookService_GetAllBooks_FullMethodName      = "/protos.BookService/GetAllBooks"
 )
 
 // BookServiceClient is the client API for BookService service.
@@ -32,6 +34,8 @@ const (
 type BookServiceClient interface {
 	CreateBook(ctx context.Context, in *BookCreateReq, opts ...grpc.CallOption) (*Void, error)
 	GetBook(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*BookGetRes, error)
+	GetCopyByBarcode(ctx context.Context, in *CopyBarcodeReq, opts ...grpc.CallOption) (*CopyLookupRes, error)
+	ListBookCopies(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*BookCopiesRes, error)
 	UpdateBook(ctx context.Context, in *BookUpdateReq, opts ...grpc.CallOption) (*Void, error)
 	DeleteBook(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
 	GetAllBooks(ctx context.Context, in *BooksGetAllReq, opts ...grpc.CallOption) (*BooksGetAllRes, error)
@@ -59,6 +63,26 @@ func (c *bookServiceClient) GetBook(ctx context.Context, in *ByID, opts ...grpc.
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BookGetRes)
 	err := c.cc.Invoke(ctx, BookService_GetBook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookServiceClient) GetCopyByBarcode(ctx context.Context, in *CopyBarcodeReq, opts ...grpc.CallOption) (*CopyLookupRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CopyLookupRes)
+	err := c.cc.Invoke(ctx, BookService_GetCopyByBarcode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookServiceClient) ListBookCopies(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*BookCopiesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BookCopiesRes)
+	err := c.cc.Invoke(ctx, BookService_ListBookCopies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +125,8 @@ func (c *bookServiceClient) GetAllBooks(ctx context.Context, in *BooksGetAllReq,
 type BookServiceServer interface {
 	CreateBook(context.Context, *BookCreateReq) (*Void, error)
 	GetBook(context.Context, *ByID) (*BookGetRes, error)
+	GetCopyByBarcode(context.Context, *CopyBarcodeReq) (*CopyLookupRes, error)
+	ListBookCopies(context.Context, *ByID) (*BookCopiesRes, error)
 	UpdateBook(context.Context, *BookUpdateReq) (*Void, error)
 	DeleteBook(context.Context, *ByID) (*Void, error)
 	GetAllBooks(context.Context, *BooksGetAllReq) (*BooksGetAllRes, error)
@@ -119,6 +145,12 @@ func (UnimplementedBookServiceServer) CreateBook(context.Context, *BookCreateReq
 }
 func (UnimplementedBookServiceServer) GetBook(context.Context, *ByID) (*BookGetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBook not implemented")
+}
+func (UnimplementedBookServiceServer) GetCopyByBarcode(context.Context, *CopyBarcodeReq) (*CopyLookupRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCopyByBarcode not implemented")
+}
+func (UnimplementedBookServiceServer) ListBookCopies(context.Context, *ByID) (*BookCopiesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBookCopies not implemented")
 }
 func (UnimplementedBookServiceServer) UpdateBook(context.Context, *BookUpdateReq) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateBook not implemented")
@@ -182,6 +214,42 @@ func _BookService_GetBook_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BookServiceServer).GetBook(ctx, req.(*ByID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookService_GetCopyByBarcode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CopyBarcodeReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookServiceServer).GetCopyByBarcode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookService_GetCopyByBarcode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookServiceServer).GetCopyByBarcode(ctx, req.(*CopyBarcodeReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookService_ListBookCopies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookServiceServer).ListBookCopies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookService_ListBookCopies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookServiceServer).ListBookCopies(ctx, req.(*ByID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -254,6 +322,14 @@ var BookService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBook",
 			Handler:    _BookService_GetBook_Handler,
+		},
+		{
+			MethodName: "GetCopyByBarcode",
+			Handler:    _BookService_GetCopyByBarcode_Handler,
+		},
+		{
+			MethodName: "ListBookCopies",
+			Handler:    _BookService_ListBookCopies_Handler,
 		},
 		{
 			MethodName: "UpdateBook",

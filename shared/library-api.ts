@@ -31,7 +31,7 @@ export interface CoverFile {
 export interface Book {
   id: string;
   title: string;
-  isbn: string;
+  isbn?: string;
   cover_image_id?: CoverFile;
   location?: string;
   is_reference_only?: boolean;
@@ -64,9 +64,21 @@ export interface Recommended {
   created_at: string;
 }
 
+export interface BookCopy {
+  id: string;
+  barcode: string;
+  status?: 'available' | 'borrowed' | 'lost' | 'retired';
+}
+
+export interface CopyLookup {
+  book: Book;
+  copy: BookCopy;
+}
+
 export interface Borrowing {
   id: string;
   book: Book;
+  copy?: BookCopy;
   user: User;
   from_date: string;
   due_date: string;

@@ -1,4 +1,9 @@
-import { useState } from 'react';
+import { Icon } from '../../../shared/Icon';
+import type { IconName } from '../../../shared/Icon';
+import { useI18n } from '../../../shared/i18n';
+import type { Message } from '../../../shared/i18n';
+import { LanguageSelect } from '../../../shared/LanguageSelect';
+import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 
 import AuthorsSection from './Authors';
@@ -23,19 +28,34 @@ const LibrarianDashboard = ({ onSignOut }: { onSignOut: () => void }) => {
   const [activeSection, setActiveSection] = useState<keyof SectionData>('users');
   const [savedSectionData, setSavedSectionData] = useState<Partial<SectionData>>({});
 
-  const menuItems: { id: keyof SectionData; label: string; icon: string; description: string }[] = [
-    { id: 'users', label: 'Users', icon: '👥', description: 'Manage students & teachers' },
-    { id: 'categories', label: 'Categories', icon: '📂', description: 'Book categories' },
-    { id: 'authors', label: 'Authors', icon: '✍️', description: 'Author information' },
-    { id: 'publishers', label: 'Publishers', icon: '🏢', description: 'Publishing houses' },
-    { id: 'books', label: 'Books', icon: '📚', description: 'Library inventory' },
-    { id: 'borrowings', label: 'Borrowings', icon: '📋', description: 'Loan management' },
-    { id: 'recommended', label: 'Recommended', icon: '⭐', description: 'Featured books' }
+  const { t } = useI18n();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const navigation = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (menuOpen) navigation.current?.querySelector<HTMLButtonElement>('[aria-current="page"]')?.focus();
+  }, [menuOpen]);
+  const menuItems: { id: keyof SectionData; label: Message; icon: IconName }[] = [
+    { id: 'users', label: 'Users', icon: 'users' },
+    { id: 'books', label: 'Books', icon: 'book' },
+    { id: 'borrowings', label: 'Borrowings', icon: 'loans' },
+    { id: 'categories', label: 'Categories', icon: 'folder' },
+    { id: 'authors', label: 'Authors', icon: 'pen' },
+    { id: 'publishers', label: 'Publishers', icon: 'building' },
+    { id: 'recommended', label: 'Recommended', icon: 'star' },
   ];
+  const activeItem = menuItems.find(item => item.id === activeSection)!;
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+    menuButton.current?.focus();
+  };
 
   const handleSectionChange = (sectionId: keyof SectionData) => {
+    if (menuOpen) closeMenu();
     setActiveSection(sectionId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0 });
   };
 
   const handleSectionDataChange = <K extends keyof SectionData>(sectionId: K, data: SectionData[K]) => {
@@ -65,114 +85,54 @@ const LibrarianDashboard = ({ onSignOut }: { onSignOut: () => void }) => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      <div className="container-fluid p-0">
-        <div className="row g-0">
-          {/* Sidebar */}
-          <div className="col-md-3 col-lg-2 library-sidebar">
-            {/* Header */}
-            <div className="p-3 text-white border-bottom border-secondary">
-              <div className="d-flex align-items-center gap-2">
-                <div style={{ fontSize: '1.5rem' }}>📚</div>
-                <div>
-                  <h6 className="mb-0 fw-bold">Library Admin</h6>
-                  <button className="btn btn-link btn-sm text-white p-0" onClick={onSignOut}>Sign out</button>
-                  <small className="text-muted" style={{ fontSize: '0.75rem' }}>Management Dashboard</small>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="nav library-sidebar-nav p-3">
-              {menuItems.map((item) => (
-                <button
-                  key={item.id}
-                  className={`nav-link text-start border-0 rounded mb-2 position-relative ${
-                    activeSection === item.id 
-                      ? 'bg-primary text-white shadow-sm' 
-                      : 'text-light bg-transparent'
-                  }`}
-                  onClick={() => handleSectionChange(item.id)}
-                  style={{ 
-                    transition: 'all 0.3s ease',
-                    padding: '0.75rem 1rem',
-                    fontSize: '0.9rem',
-                    fontWeight: activeSection === item.id ? '600' : '400'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (activeSection !== item.id) {
-                      e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
-                      e.currentTarget.style.transform = 'translateX(5px)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activeSection !== item.id) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                    }
-                  }}
-                  aria-current={activeSection === item.id ? "page" : undefined}
-                  title={item.description}
-                >
-                  <div className="d-flex align-items-center gap-2">
-                    <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
-                    <span>{item.label}</span>
-                  </div>
-                  {savedSectionData[item.id] && (
-                    <div className="position-absolute" style={{ top: '8px', right: '8px' }}>
-                      <span 
-                        className="badge rounded-pill" 
-                        style={{ 
-                          backgroundColor: '#ffc107',
-                          fontSize: '0.6rem',
-                          padding: '3px 6px'
-                        }}
-                        title="Unsaved changes"
-                      >
-                        ●
-                      </span>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </nav>
-
-            {/* Footer */}
-            <div className="library-sidebar-footer w-100 p-3 text-center border-top border-secondary">
-              <small className="text-muted" style={{ fontSize: '0.7rem' }}>
-                University Library System v1.0
-              </small>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="col-md-9 col-lg-10 ms-auto">
-            <div className="p-3 p-md-4">
-              {/* Breadcrumb */}
-              <nav aria-label="breadcrumb" className="mb-3">
-                <ol className="breadcrumb">
-                  <li className="breadcrumb-item">
-                    <a href="#" className="text-decoration-none" onClick={(e) => {
-                      e.preventDefault();
-                      setActiveSection('users');
-                    }}>
-                      Dashboard
-                    </a>
-                  </li>
-                  <li className="breadcrumb-item active" aria-current="page">
-                    {menuItems.find(i => i.id === activeSection)?.label}
-                  </li>
-                </ol>
-              </nav>
-
-              {/* Content Area */}
-              <div className="content-wrapper">
-                {renderActiveSection()}
-              </div>
-            </div>
-          </div>
+    <div className="staff-shell" onKeyDown={event => {
+      if (event.key === 'Escape' && menuOpen) closeMenu();
+    }}>
+      <header className="staff-header">
+        <button className="staff-icon-button staff-menu-toggle" ref={menuButton} type="button"
+          aria-label={t(menuOpen ? 'Close navigation' : 'Open navigation')}
+          aria-expanded={menuOpen} aria-controls="staff-navigation" onClick={() => setMenuOpen(open => !open)}>
+          <Icon name={menuOpen ? 'close' : 'menu'} />
+        </button>
+        <div className="staff-brand">
+          <span className="staff-brand-icon"><Icon name="library" size={22} /></span>
+          <strong>{t('Oxus Library')}</strong>
         </div>
-      </div>
+        <div className="staff-header-actions">
+          <LanguageSelect />
+          <button className="staff-icon-button staff-sign-out" type="button"
+            aria-label={t('Sign out')} title={t('Sign out')} onClick={onSignOut}>
+            <Icon name="logout" size={18} />
+            <span>{t('Sign out')}</span>
+          </button>
+        </div>
+      </header>
+      {menuOpen && <div className="staff-menu-backdrop" aria-hidden="true" onClick={closeMenu} />}
+      <aside className={`library-sidebar${menuOpen ? ' is-open' : ''}`} id="staff-navigation">
+        <nav ref={navigation} className="library-sidebar-nav" aria-label={t('Dashboard navigation')}>
+          {menuItems.map(item => (
+            <button key={item.id} type="button" className="staff-nav-link"
+              onClick={() => handleSectionChange(item.id)}
+              aria-current={activeSection === item.id ? 'page' : undefined}>
+              <Icon name={item.icon} />
+              <span>{t(item.label)}</span>
+              {savedSectionData[item.id] && (
+                <span className="staff-unsaved" role="img" title={t('Unsaved changes')} aria-label={t('Unsaved changes')} />
+              )}
+            </button>
+          ))}
+        </nav>
+      </aside>
+      <main className="staff-main">
+        <div className="staff-location">
+          <span>{t('Staff dashboard')}</span>
+          <span aria-hidden="true">/</span>
+          <strong>{t(activeItem.label)}</strong>
+        </div>
+        <div className="content-wrapper">
+          {renderActiveSection()}
+        </div>
+      </main>
     </div>
   );
 };

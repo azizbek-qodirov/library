@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	pb "library/internal/pkg/genproto"
@@ -20,6 +21,10 @@ func NewBorrowingRepo(db *sql.DB) *BorrowingRepo {
 	return &BorrowingRepo{db: db}
 }
 
+// Append the selected copy only when supplied so retries from older clients retain their payload.
+const checkoutPayload = `jsonb_build_array($1::uuid, $2::uuid, $3::date, $4::date, $5::text)
+	|| CASE WHEN $7::text = '' THEN '[]'::jsonb ELSE jsonb_build_array($7::uuid) END`
+
 func (r *BorrowingRepo) Create(ctx context.Context, req *pb.BorrowingCreateReq) (*pb.Void, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -31,15 +36,15 @@ func (r *BorrowingRepo) Create(ctx context.Context, req *pb.BorrowingCreateReq) 
 	err = tx.QueryRowContext(ctx, `
 		INSERT INTO borrowings (book_id, user_id, from_date, due_date, notes, request_id, checkout_payload)
 		VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::uuid,
-			CASE WHEN $6 <> '' THEN jsonb_build_array($1::uuid, $2::uuid, $3::date, $4::date, $5::text) END)
+			CASE WHEN $6 <> '' THEN `+checkoutPayload+` END)
 		ON CONFLICT (request_id) DO NOTHING RETURNING id`,
-		req.BookId, req.UserId, req.FromDate, req.DueDate, req.Notes, req.RequestId).Scan(&id)
+		req.BookId, req.UserId, req.FromDate, req.DueDate, req.Notes, req.RequestId, req.CopyId).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		var same bool
 		err = tx.QueryRowContext(ctx, `
-			SELECT checkout_payload = jsonb_build_array($1::uuid, $2::uuid, $3::date, $4::date, $5::text)
+			SELECT checkout_payload = (`+checkoutPayload+`)
 			FROM borrowings WHERE request_id = $6`, req.BookId, req.UserId, req.FromDate,
-			req.DueDate, req.Notes, req.RequestId).Scan(&same)
+			req.DueDate, req.Notes, req.RequestId, req.CopyId).Scan(&same)
 		if err != nil {
 			return nil, err
 		}
@@ -64,13 +69,32 @@ func (r *BorrowingRepo) Create(ctx context.Context, req *pb.BorrowingCreateReq) 
 		}
 		return nil, err
 	}
+	// The stock update holds the book row lock, serializing copy allocation and retirement.
+	var copyID string
+	err = tx.QueryRowContext(ctx, `
+		SELECT c.id FROM book_copies c
+		WHERE c.book_id = $1 AND NOT c.retired
+		  AND (NULLIF($2, '')::uuid IS NULL OR c.id = NULLIF($2, '')::uuid)
+		  AND `+availableCopy+`
+		ORDER BY c.number LIMIT 1`, req.BookId, req.CopyId).Scan(&copyID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Error(codes.FailedPrecondition, "this copy is unavailable for checkout")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if _, err := tx.ExecContext(ctx, "UPDATE borrowings SET copy_id = $1 WHERE id = $2", copyID, id); err != nil {
+		return nil, err
+	}
+
 	return &pb.Void{}, tx.Commit()
 }
 
 const borrowingJSON = `jsonb_build_object(
 	'id', l.id, 'book', ` + bookJSON + `, 'user', to_jsonb(u),
 	'from_date', l.from_date, 'due_date', l.due_date, 'extension_date', l.extension_date,
-	'status', l.status, 'returned_at', l.returned_at, 'notes', l.notes
+	'status', l.status, 'returned_at', l.returned_at, 'notes', l.notes,
+	'copy', (SELECT jsonb_build_object('id', c.id, 'barcode', c.barcode) FROM book_copies c WHERE c.id = l.copy_id)
 )`
 const borrowingsFrom = " FROM borrowings l JOIN books b ON b.id = l.book_id JOIN users u ON u.id = l.user_id"
 
@@ -203,7 +227,9 @@ func (r *BorrowingRepo) Delete(ctx context.Context, req *pb.ByID) (*pb.Void, err
 
 func (r *BorrowingRepo) GetAll(ctx context.Context, req *pb.BorrowingsGetAllReq) (*pb.BorrowingsGetAllRes, error) {
 	query := listQuery{where: borrowingsFrom + " WHERE TRUE"}
-	if req.Search != "" {
+	if term := strings.TrimSpace(req.Search); catalogBarcode.MatchString(term) {
+		query.add(` AND EXISTS (SELECT 1 FROM book_copies c WHERE c.id = l.copy_id AND c.barcode = $%d)`, strings.ToUpper(term))
+	} else if req.Search != "" {
 		query.add(` AND (b.title ILIKE $%[1]d OR u.full_name ILIKE $%[1]d OR EXISTS (
 			SELECT 1 FROM book_authors ba JOIN authors a ON a.id = ba.author_id
 			WHERE ba.book_id = b.id AND a.name ILIKE $%[1]d))`, "%"+req.Search+"%")

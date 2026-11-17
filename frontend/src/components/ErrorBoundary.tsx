@@ -1,8 +1,10 @@
+import type { Message } from '../../../shared/i18n';
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
+  t: (key: Message) => string;
   fallback?: ReactNode;
 }
 
@@ -36,6 +38,7 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   render() {
+    const { t } = this.props;
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
@@ -50,10 +53,10 @@ class ErrorBoundary extends Component<Props, State> {
           borderRadius: '5px',
           margin: '20px'
         }}>
-          <h2>Xatolik yuz berdi</h2>
-          <p>Uzr, kutilmagan xatolik yuz berdi.</p>
+          <h2>{t("Something went wrong")}</h2>
+          <p>{t("An unexpected error occurred.")}</p>
           <details style={{ marginTop: '10px', textAlign: 'left' }}>
-            <summary style={{ cursor: 'pointer' }}>Texnik ma'lumotlar</summary>
+            <summary style={{ cursor: 'pointer' }}>{t("Technical details")}</summary>
             <pre style={{
               background: '#fff',
               padding: '10px',
@@ -76,7 +79,7 @@ class ErrorBoundary extends Component<Props, State> {
               cursor: 'pointer'
             }}
           >
-            Qayta urinish
+            {t("Try again")}
           </button>
         </div>
       );

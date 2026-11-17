@@ -1,3 +1,5 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { usePaginatedList } from './usePaginatedList';
 import { staffFetch } from './api';
 import React, { useEffect, useRef, useState } from 'react';
@@ -19,6 +21,7 @@ interface Props {
 
 
 const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<PublisherFormData>({
@@ -59,7 +62,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      alert('Publisher name is required');
+      alert(t("Publisher name is required"));
       return;
     }
 
@@ -83,17 +86,17 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Failed to save publisher');
+        throw new Error(errorText || t("Failed to save publisher"));
       }
 
       actionAbortController.current = null;
       handleCancelForm();
       fetchPublishers();
-      alert(`Publisher ${editingPublisher ? 'updated' : 'created'} successfully!`);
+      alert(t(editingPublisher ? "Publisher updated successfully!" : "Publisher created successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
       console.error('Error saving publisher:', error);
-      alert(`Failed to save publisher. ${error instanceof Error ? error.message : 'Please try again.'}`);
+      alert(t("Failed to save publisher") + " " + (error instanceof Error ? error.message : t("Please try again.")));
     } finally {
       setActionLoading(false);
     }
@@ -113,17 +116,17 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Failed to delete publisher');
+        throw new Error(errorText || t("Failed to delete publisher"));
       }
 
       actionAbortController.current = null;
       setDeleteModal({ isOpen: false, publisher: null });
       fetchPublishers();
-      alert('Publisher deleted successfully!');
+      alert(t("Publisher deleted successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
       console.error('Error deleting publisher:', error);
-      alert(`Failed to delete publisher. ${error instanceof Error ? error.message : 'Please try again.'}`);
+      alert(t("Failed to delete publisher") + " " + (error instanceof Error ? error.message : t("Please try again.")));
     } finally {
       setActionLoading(false);
     }
@@ -165,7 +168,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
         disabled={currentPage === 1}
       >
-        « Prev
+        {t("« Prev")}
       </button>
     );
 
@@ -228,7 +231,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
         disabled={currentPage === totalPages}
       >
-        Next »
+        {t("Next »")}
       </button>
     );
 
@@ -240,27 +243,27 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
       <div onClick={saveCurrentState}>
         <div className="card shadow-sm">
           <div className="card-header bg-primary text-white">
-            <h5 className="mb-0">{editingPublisher ? 'Edit Publisher' : 'Add New Publisher'}</h5>
+            <h5 className="mb-0">{editingPublisher ? t("Edit Publisher") : t("Add New Publisher")}</h5>
           </div>
           <div className="card-body">
             <div className="mb-3">
-              <label className="form-label fw-semibold">Publisher Name *</label>
+              <label className="form-label fw-semibold">{t("Publisher Name *")}</label>
               <input
                 type="text"
                 className="form-control"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter publisher name"
+                placeholder={t("Enter publisher name")}
               />
             </div>
             <div className="mb-4">
-              <label className="form-label fw-semibold">Description</label>
+              <label className="form-label fw-semibold">{t("Description")}</label>
               <textarea
                 className="form-control"
                 rows={4}
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Enter publisher description"
+                placeholder={t("Enter publisher description")}
               />
             </div>
             <div className="d-flex gap-2">
@@ -272,10 +275,10 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                 {actionLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2"></span>
-                    Saving...
+                    {t("Saving...")}
                   </>
                 ) : (
-                  editingPublisher ? 'Update Publisher' : 'Create Publisher'
+                  editingPublisher ? t("Update Publisher") : t("Create Publisher")
                 )}
               </button>
               <button
@@ -286,7 +289,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                   handleCancelForm();
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -299,25 +302,25 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     <div onClick={saveCurrentState}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Publishers Management</h3>
-          <p className="text-muted mb-0">Manage book publishers and publishing houses</p>
+          <h3 className="mb-1">{t("Publishers Management")}</h3>
+          <p className="text-muted mb-0">{t("Manage book publishers and publishing houses")}</p>
         </div>
         <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => setShowForm(true)}>
-          <span>+</span>
-          Add New Publisher
+          <span aria-hidden="true">+</span>
+          {t("Add New Publisher")}
         </button>
       </div>
 
       {/* Search Card */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-light">
-          <h6 className="mb-0">Search Publishers</h6>
+          <h6 className="mb-0">{t("Search Publishers")}</h6>
         </div>
         <div className="card-body">
           <input
             type="text"
             className="form-control"
-            placeholder="Search by publisher name..."
+            placeholder={t("Search by publisher name...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -327,7 +330,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
       {/* Error Alert */}
       {error && (
         <div className="alert alert-danger alert-dismissible" role="alert">
-          <strong>Error!</strong> {error}
+          <strong>{t("Error!")}</strong> {t("Could not load records.")}
         </div>
       )}
 
@@ -336,12 +339,12 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
         <div className="card-header bg-white">
           <div className="row align-items-center">
             <div className="col">
-              <h6 className="mb-0">All Publishers</h6>
+              <h6 className="mb-0">{t("All Publishers")}</h6>
             </div>
             <div className="col-auto">
               <div className="d-flex gap-4 small text-muted">
-                <span>Total: <strong>{totalPublishers}</strong></span>
-                <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+                <span>{t("Total:")} <strong>{totalPublishers}</strong></span>
+                {totalPages > 1 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
               </div>
             </div>
           </div>
@@ -350,23 +353,23 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
           {loading ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">{t("Loading...")}</span>
               </div>
-              <p className="mt-3 text-muted">Loading publishers...</p>
+              <p className="mt-3 text-muted">{t("Loading publishers...")}</p>
             </div>
           ) : publishers.length === 0 ? (
             <div className="text-center p-5">
-              <div className="text-muted mb-3" style={{ fontSize: '3rem' }}>🏢</div>
-              <h5>No Publishers Found</h5>
+              <div className="text-muted mb-3" style={{ fontSize: '3rem' }}><Icon name="building" size={28} /></div>
+              <h5>{t("No Publishers Found")}</h5>
               <p className="text-muted mb-4">
                 {searchQuery 
-                  ? 'No publishers match your search query.' 
-                  : 'No publishers have been added yet.'
+                  ? t("No publishers match your search query.")
+                  : t("No publishers have been added yet.")
                 }
               </p>
               {!searchQuery && (
                 <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                  Add First Publisher
+                  {t("Add First Publisher")}
                 </button>
               )}
             </div>
@@ -375,21 +378,21 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
               <table className="table table-hover mb-0 library-record-table" role="table">
                 <thead role="rowgroup" className="table-light">
                   <tr role="row">
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Publisher Name</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Description</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">Actions</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Publisher Name")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Description")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody role="rowgroup">
                   {publishers.map((publisher) => (
                     <tr role="row" key={publisher.id}>
-                      <td role="cell" data-label="Publisher" className="py-3">
+                      <td role="cell" data-label={t("Publisher")} className="py-3">
                         <div className="fw-medium">{publisher.name}</div>
                       </td>
-                      <td role="cell" data-label="Description" className="py-3 text-muted">
+                      <td role="cell" data-label={t("Description")} className="py-3 text-muted">
                         {publisher.description || '-'}
                       </td>
-                      <td role="cell" data-label="Actions" className="py-3 text-end">
+                      <td role="cell" data-label={t("Actions")} className="py-3 text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
@@ -401,16 +404,16 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                               });
                               setShowForm(true);
                             }}
-                            title="Edit publisher"
+                            title={t("Edit publisher")}
                           >
-                            Edit
+                            {t("Edit")}
                           </button>
                           <button
                             className="btn btn-outline-danger"
                             onClick={() => setDeleteModal({ isOpen: true, publisher })}
-                            title="Delete publisher"
+                            title={t("Delete publisher")}
                           >
-                            Delete
+                            {t("Delete")}
                           </button>
                         </div>
                       </td>
@@ -431,14 +434,14 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content shadow">
               <div className="modal-header border-0 pb-0">
-                <h5 className="modal-title text-danger">Confirm Delete</h5>
-                <button type="button" className="btn-close" onClick={() => setDeleteModal({ isOpen: false, publisher: null })}></button>
+                <h5 className="modal-title text-danger">{t("Confirm Delete")}</h5>
+                <button type="button" className="btn-close" aria-label={t("Close")} onClick={() => setDeleteModal({ isOpen: false, publisher: null })}></button>
               </div>
               <div className="modal-body">
                 <div className="text-center mb-3">
-                  <div className="text-danger mb-3" style={{ fontSize: '3rem' }}>⚠️</div>
-                  <p className="mb-2">Are you sure you want to delete <strong>{deleteModal.publisher?.name}</strong>?</p>
-                  <p className="text-muted small">This action cannot be undone.</p>
+                  <div className="text-danger mb-3" style={{ fontSize: '3rem' }}><Icon name="warning" size={28} /></div>
+                  <p className="mb-2">{t("Are you sure you want to delete “{name}”?", { name: deleteModal.publisher?.name ?? "" })}</p>
+                  <p className="text-muted small">{t("This action cannot be undone.")}</p>
                 </div>
               </div>
               <div className="modal-footer border-0 pt-0">
@@ -447,7 +450,7 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                   className="btn btn-outline-secondary"
                   onClick={() => setDeleteModal({ isOpen: false, publisher: null })}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button 
                   type="button" 
@@ -458,10 +461,10 @@ const PublishersSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                   {actionLoading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2"></span>
-                      Deleting...
+                      {t("Deleting...")}
                     </>
                   ) : (
-                    'Delete'
+                    t("Delete")
                   )}
                 </button>
               </div>

@@ -98,7 +98,7 @@ func loadCatalog() (demoCatalog, []coverAsset, error) {
 	return catalog, covers, nil
 }
 
-const catalogTables = "borrowings, recommendeds, book_authors, book_categories, books, users, authors, categories, publishers, files"
+const catalogTables = "borrowings, recommendeds, book_authors, book_categories, book_copies, books, users, authors, categories, publishers, files"
 
 func seedCatalog(ctx context.Context, db *sql.DB, onlyIfEmpty bool) error {
 	catalog, covers, err := loadCatalog()

@@ -1,3 +1,5 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { API_BASE_URL } from '../api';
 import { useEffect, useState } from "react";
 import BookCard from "./BookCard";
@@ -28,11 +30,12 @@ interface RecommendedResponse {
 }
 
 function BookList({ category, filters, onBookClick }: Props) {
+  const { t } = useI18n();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBooks, setTotalBooks] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   
   const booksPerPage = 20;
   const totalPages = Math.ceil(totalBooks / booksPerPage);
@@ -47,7 +50,7 @@ function BookList({ category, filters, onBookClick }: Props) {
 
     const fetchBooks = async () => {
       setLoading(true);
-      setError(null);
+      setError(false);
 
       try {
         const offset = (currentPage - 1) * booksPerPage;
@@ -116,7 +119,7 @@ function BookList({ category, filters, onBookClick }: Props) {
       } catch (err) {
         if (abortController.signal.aborted) return;
         console.error("Failed to fetch books:", err);
-        setError(err instanceof Error ? err.message : "Failed to load books");
+        setError(true);
         setBooks([]);
         setTotalBooks(0);
       } finally {
@@ -163,7 +166,7 @@ function BookList({ category, filters, onBookClick }: Props) {
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        ← Prev
+        {t("← Prev")}
       </button>
     );
 
@@ -250,7 +253,7 @@ function BookList({ category, filters, onBookClick }: Props) {
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
-        Next →
+        {t("Next →")}
       </button>
     );
 
@@ -272,14 +275,14 @@ function BookList({ category, filters, onBookClick }: Props) {
       <div className="books-section">
         <div className="container">
           <div className="alert alert-danger text-center">
-            <h5 className="alert-heading">Error Loading Books</h5>
-            <p className="mb-0">{error}</p>
+            <h5 className="alert-heading">{t("Error Loading Books")}</h5>
+            <p className="mb-0">{t("Failed to load books")}</p>
             <hr />
             <button
               className="btn btn-outline-danger btn-sm"
               onClick={() => window.location.reload()}
             >
-              Try Again
+              {t("Try Again")}
             </button>
           </div>
         </div>
@@ -292,14 +295,14 @@ function BookList({ category, filters, onBookClick }: Props) {
     return (
       <div className="books-section">
         <div className="no-results">
-          <div className="no-results-icon">📚</div>
+          <div className="no-results-icon"><Icon name="library" size={28} /></div>
           <div className="no-results-title">
-            {isSearchActive ? "No Books Found" : "No Books Available"}
+            {isSearchActive ? t("No Books Found") : t("No Books Available")}
           </div>
           <div className="no-results-text">
             {isSearchActive
-              ? "Try adjusting your search terms or filters"
-              : "There are no books in this category yet"}
+              ? t("Try adjusting your search terms or filters")
+              : t("There are no books in this category yet")}
           </div>
         </div>
       </div>
@@ -315,10 +318,10 @@ function BookList({ category, filters, onBookClick }: Props) {
       <div className="container">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <div className="text-muted">
-            Showing {startIndex}-{endIndex} of {totalBooks} books
+            {t("Showing {start}–{end} of {total}", { start: startIndex, end: endIndex, total: totalBooks })}
           </div>
           <div className="text-muted">
-            Page {currentPage} of {totalPages}
+            {t("Page {page} of {total}", { page: currentPage, total: totalPages })}
           </div>
         </div>
 

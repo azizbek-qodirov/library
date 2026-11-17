@@ -1,3 +1,5 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { usePaginatedList } from './usePaginatedList';
 import { staffFetch } from './api';
 
@@ -20,6 +22,7 @@ const UsersSection = ({ savedData, onDataChange }: {
   savedData?: SavedData | null;
   onDataChange: (data: SavedData | null) => void;
 }) => {
+  const { locale, t } = useI18n();
   const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [roleFilter, setRoleFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
@@ -41,7 +44,7 @@ const UsersSection = ({ savedData, onDataChange }: {
   const usersPerPage = 20;
   const {
     items: users, total: totalUsers, loading, error, currentPage, setCurrentPage, reload: fetchUsers,
-  } = usePaginatedList<User>('/users', 'users', 'total', searchQuery,
+  } = usePaginatedList<User>('/users', 'users', t("total"), searchQuery,
     new URLSearchParams({ role: roleFilter, group_name: groupFilter.trim() }).toString(), usersPerPage);
   const totalPages = Math.ceil(totalUsers / usersPerPage);
 
@@ -80,7 +83,7 @@ const UsersSection = ({ savedData, onDataChange }: {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || `Failed to ${editingUser ? 'update' : 'create'} user`);
+        throw new Error(errorText || t(editingUser ? "Failed to update user" : "Failed to create user"));
       }
 
       actionAbortController.current = null;
@@ -88,14 +91,14 @@ const UsersSection = ({ savedData, onDataChange }: {
       setEditingUser(null);
       onDataChange(null);
       fetchUsers();
-      alert(`User ${editingUser ? 'updated' : 'created'} successfully!`);
+      alert(t(editingUser ? "User updated successfully!" : "User created successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         // Operation was cancelled, do nothing
         return;
       }
       console.error('Error saving user:', error);
-      alert(`Failed to ${editingUser ? 'update' : 'create'} user. ${error instanceof Error ? error.message : 'Please try again.'}`);
+      alert(t(editingUser ? "Failed to update user" : "Failed to create user") + ". " + (error instanceof Error ? error.message : t("Please try again.")));
     } finally {
       setActionLoading(false);
     }
@@ -117,20 +120,20 @@ const UsersSection = ({ savedData, onDataChange }: {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Failed to delete user');
+        throw new Error(errorText || t("Failed to delete user"));
       }
 
       actionAbortController.current = null;
       setDeleteModal({ isOpen: false, user: null });
       fetchUsers();
-      alert('User deleted successfully!');
+      alert(t("User deleted successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         // Operation was cancelled, do nothing
         return;
       }
       console.error('Error deleting user:', error);
-      alert(`Failed to delete user. ${error instanceof Error ? error.message : 'Please try again.'}`);
+      alert(t("Failed to delete user") + " " + (error instanceof Error ? error.message : t("Please try again.")));
     } finally {
       setActionLoading(false);
     }
@@ -174,7 +177,7 @@ const UsersSection = ({ savedData, onDataChange }: {
         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
         disabled={currentPage === 1}
       >
-        « Prev
+        {t("« Prev")}
       </button>
     );
 
@@ -237,7 +240,7 @@ const UsersSection = ({ savedData, onDataChange }: {
         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
         disabled={currentPage === totalPages}
       >
-        Next »
+        {t("Next »")}
       </button>
     );
 
@@ -261,50 +264,50 @@ const UsersSection = ({ savedData, onDataChange }: {
     <div onClick={saveCurrentState}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Users Management</h3>
-          <p className="text-muted mb-0">Manage student and teacher accounts</p>
+          <h3 className="mb-1">{t("Users Management")}</h3>
+          <p className="text-muted mb-0">{t("Manage student and teacher accounts")}</p>
         </div>
         <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => setShowForm(true)}>
-          <span>+</span>
-          Add New User
+          <span aria-hidden="true">+</span>
+          {t("Add New User")}
         </button>
       </div>
 
       {/* Filters Card */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-light">
-          <h6 className="mb-0">Search & Filter</h6>
+          <h6 className="mb-0">{t("Search & Filter")}</h6>
         </div>
         <div className="card-body">
           <div className="row g-3">
             <div className="col-md-4">
-              <label className="form-label small fw-semibold">Search Users</label>
+              <label className="form-label small fw-semibold">{t("Search Users")}</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search by name, email..."
+                placeholder={t("Search by name, email...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-semibold">Role</label>
+              <label className="form-label small fw-semibold">{t("Role")}</label>
               <select
                 className="form-select"
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
               >
-                <option value="">All Roles</option>
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
+                <option value="">{t("All Roles")}</option>
+                <option value="student">{t("Student")}</option>
+                <option value="teacher">{t("Teacher")}</option>
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-semibold">Group</label>
+              <label className="form-label small fw-semibold">{t("Group")}</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Filter by group name..."
+                placeholder={t("Filter by group name...")}
                 value={groupFilter}
                 onChange={(e) => setGroupFilter(e.target.value)}
               />
@@ -316,7 +319,7 @@ const UsersSection = ({ savedData, onDataChange }: {
       {/* Error Alert */}
       {error && (
         <div className="alert alert-danger alert-dismissible" role="alert">
-          <strong>Error!</strong> {error}
+          <strong>{t("Error!")}</strong> {t("Could not load records.")}
         </div>
       )}
 
@@ -325,12 +328,12 @@ const UsersSection = ({ savedData, onDataChange }: {
         <div className="card-header bg-white">
           <div className="row align-items-center">
             <div className="col">
-              <h6 className="mb-0">All Users</h6>
+              <h6 className="mb-0">{t("All Users")}</h6>
             </div>
             <div className="col-auto">
               <div className="d-flex gap-4 small text-muted">
-                <span>Total: <strong>{totalUsers}</strong></span>
-                <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+                <span>{t("Total:")} <strong>{totalUsers}</strong></span>
+                {totalPages > 1 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
               </div>
             </div>
           </div>
@@ -339,23 +342,23 @@ const UsersSection = ({ savedData, onDataChange }: {
           {loading ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">{t("Loading...")}</span>
               </div>
-              <p className="mt-3 text-muted">Loading users...</p>
+              <p className="mt-3 text-muted">{t("Loading users...")}</p>
             </div>
           ) : users.length === 0 ? (
             <div className="text-center p-5">
-              <div className="text-muted mb-3" style={{ fontSize: '3rem' }}>👥</div>
-              <h5>No Users Found</h5>
+              <div className="text-muted mb-3" style={{ fontSize: '3rem' }}><Icon name="users" size={28} /></div>
+              <h5>{t("No Users Found")}</h5>
               <p className="text-muted mb-4">
                 {searchQuery || roleFilter || groupFilter
-                  ? 'No users match your current filters.'
-                  : 'No users have been added yet.'
+                  ? t("No users match your current filters.")
+                  : t("No users have been added yet.")
                 }
               </p>
               {!searchQuery && !roleFilter && !groupFilter && (
                 <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                  Add First User
+                  {t("Add First User")}
                 </button>
               )}
             </div>
@@ -364,37 +367,37 @@ const UsersSection = ({ savedData, onDataChange }: {
               <table className="table table-hover mb-0 library-record-table" role="table">
                 <thead role="rowgroup" className="table-light">
                   <tr role="row">
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Name</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Group</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Email</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Phone</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Role</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold">Created</th>
-                    <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">Actions</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Name")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Group")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Email")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Phone")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Role")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold">{t("Created")}</th>
+                    <th role="columnheader" scope="col" className="border-0 fw-semibold text-end">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody role="rowgroup">
                   {users.map((user, index) => (
                     <tr role="row" key={user.id} style={{ borderLeft: index % 2 === 0 ? '3px solid transparent' : '3px solid #f8f9fa' }}>
-                      <td role="cell" data-label="Name" className="py-3">
+                      <td role="cell" data-label={t("Name")} className="py-3">
                         <div className="fw-medium">{user.full_name}</div>
                       </td>
-                      <td role="cell" data-label="Group" className="py-3">
+                      <td role="cell" data-label={t("Group")} className="py-3">
                         <span className="badge bg-light text-dark">
-                          {user.group_name || 'No Group'}
+                          {user.group_name || t("No Group")}
                         </span>
                       </td>
-                      <td role="cell" data-label="Email" className="py-3 text-muted">{user.email || '-'}</td>
-                      <td role="cell" data-label="Phone" className="py-3 text-muted">{user.phone || '-'}</td>
-                      <td role="cell" data-label="Role" className="py-3">
+                      <td role="cell" data-label={t("Email")} className="py-3 text-muted">{user.email || '-'}</td>
+                      <td role="cell" data-label={t("Phone")} className="py-3 text-muted">{user.phone || '-'}</td>
+                      <td role="cell" data-label={t("Role")} className="py-3">
                         <span className={`badge ${user.role === 'teacher' ? 'bg-primary' : 'bg-secondary'}`}>
-                          {user.role}
+                          {t(user.role === "teacher" ? "Teacher" : "Student")}
                         </span>
                       </td>
-                      <td role="cell" data-label="Created" className="py-3 text-muted small">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                      <td role="cell" data-label={t("Created")} className="py-3 text-muted small">
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString(locale) : '—'}
                       </td>
-                      <td role="cell" data-label="Actions" className="py-3 text-end">
+                      <td role="cell" data-label={t("Actions")} className="py-3 text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
@@ -402,16 +405,16 @@ const UsersSection = ({ savedData, onDataChange }: {
                               setEditingUser(user);
                               setShowForm(true);
                             }}
-                            title="Edit user"
+                            title={t("Edit user")}
                           >
-                            Edit
+                            {t("Edit")}
                           </button>
                           <button
                             className="btn btn-outline-danger"
                             onClick={() => setDeleteModal({ isOpen: true, user })}
-                            title="Delete user"
+                            title={t("Delete user")}
                           >
-                            Delete
+                            {t("Delete")}
                           </button>
                         </div>
                       </td>

@@ -28,6 +28,22 @@ definitions:
       name:
         type: string
     type: object
+  genproto.BookCopiesRes:
+    properties:
+      copies:
+        items:
+          $ref: '#/definitions/genproto.BookCopy'
+        type: array
+    type: object
+  genproto.BookCopy:
+    properties:
+      barcode:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+    type: object
   genproto.BookCreateReq:
     properties:
       author_ids:
@@ -161,6 +177,9 @@ definitions:
     properties:
       book_id:
         type: string
+      copy_id:
+        description: Exact copy selected by barcode; optional for existing clients.
+        type: string
       due_date:
         type: string
       from_date:
@@ -177,6 +196,8 @@ definitions:
     properties:
       book:
         $ref: '#/definitions/genproto.BookGetRes'
+      copy:
+        $ref: '#/definitions/genproto.BookCopy'
       due_date:
         type: string
       extension_date:
@@ -250,6 +271,13 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  genproto.CopyLookupRes:
+    properties:
+      book:
+        $ref: '#/definitions/genproto.BookGetRes'
+      copy:
+        $ref: '#/definitions/genproto.BookCopy'
     type: object
   genproto.FileGetRes:
     properties:
@@ -725,6 +753,30 @@ paths:
       security:
       - StaffAuth: []
       summary: Update book
+      tags:
+      - 05-Book
+  /book/{id}/copies:
+    get:
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/genproto.BookCopiesRes'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      security:
+      - StaffAuth: []
+      summary: List physical copies and their barcodes
       tags:
       - 05-Book
   /books:
@@ -1212,6 +1264,34 @@ paths:
       summary: Update category
       tags:
       - 02-Category
+  /copy/{barcode}:
+    get:
+      parameters:
+      - description: University barcode, such as OX-123
+        in: path
+        name: barcode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/genproto.CopyLookupRes'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      security:
+      - StaffAuth: []
+      summary: Look up a library copy by university barcode
+      tags:
+      - 05-Book
   /file:
     post:
       consumes:

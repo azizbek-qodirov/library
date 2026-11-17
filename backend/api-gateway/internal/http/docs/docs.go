@@ -502,6 +502,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/book/{id}/copies": {
+            "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "05-Book"
+                ],
+                "summary": "List physical copies and their barcodes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.BookCopiesRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/books": {
             "get": {
                 "description": "Retrieves a list of books with optional filters for location, categories, authors, publisher, language, reference-only status, and search query",
@@ -1251,6 +1290,51 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/copy/{barcode}": {
+            "get": {
+                "security": [
+                    {
+                        "StaffAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "05-Book"
+                ],
+                "summary": "Look up a library copy by university barcode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "University barcode, such as OX-123",
+                        "name": "barcode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/genproto.CopyLookupRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "string"
                         }
@@ -2263,6 +2347,31 @@ const docTemplate = `{
                 }
             }
         },
+        "genproto.BookCopiesRes": {
+            "type": "object",
+            "properties": {
+                "copies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genproto.BookCopy"
+                    }
+                }
+            }
+        },
+        "genproto.BookCopy": {
+            "type": "object",
+            "properties": {
+                "barcode": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "genproto.BookCreateReq": {
             "type": "object",
             "properties": {
@@ -2461,6 +2570,10 @@ const docTemplate = `{
                 "book_id": {
                     "type": "string"
                 },
+                "copy_id": {
+                    "description": "Exact copy selected by barcode; optional for existing clients.",
+                    "type": "string"
+                },
                 "due_date": {
                     "type": "string"
                 },
@@ -2484,6 +2597,9 @@ const docTemplate = `{
             "properties": {
                 "book": {
                     "$ref": "#/definitions/genproto.BookGetRes"
+                },
+                "copy": {
+                    "$ref": "#/definitions/genproto.BookCopy"
                 },
                 "due_date": {
                     "type": "string"
@@ -2596,6 +2712,17 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "genproto.CopyLookupRes": {
+            "type": "object",
+            "properties": {
+                "book": {
+                    "$ref": "#/definitions/genproto.BookGetRes"
+                },
+                "copy": {
+                    "$ref": "#/definitions/genproto.BookCopy"
                 }
             }
         },

@@ -88,3 +88,24 @@
     min-height: 44px;
   }
 }
+
+.public-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-inline-start: auto;
+  color: #425575;
+}
+
+@media (max-width: 991.98px) {
+  .navbar .navbar-collapse { order: 1; }
+}
+
+@media (max-width: 420px) {
+  .navbar .navbar-brand {
+    min-width: 0;
+    flex: 1;
+    white-space: normal;
+    line-height: 1.12;
+  }
+}

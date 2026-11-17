@@ -3,14 +3,17 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"regexp"
 	"strings"
 
 	pb "library/internal/pkg/genproto"
 
 	"github.com/lib/pq"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+var catalogBarcode = regexp.MustCompile(`(?i)^OX-[1-9][0-9]{0,18}$`)
 
 type BookRepo struct {
 	db *sql.DB
@@ -31,13 +34,13 @@ func (r *BookRepo) CreateBook(ctx context.Context, req *pb.BookCreateReq) (*pb.V
 		INSERT INTO books (
 			title, cover_image_id, location, is_reference_only, description,
 			isbn, published_date, publisher_id, language, page_count, total_copies, available_copies, publication_year
-		) VALUES ($1,NULLIF($2,'')::uuid,$3,$4,$5,$6,NULLIF($7,'')::date,NULLIF($8,'')::uuid,$9,$10,$11,$11,NULLIF($12::int,0))
+		) VALUES ($1,NULLIF($2,'')::uuid,$3,$4,$5,NULLIF(btrim($6),''),NULLIF($7,'')::date,NULLIF($8,'')::uuid,$9,$10,$11,$11,NULLIF($12::int,0))
 		RETURNING id
 	`
 	var bookID string
 	err = tx.QueryRowContext(ctx, query,
 		req.Title, req.CoverImageId, req.Location, req.IsReferenceOnly,
-		req.Description, req.Isbn, req.GetPublishedDate(), req.PublisherId,
+		req.Description, strings.TrimSpace(req.Isbn), req.GetPublishedDate(), req.PublisherId,
 		req.Language, req.PageCount, req.TotalCopies, req.PublicationYear,
 	).Scan(&bookID)
 	if err != nil {
@@ -87,14 +90,14 @@ func (r *BookRepo) UpdateBook(ctx context.Context, req *pb.BookUpdateReq) (*pb.V
 	query := `
 		UPDATE books
 		SET title=$1, cover_image_id=NULLIF($2,'')::uuid, location=$3, is_reference_only=$4,
-		    description=$5, isbn=$6, published_date=NULLIF($7,'')::date, publisher_id=NULLIF($8,'')::uuid, language=$9,
+		    description=$5, isbn=NULLIF(btrim($6),''), published_date=NULLIF($7,'')::date, publisher_id=NULLIF($8,'')::uuid, language=$9,
 		    page_count=$10, total_copies=$11, available_copies=available_copies + ($11 - total_copies),
 		    publication_year=CASE WHEN $13::int IS NULL THEN publication_year ELSE NULLIF($13,0) END, updated_at = NOW()
 		WHERE id=$12 AND available_copies + ($11 - total_copies) >= 0
 	`
 	result, err := tx.ExecContext(ctx, query,
 		req.Body.Title, req.Body.CoverImageId, req.Body.Location, req.Body.IsReferenceOnly,
-		req.Body.Description, req.Body.Isbn, req.Body.GetPublishedDate(), req.Body.PublisherId,
+		req.Body.Description, strings.TrimSpace(req.Body.Isbn), req.Body.GetPublishedDate(), req.Body.PublisherId,
 		req.Body.Language, req.Body.PageCount, req.Body.TotalCopies,
 		req.Id, req.Body.PublicationYear,
 	)
@@ -182,7 +185,9 @@ func (r *BookRepo) GetAllBooks(ctx context.Context, req *pb.BooksGetAllReq) (*pb
 	if req.AvailableOnly {
 		query.where += " AND b.available_copies > 0 AND NOT coalesce(b.is_reference_only, false)"
 	}
-	if term := strings.TrimSpace(req.Search); term != "" {
+	if term := strings.TrimSpace(req.Search); catalogBarcode.MatchString(term) {
+		query.add(` AND EXISTS (SELECT 1 FROM book_copies c WHERE c.book_id = b.id AND c.barcode = $%d)`, strings.ToUpper(term))
+	} else if term != "" {
 		query.add(catalogSearch, "%"+searchApostrophes.Replace(term)+"%")
 	}
 

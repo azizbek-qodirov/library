@@ -1,3 +1,5 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { usePaginatedList } from './usePaginatedList';
 import { readAPI, staffFetch } from './api';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,6 +20,7 @@ interface Props {
 
 // Recommended Section
 const RecommendedSection = ({ savedData, onDataChange }: Props) => {
+  const { locale, t } = useI18n();
   const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [showForm, setShowForm] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState('');
@@ -55,13 +58,13 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
     return books.map(book => ({
       id: book.id,
       label: book.title,
-      subtitle: `${book.author_ids?.map(a => a.name).join(', ') || 'No author'} | ISBN: ${book.isbn}`
+      subtitle: `${book.author_ids?.map(a => a.name).join(', ') || t("No author")}${book.isbn ? ` | ISBN: ${book.isbn}` : ''}`
     }));
-  }, []);
+  }, [t]);
 
   const handleSave = async () => {
     if (!selectedBookId) {
-      alert('Please select a book');
+      alert(t("Please select a book"));
       return;
     }
 
@@ -79,11 +82,11 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
       actionAbortController.current = null;
       handleCancelForm();
       fetchRecommended();
-      alert('Book added to recommended successfully!');
+      alert(t("Book added to recommended successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
       console.error('Error adding recommended:', error);
-      alert(`Failed to add recommended book. ${error instanceof Error ? error.message : 'Please try again.'}`);
+      alert(t("Failed to add recommended book.") + " " + (error instanceof Error ? error.message : t("Please try again.")));
     } finally {
       setActionLoading(false);
     }
@@ -101,15 +104,15 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
         signal
       });
 
-      if (!response.ok) throw new Error('Failed to remove recommended book');
+      if (!response.ok) throw new Error(t("Failed to remove recommended book"));
 
       actionAbortController.current = null;
       setDeleteModal({ isOpen: false, recommended: null });
       fetchRecommended();
-      alert('Recommended book removed successfully!');
+      alert(t("Recommended book removed successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      alert('Failed to remove recommended book. Please try again.');
+      alert(t("Failed to remove recommended book. Please try again."));
     } finally {
       setActionLoading(false);
     }
@@ -139,7 +142,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
         disabled={currentPage === 1}
       >
-        « Prev
+        {t("« Prev")}
       </button>
     );
 
@@ -202,7 +205,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
         disabled={currentPage === totalPages}
       >
-        Next »
+        {t("Next »")}
       </button>
     );
 
@@ -214,21 +217,21 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
       <div>
         <div className="card shadow-sm">
           <div className="card-header bg-primary text-white">
-            <h5 className="mb-0">Add Recommended Book</h5>
+            <h5 className="mb-0">{t("Add Recommended Book")}</h5>
           </div>
           <div className="card-body">
             <div className="mb-4">
               <SearchableSelectAsync
-                label="Select Book"
+                label={t("Select Book")}
                 required
                 fetchOptions={fetchBooks}
                 value={selectedBookId}
                 onChange={(value) => setSelectedBookId(value as string)}
-                placeholder="Type to search books..."
+                placeholder={t("Type to search books...")}
                 multiple={false}
               />
               <small className="text-muted">
-                Search by title, author, or ISBN. Only books not already recommended will be added.
+                {t("Search by title, author, or ISBN. Only books not already recommended will be added.")}
               </small>
             </div>
 
@@ -241,10 +244,10 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
                 {actionLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2"></span>
-                    Adding...
+                    {t("Adding...")}
                   </>
                 ) : (
-                  'Add to Recommended'
+                  t("Add to Recommended")
                 )}
               </button>
               <button
@@ -255,7 +258,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
                   handleCancelForm();
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -268,25 +271,25 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Recommended Books</h3>
-          <p className="text-muted mb-0">Feature books on the homepage</p>
+          <h3 className="mb-1">{t("Recommended Books")}</h3>
+          <p className="text-muted mb-0">{t("Feature books on the homepage")}</p>
         </div>
         <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => setShowForm(true)}>
-          <span>+</span>
-          Add Recommended Book
+          <span aria-hidden="true">+</span>
+          {t("Add Recommended Book")}
         </button>
       </div>
 
       {/* Search Card */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-light">
-          <h6 className="mb-0">Search Recommended Books</h6>
+          <h6 className="mb-0">{t("Search Recommended Books")}</h6>
         </div>
         <div className="card-body">
           <input
             type="text"
             className="form-control"
-            placeholder="Search by book title, author, or ISBN..."
+            placeholder={t("Search by book title, author, or ISBN...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -296,7 +299,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
       {/* Error Alert */}
       {error && (
         <div className="alert alert-danger alert-dismissible" role="alert">
-          <strong>Error!</strong> {error}
+          <strong>{t("Error!")}</strong> {t("Could not load records.")}
         </div>
       )}
 
@@ -305,12 +308,12 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
         <div className="card-header bg-white">
           <div className="row align-items-center">
             <div className="col">
-              <h6 className="mb-0">All Recommended Books</h6>
+              <h6 className="mb-0">{t("All Recommended Books")}</h6>
             </div>
             <div className="col-auto">
               <div className="d-flex gap-4 small text-muted">
-                <span>Total: <strong>{totalRecommended}</strong></span>
-                <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+                <span>{t("Total:")} <strong>{totalRecommended}</strong></span>
+                {totalPages > 1 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
               </div>
             </div>
           </div>
@@ -319,23 +322,23 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
           {loading ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">{t("Loading...")}</span>
               </div>
-              <p className="mt-3 text-muted">Loading recommended books...</p>
+              <p className="mt-3 text-muted">{t("Loading recommended books...")}</p>
             </div>
           ) : recommended.length === 0 ? (
             <div className="text-center p-5">
-              <div className="text-muted mb-3" style={{ fontSize: '3rem' }}>⭐</div>
-              <h5>No Recommended Books</h5>
+              <div className="text-muted mb-3" style={{ fontSize: '3rem' }}><Icon name="star" size={28} /></div>
+              <h5>{t("No Recommended Books")}</h5>
               <p className="text-muted mb-4">
                 {searchQuery
-                  ? 'No books match your search query.'
-                  : 'No books have been recommended yet.'
+                  ? t("No books match your search query.")
+                  : t("No books have been recommended yet.")
                 }
               </p>
               {!searchQuery && (
                 <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                  Add First Recommended Book
+                  {t("Add First Recommended Book")}
                 </button>
               )}
             </div>
@@ -356,20 +359,20 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
                         className="card-img-top bg-light d-flex align-items-center justify-content-center"
                         style={{ height: '280px', fontSize: '4rem' }}
                       >
-                        📚
+                        <Icon name="library" size={28} />
                       </div>
                     )}
                     <div className="card-body">
                       <h6 className="card-title fw-bold mb-2">{rec.book_id.title}</h6>
                       <p className="card-text text-muted small mb-2">
-                        <strong>By:</strong> {rec.book_id.author_ids?.map(a => a.name).join(', ') || 'Unknown'}
+                        <strong>{t("By:")}</strong> {rec.book_id.author_ids?.map(a => a.name).join(', ') || t("Unknown")}
                       </p>
                       <p className="card-text text-muted small mb-3">
-                        <strong>ISBN:</strong> {rec.book_id.isbn}
+                        <strong>{t("ISBN:")}</strong> {rec.book_id.isbn}
                       </p>
                       <div className="d-flex justify-content-between align-items-center">
                         <small className="text-muted">
-                          Added {new Date(rec.created_at).toLocaleDateString()}
+                          {t("Added")} {new Date(rec.created_at).toLocaleDateString(locale)}
                         </small>
                       </div>
                     </div>
@@ -378,7 +381,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
                         className="btn btn-sm btn-outline-danger w-100"
                         onClick={() => setDeleteModal({ isOpen: true, recommended: rec })}
                       >
-                        Remove from Recommended
+                        {t("Remove from Recommended")}
                       </button>
                     </div>
                   </div>
@@ -397,16 +400,16 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content shadow">
               <div className="modal-header border-0 pb-0">
-                <h5 className="modal-title text-danger">Confirm Remove</h5>
-                <button type="button" className="btn-close" onClick={() => setDeleteModal({ isOpen: false, recommended: null })}></button>
+                <h5 className="modal-title text-danger">{t("Confirm Remove")}</h5>
+                <button type="button" className="btn-close" aria-label={t("Close")} onClick={() => setDeleteModal({ isOpen: false, recommended: null })}></button>
               </div>
               <div className="modal-body">
                 <div className="text-center mb-3">
-                  <div className="text-warning mb-3" style={{ fontSize: '3rem' }}>⚠️</div>
+                  <div className="text-warning mb-3" style={{ fontSize: '3rem' }}><Icon name="warning" size={28} /></div>
                   <p className="mb-2">
-                    Remove <strong>{deleteModal.recommended?.book_id.title}</strong> from recommended books?
+                    {t("Remove “{title}” from recommended books?", { title: deleteModal.recommended?.book_id.title ?? "" })}
                   </p>
-                  <p className="text-muted small">This will no longer feature on the homepage.</p>
+                  <p className="text-muted small">{t("This will no longer feature on the homepage.")}</p>
                 </div>
               </div>
               <div className="modal-footer border-0 pt-0">
@@ -416,7 +419,7 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
                   onClick={() => setDeleteModal({ isOpen: false, recommended: null })}
                   disabled={actionLoading}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
                   type="button"
@@ -427,10 +430,10 @@ const RecommendedSection = ({ savedData, onDataChange }: Props) => {
                   {actionLoading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2"></span>
-                      Removing...
+                      {t("Removing...")}
                     </>
                   ) : (
-                    'Remove'
+                    t("Remove")
                   )}
                 </button>
               </div>

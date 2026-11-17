@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import { useMemo } from 'react';
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import { readAPI } from './api';
@@ -30,6 +31,7 @@ const fetchCategories = (search: string, signal?: AbortSignal) => fetchOptions<C
 export default function BookEditor({
     editingBook, formData, setFormData, imagePreview, actionLoading, handleFileChange, handleSave, handleCancelForm,
 }: BookEditorProps) {
+  const { t } = useI18n();
     const initialAuthors = useMemo(() => (editingBook?.author_ids ?? []).map(a => ({ id: a.id, label: a.name })), [editingBook]);
     const initialCategories = useMemo(() => (editingBook?.category_ids ?? []).map(c => ({ id: c.id, label: c.name })), [editingBook]);
     const initialPublishers = useMemo(() => editingBook?.publisher_id
@@ -40,12 +42,12 @@ export default function BookEditor({
         <div>
             <div className="card shadow-sm">
                 <div className="card-header bg-primary text-white">
-                    <h5 className="mb-0">{editingBook ? 'Edit Book' : 'Add New Book'}</h5>
+                    <h5 className="mb-0">{editingBook ? t("Edit Book") : t("Add New Book")}</h5>
                 </div>
                 <div className="card-body">
                     {/* Cover Image Upload */}
                     <div className="mb-4">
-                        <label className="form-label fw-semibold">Cover Image</label>
+                        <label className="form-label fw-semibold">{t("Cover Image")}</label>
                         <div className="row">
                             <div className="col-md-8">
                                 <input
@@ -54,14 +56,14 @@ export default function BookEditor({
                                     accept="image/jpeg,image/png,image/gif,image/webp"
                                     onChange={handleFileChange}
                                 />
-                                <small className="text-muted">Upload a book cover image (JPG, PNG, max 5MB)</small>
+                                <small className="text-muted">{t("Upload a book cover image (JPG, PNG, max 5MB)")}</small>
                             </div>
                             <div className="col-md-4">
                                 {(imagePreview || editingBook?.cover_image_id?.url) && (
                                     <div className="text-center">
                                         <img
                                             src={imagePreview || editingBook?.cover_image_id?.url}
-                                            alt="Cover preview"
+                                            alt={t("Cover preview")}
                                             className="img-thumbnail"
                                             style={{ maxHeight: '150px', maxWidth: '100%', objectFit: 'cover' }}
                                         />
@@ -74,44 +76,44 @@ export default function BookEditor({
                     {/* Basic Info */}
                     <div className="row">
                         <div className="col-md-6 mb-3">
-                            <label className="form-label fw-semibold">Title *</label>
+                            <label className="form-label fw-semibold">{t("Title *")}</label>
                             <input
                                 type="text"
                                 className="form-control"
                                 value={formData.title}
                                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                placeholder="Enter book title"
+                                placeholder={t("Enter book title")}
                             />
                         </div>
                         <div className="col-md-6 mb-3">
-                            <label className="form-label fw-semibold">ISBN *</label>
+                            <label className="form-label fw-semibold">{t("ISBN (optional)")}</label>
                             <input
                                 type="text"
                                 className="form-control"
                                 value={formData.isbn}
                                 onChange={(e) => setFormData(prev => ({ ...prev, isbn: e.target.value }))}
-                                placeholder="Enter ISBN number"
+                                placeholder={t("Enter ISBN number")}
                             />
                         </div>
                     </div>
 
                     <div className="row">
                         <div className="col-md-6 mb-3">
-                            <label className="form-label fw-semibold">Location</label>
+                            <label className="form-label fw-semibold">{t("Location")}</label>
                             <input
                                 type="text"
                                 className="form-control"
-                                placeholder="e.g., Shelf A-12"
+                                placeholder={t("e.g., Shelf A-12")}
                                 value={formData.location}
                                 onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                             />
                         </div>
                         <div className="col-md-6 mb-3">
-                            <label className="form-label fw-semibold">Language</label>
+                            <label className="form-label fw-semibold">{t("Language")}</label>
                             <input
                                 type="text"
                                 className="form-control"
-                                placeholder="e.g., eng, uzb, rus"
+                                placeholder={t("e.g., eng, uzb, rus")}
                                 value={formData.language}
                                 onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value }))}
                             />
@@ -120,7 +122,7 @@ export default function BookEditor({
 
                     <div className="row">
                         <div className="col-md-3 mb-3">
-                            <label className="form-label fw-semibold">Published Date</label>
+                            <label className="form-label fw-semibold">{t("Published Date")}</label>
                             <input
                                 type="date"
                                 className="form-control"
@@ -129,7 +131,7 @@ export default function BookEditor({
                             />
                         </div>
                         <div className="col-md-3 mb-3">
-                            <label className="form-label fw-semibold" htmlFor="publication-year">Edition year</label>
+                            <label className="form-label fw-semibold" htmlFor="publication-year">{t("Edition year")}</label>
                             <input
                                 id="publication-year"
                                 type="number"
@@ -142,7 +144,7 @@ export default function BookEditor({
                             />
                         </div>
                         <div className="col-md-3 mb-3">
-                            <label className="form-label fw-semibold">Page Count</label>
+                            <label className="form-label fw-semibold">{t("Page Count")}</label>
                             <input
                                 type="number"
                                 className="form-control"
@@ -153,12 +155,12 @@ export default function BookEditor({
                         </div>
                         <div className="col-md-3 mb-3">
                             <SearchableSelectAsync
-                                label="Publisher"
+                                label={t("Publisher")}
                                 fetchOptions={fetchPublishers}
                                 initialOptions={initialPublishers}
                                 value={formData.publisher_id}
                                 onChange={(value) => setFormData(prev => ({ ...prev, publisher_id: value as string }))}
-                                placeholder="Search publisher..."
+                                placeholder={t("Search publisher...")}
                                 multiple={false}
                             />
                         </div>
@@ -166,7 +168,7 @@ export default function BookEditor({
 
                     <div className="row">
                         <div className="col-md-4 mb-3">
-                            <label className="form-label fw-semibold">Total Copies</label>
+                            <label className="form-label fw-semibold">{t("Total Copies")}</label>
                             <input
                                 type="number"
                                 className="form-control"
@@ -176,7 +178,7 @@ export default function BookEditor({
                             />
                         </div>
                         <div className="col-md-4 mb-3">
-                            <label className="form-label fw-semibold d-block">Reference Only</label>
+                            <label className="form-label fw-semibold d-block">{t("Reference Only")}</label>
                             <div className="form-check mt-2">
                                 <input
                                     type="checkbox"
@@ -186,32 +188,32 @@ export default function BookEditor({
                                     onChange={(e) => setFormData(prev => ({ ...prev, is_reference_only: e.target.checked }))}
                                 />
                                 <label className="form-check-label" htmlFor="referenceOnly">
-                                    Cannot be borrowed
+                                    {t("Cannot be borrowed")}
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">Description</label>
+                        <label className="form-label fw-semibold">{t("Description")}</label>
                         <textarea
                             className="form-control"
                             rows={3}
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Enter book description"
+                            placeholder={t("Enter book description")}
                         />
                     </div>
 
                     {/* Authors Selection */}
                     <div className="mb-3">
                         <SearchableSelectAsync
-                            label="Authors"
+                            label={t("Authors")}
                             fetchOptions={fetchAuthors}
                                 initialOptions={initialAuthors}
                             value={formData.author_ids}
                             onChange={(value) => setFormData(prev => ({ ...prev, author_ids: value as string[] }))}
-                            placeholder="Search and select authors..."
+                            placeholder={t("Search and select authors...")}
                             multiple={true}
                         />
                     </div>
@@ -219,12 +221,12 @@ export default function BookEditor({
                     {/* Categories Selection */}
                     <div className="mb-4">
                         <SearchableSelectAsync
-                            label="Categories"
+                            label={t("Categories")}
                             fetchOptions={fetchCategories}
                                 initialOptions={initialCategories}
                             value={formData.category_ids}
                             onChange={(value) => setFormData(prev => ({ ...prev, category_ids: value as string[] }))}
-                            placeholder="Search and select categories..."
+                            placeholder={t("Search and select categories...")}
                             multiple={true}
                         />
                     </div>
@@ -233,15 +235,15 @@ export default function BookEditor({
                         <button
                             className="btn btn-primary px-4"
                             onClick={handleSave}
-                            disabled={actionLoading || !formData.title.trim() || !formData.isbn.trim()}
+                            disabled={actionLoading || !formData.title.trim()}
                         >
                             {actionLoading ? (
                                 <>
                                     <span className="spinner-border spinner-border-sm me-2"></span>
-                                    {formData.cover_image_file ? 'Uploading & Saving...' : 'Saving...'}
+                                    {formData.cover_image_file ? t("Uploading & Saving...") : t("Saving...")}
                                 </>
                             ) : (
-                                editingBook ? 'Update Book' : 'Create Book'
+                                editingBook ? t("Update Book") : t("Create Book")
                             )}
                         </button>
                         <button
@@ -252,7 +254,7 @@ export default function BookEditor({
                                 handleCancelForm();
                             }}
                         >
-                            Cancel
+                            {t("Cancel")}
                         </button>
                     </div>
                 </div>

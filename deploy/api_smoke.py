@@ -164,10 +164,44 @@ api(f"/borrowing/{loan}/return", "POST", expected=204)
 assert api(f"/borrowing/{loan}")["status"] == "returned"
 assert api(f"/book/{book}")["available_copies"] == 1
 
-for route, identifier in (("borrowing", loan), ("book", book), ("author", author),
+# Scan an individual copy of an ISBN-less title, while another copy remains available.
+barcode_title = marker + " without ISBN"
+barcode_book_data = {"title": barcode_title, "page_count": 42, "total_copies": 2}
+api("/book", "POST", barcode_book_data, 201)
+barcode_book, = [item for item in listed("/books", "books", search=barcode_title)]
+assert not barcode_book.get("isbn")
+barcode_book_id = barcode_book["id"]
+first, second = api(f"/book/{barcode_book_id}/copies")["copies"]
+assert first["barcode"] != second["barcode"]
+barcode = second["barcode"]
+lookup = f"/copy/{barcode.lower()}"
+api(lookup, expected=401, staff=False)
+assert api(lookup)["book"]["id"] == barcode_book_id
+assert api(lookup)["copy"] == second
+public_books = api("/books?" + urlencode({"search": barcode}), staff=False)["books"]
+assert [item["id"] for item in public_books] == [barcode_book_id]
+
+copy_checkout = {**checkout, "book_id": barcode_book_id, "copy_id": second["id"], "request_id": str(uuid4())}
+api("/borrowing", "POST", {**copy_checkout, "copy_id": api(f"/book/{book}/copies")["copies"][0]["id"]}, 409)
+api("/borrowing", "POST", copy_checkout, 201)
+api("/borrowing", "POST", copy_checkout, 201)
+assert api(lookup)["copy"]["status"] == "borrowed"
+assert api(f"/book/{barcode_book_id}")["available_copies"] == 1
+api("/borrowing", "POST", {**copy_checkout, "request_id": str(uuid4())}, 409)
+barcode_loan, = listed("/borrowings", "borrowings", search=barcode)
+assert barcode_loan["copy"]["id"] == second["id"]
+api(f"/borrowing/{barcode_loan['id']}/return", "POST", expected=204)
+assert api(lookup)["copy"]["status"] == "available"
+api(f"/book/{barcode_book_id}", "PUT", {**barcode_book_data, "total_copies": 1})
+assert api(lookup)["copy"]["status"] == "retired"
+api(f"/book/{barcode_book_id}", "PUT", barcode_book_data)
+assert len({copy["barcode"] for copy in api(f"/book/{barcode_book_id}/copies")["copies"]}) == 3
+
+for route, identifier in (("borrowing", barcode_loan["id"]), ("book", barcode_book_id),
+                          ("borrowing", loan), ("book", book), ("author", author),
                           ("publisher", publisher), ("category", category), ("user", user),
                           ("file", cover_id)):
     api(f"/{route}/{identifier}", "DELETE")
     api(f"/{route}/{identifier}", expected=404)
 request(cover["url"], expected=404, staff=False)
-print("Verified catalog CRUD, search and filters, recommendation uniqueness, checkout, renewal, loss, return, and cover lifecycle")
+print("Verified catalog CRUD, search and filters, recommendation uniqueness, checkout, renewal, loss, return, copy barcode lifecycle, and cover lifecycle")

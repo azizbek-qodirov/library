@@ -1,0 +1,29 @@
+.library-language {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-height: 44px;
+  min-width: 62px;
+  padding: .25rem .6rem;
+  border: 1px solid currentColor;
+  border-radius: .5rem;
+  font-size: .8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.library-language:focus-within {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.library-language select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}

@@ -1,3 +1,5 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { useState } from "react";
 import type { Book } from "./types";
 
@@ -7,6 +9,7 @@ interface Props {
 }
 
 function BookCard({ book, onClick }: Props) {
+  const { t } = useI18n();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   
@@ -57,7 +60,7 @@ function BookCard({ book, onClick }: Props) {
             {imageLoading && (
               <div className="image-placeholder">
                 <div className="spinner-border spinner-border-sm text-muted" role="status">
-                  <span className="visually-hidden">Yuklanmoqda...</span>
+                  <span className="visually-hidden">{t("Loading…")}</span>
                 </div>
               </div>
             )}
@@ -65,8 +68,8 @@ function BookCard({ book, onClick }: Props) {
         ) : (
           <div className="image-placeholder">
             <div className="text-center">
-              <i className="bi bi-book" style={{ fontSize: '2rem', color: '#6c757d' }}>📖</i>
-              <div className="mt-1 small">Muqova yo'q</div>
+              <i className="bi bi-book" style={{ fontSize: '2rem', color: '#6c757d' }}><Icon name="book" size={28} /></i>
+              <div className="mt-1 small">{t("No cover")}</div>
             </div>
           </div>
         )}
@@ -84,13 +87,13 @@ function BookCard({ book, onClick }: Props) {
 
         {book.author_ids && book.author_ids.length > 0 && (
           <div className="book-author" title={book.author_ids.map(a => a.name).join(', ')}>
-            <strong>By:</strong> {book.author_ids.map(a => a.name).join(', ')}
+            <strong>{t("By:")}</strong> {book.author_ids.map(a => a.name).join(', ')}
           </div>
         )}
 
         {book.publisher_id && (
           <div className="book-publisher" title={book.publisher_id.name}>
-            <strong>Publisher:</strong> {book.publisher_id.name}
+            <strong>{t("Publisher:")}</strong> {book.publisher_id.name}
           </div>
         )}
 
@@ -104,18 +107,18 @@ function BookCard({ book, onClick }: Props) {
         <div className="mt-2">
           {available && book.available_copies && book.total_copies && (
             <small className="text-muted d-block">
-              {book.available_copies}/{book.total_copies} copies
+              {book.available_copies}/{book.total_copies} {t("copies")}
             </small>
           )}
           
           {book.location && (
             <small className="text-muted d-block">
-              <strong>Location:</strong> {book.location}
+              <strong>{t("Location:")}</strong> {book.location}
             </small>
           )}
           
           {book.is_reference_only && (
-            <span className="reference-badge">Reference Only</span>
+            <span className="reference-badge">{t("Reference Only")}</span>
           )}
         </div>
       </div>

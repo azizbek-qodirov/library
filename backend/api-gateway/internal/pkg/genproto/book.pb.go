@@ -721,6 +721,206 @@ func (x *BooksGetAllRes) GetTotalCount() int64 {
 	return 0
 }
 
+type CopyBarcodeReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Barcode       string                 `protobuf:"bytes,1,opt,name=barcode,proto3" json:"barcode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CopyBarcodeReq) Reset() {
+	*x = CopyBarcodeReq{}
+	mi := &file_library_submodule_book_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CopyBarcodeReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CopyBarcodeReq) ProtoMessage() {}
+
+func (x *CopyBarcodeReq) ProtoReflect() protoreflect.Message {
+	mi := &file_library_submodule_book_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CopyBarcodeReq.ProtoReflect.Descriptor instead.
+func (*CopyBarcodeReq) Descriptor() ([]byte, []int) {
+	return file_library_submodule_book_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CopyBarcodeReq) GetBarcode() string {
+	if x != nil {
+		return x.Barcode
+	}
+	return ""
+}
+
+type BookCopy struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Barcode       string                 `protobuf:"bytes,2,opt,name=barcode,proto3" json:"barcode,omitempty"`
+	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BookCopy) Reset() {
+	*x = BookCopy{}
+	mi := &file_library_submodule_book_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BookCopy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BookCopy) ProtoMessage() {}
+
+func (x *BookCopy) ProtoReflect() protoreflect.Message {
+	mi := &file_library_submodule_book_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BookCopy.ProtoReflect.Descriptor instead.
+func (*BookCopy) Descriptor() ([]byte, []int) {
+	return file_library_submodule_book_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *BookCopy) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *BookCopy) GetBarcode() string {
+	if x != nil {
+		return x.Barcode
+	}
+	return ""
+}
+
+func (x *BookCopy) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type CopyLookupRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Copy          *BookCopy              `protobuf:"bytes,1,opt,name=copy,proto3" json:"copy,omitempty"`
+	Book          *BookGetRes            `protobuf:"bytes,2,opt,name=book,proto3" json:"book,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CopyLookupRes) Reset() {
+	*x = CopyLookupRes{}
+	mi := &file_library_submodule_book_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CopyLookupRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CopyLookupRes) ProtoMessage() {}
+
+func (x *CopyLookupRes) ProtoReflect() protoreflect.Message {
+	mi := &file_library_submodule_book_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CopyLookupRes.ProtoReflect.Descriptor instead.
+func (*CopyLookupRes) Descriptor() ([]byte, []int) {
+	return file_library_submodule_book_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CopyLookupRes) GetCopy() *BookCopy {
+	if x != nil {
+		return x.Copy
+	}
+	return nil
+}
+
+func (x *CopyLookupRes) GetBook() *BookGetRes {
+	if x != nil {
+		return x.Book
+	}
+	return nil
+}
+
+type BookCopiesRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Copies        []*BookCopy            `protobuf:"bytes,1,rep,name=copies,proto3" json:"copies,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BookCopiesRes) Reset() {
+	*x = BookCopiesRes{}
+	mi := &file_library_submodule_book_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BookCopiesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BookCopiesRes) ProtoMessage() {}
+
+func (x *BookCopiesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_library_submodule_book_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BookCopiesRes.ProtoReflect.Descriptor instead.
+func (*BookCopiesRes) Descriptor() ([]byte, []int) {
+	return file_library_submodule_book_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *BookCopiesRes) GetCopies() []*BookCopy {
+	if x != nil {
+		return x.Copies
+	}
+	return nil
+}
+
 var File_library_submodule_book_proto protoreflect.FileDescriptor
 
 const file_library_submodule_book_proto_rawDesc = "" +
@@ -810,11 +1010,24 @@ const file_library_submodule_book_proto_rawDesc = "" +
 	"\x0eBooksGetAllRes\x12(\n" +
 	"\x05books\x18\x01 \x03(\v2\x12.protos.BookGetResR\x05books\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
-	"totalCount2\x89\x02\n" +
+	"totalCount\"*\n" +
+	"\x0eCopyBarcodeReq\x12\x18\n" +
+	"\abarcode\x18\x01 \x01(\tR\abarcode\"L\n" +
+	"\bBookCopy\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\abarcode\x18\x02 \x01(\tR\abarcode\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\"]\n" +
+	"\rCopyLookupRes\x12$\n" +
+	"\x04copy\x18\x01 \x01(\v2\x10.protos.BookCopyR\x04copy\x12&\n" +
+	"\x04book\x18\x02 \x01(\v2\x12.protos.BookGetResR\x04book\"9\n" +
+	"\rBookCopiesRes\x12(\n" +
+	"\x06copies\x18\x01 \x03(\v2\x10.protos.BookCopyR\x06copies2\x83\x03\n" +
 	"\vBookService\x121\n" +
 	"\n" +
 	"CreateBook\x12\x15.protos.BookCreateReq\x1a\f.protos.Void\x12+\n" +
-	"\aGetBook\x12\f.protos.ByID\x1a\x12.protos.BookGetRes\x121\n" +
+	"\aGetBook\x12\f.protos.ByID\x1a\x12.protos.BookGetRes\x12A\n" +
+	"\x10GetCopyByBarcode\x12\x16.protos.CopyBarcodeReq\x1a\x15.protos.CopyLookupRes\x125\n" +
+	"\x0eListBookCopies\x12\f.protos.ByID\x1a\x15.protos.BookCopiesRes\x121\n" +
 	"\n" +
 	"UpdateBook\x12\x15.protos.BookUpdateReq\x1a\f.protos.Void\x12(\n" +
 	"\n" +
@@ -833,7 +1046,7 @@ func file_library_submodule_book_proto_rawDescGZIP() []byte {
 	return file_library_submodule_book_proto_rawDescData
 }
 
-var file_library_submodule_book_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_library_submodule_book_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_library_submodule_book_proto_goTypes = []any{
 	(*BookCreateReq)(nil),   // 0: protos.BookCreateReq
 	(*BookGetRes)(nil),      // 1: protos.BookGetRes
@@ -841,35 +1054,46 @@ var file_library_submodule_book_proto_goTypes = []any{
 	(*BookUpdateBody)(nil),  // 3: protos.BookUpdateBody
 	(*BooksGetAllReq)(nil),  // 4: protos.BooksGetAllReq
 	(*BooksGetAllRes)(nil),  // 5: protos.BooksGetAllRes
-	(*FileGetRes)(nil),      // 6: protos.FileGetRes
-	(*CategoryGetRes)(nil),  // 7: protos.CategoryGetRes
-	(*AuthorGetRes)(nil),    // 8: protos.AuthorGetRes
-	(*PublisherGetRes)(nil), // 9: protos.PublisherGetRes
-	(*ByID)(nil),            // 10: protos.ByID
-	(*Void)(nil),            // 11: protos.Void
+	(*CopyBarcodeReq)(nil),  // 6: protos.CopyBarcodeReq
+	(*BookCopy)(nil),        // 7: protos.BookCopy
+	(*CopyLookupRes)(nil),   // 8: protos.CopyLookupRes
+	(*BookCopiesRes)(nil),   // 9: protos.BookCopiesRes
+	(*FileGetRes)(nil),      // 10: protos.FileGetRes
+	(*CategoryGetRes)(nil),  // 11: protos.CategoryGetRes
+	(*AuthorGetRes)(nil),    // 12: protos.AuthorGetRes
+	(*PublisherGetRes)(nil), // 13: protos.PublisherGetRes
+	(*ByID)(nil),            // 14: protos.ByID
+	(*Void)(nil),            // 15: protos.Void
 }
 var file_library_submodule_book_proto_depIdxs = []int32{
-	6,  // 0: protos.BookGetRes.cover_image_id:type_name -> protos.FileGetRes
-	7,  // 1: protos.BookGetRes.category_ids:type_name -> protos.CategoryGetRes
-	8,  // 2: protos.BookGetRes.author_ids:type_name -> protos.AuthorGetRes
-	9,  // 3: protos.BookGetRes.publisher_id:type_name -> protos.PublisherGetRes
+	10, // 0: protos.BookGetRes.cover_image_id:type_name -> protos.FileGetRes
+	11, // 1: protos.BookGetRes.category_ids:type_name -> protos.CategoryGetRes
+	12, // 2: protos.BookGetRes.author_ids:type_name -> protos.AuthorGetRes
+	13, // 3: protos.BookGetRes.publisher_id:type_name -> protos.PublisherGetRes
 	3,  // 4: protos.BookUpdateReq.body:type_name -> protos.BookUpdateBody
 	1,  // 5: protos.BooksGetAllRes.books:type_name -> protos.BookGetRes
-	0,  // 6: protos.BookService.CreateBook:input_type -> protos.BookCreateReq
-	10, // 7: protos.BookService.GetBook:input_type -> protos.ByID
-	2,  // 8: protos.BookService.UpdateBook:input_type -> protos.BookUpdateReq
-	10, // 9: protos.BookService.DeleteBook:input_type -> protos.ByID
-	4,  // 10: protos.BookService.GetAllBooks:input_type -> protos.BooksGetAllReq
-	11, // 11: protos.BookService.CreateBook:output_type -> protos.Void
-	1,  // 12: protos.BookService.GetBook:output_type -> protos.BookGetRes
-	11, // 13: protos.BookService.UpdateBook:output_type -> protos.Void
-	11, // 14: protos.BookService.DeleteBook:output_type -> protos.Void
-	5,  // 15: protos.BookService.GetAllBooks:output_type -> protos.BooksGetAllRes
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	7,  // 6: protos.CopyLookupRes.copy:type_name -> protos.BookCopy
+	1,  // 7: protos.CopyLookupRes.book:type_name -> protos.BookGetRes
+	7,  // 8: protos.BookCopiesRes.copies:type_name -> protos.BookCopy
+	0,  // 9: protos.BookService.CreateBook:input_type -> protos.BookCreateReq
+	14, // 10: protos.BookService.GetBook:input_type -> protos.ByID
+	6,  // 11: protos.BookService.GetCopyByBarcode:input_type -> protos.CopyBarcodeReq
+	14, // 12: protos.BookService.ListBookCopies:input_type -> protos.ByID
+	2,  // 13: protos.BookService.UpdateBook:input_type -> protos.BookUpdateReq
+	14, // 14: protos.BookService.DeleteBook:input_type -> protos.ByID
+	4,  // 15: protos.BookService.GetAllBooks:input_type -> protos.BooksGetAllReq
+	15, // 16: protos.BookService.CreateBook:output_type -> protos.Void
+	1,  // 17: protos.BookService.GetBook:output_type -> protos.BookGetRes
+	8,  // 18: protos.BookService.GetCopyByBarcode:output_type -> protos.CopyLookupRes
+	9,  // 19: protos.BookService.ListBookCopies:output_type -> protos.BookCopiesRes
+	15, // 20: protos.BookService.UpdateBook:output_type -> protos.Void
+	15, // 21: protos.BookService.DeleteBook:output_type -> protos.Void
+	5,  // 22: protos.BookService.GetAllBooks:output_type -> protos.BooksGetAllRes
+	16, // [16:23] is the sub-list for method output_type
+	9,  // [9:16] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_library_submodule_book_proto_init() }
@@ -892,7 +1116,7 @@ func file_library_submodule_book_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_library_submodule_book_proto_rawDesc), len(file_library_submodule_book_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

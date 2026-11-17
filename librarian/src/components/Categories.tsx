@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import { usePaginatedList } from './usePaginatedList';
 import { staffFetch } from './api';
 import { useEffect, useRef, useState, type JSX } from 'react';
@@ -18,6 +19,7 @@ interface Props {
 
 // Categories Section
 const CategoriesSection = ({ savedData, onDataChange }: Props) => {
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', description: '' });
@@ -53,7 +55,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      alert('Category name is required');
+      alert(t("Category name is required"));
       return;
     }
 
@@ -76,15 +78,15 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
         signal
       });
 
-      if (!response.ok) throw new Error('Failed to save category');
+      if (!response.ok) throw new Error(t("Failed to save category"));
 
       actionAbortController.current = null;
       handleCancelForm();
       fetchCategories();
-      alert(`Category ${editingCategory ? 'updated' : 'created'} successfully!`);
+      alert(t(editingCategory ? "Category updated successfully!" : "Category created successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      alert('Failed to save category. Please try again.');
+      alert(t("Failed to save category. Please try again."));
     } finally {
       setActionLoading(false);
     }
@@ -103,7 +105,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
         signal
       });
 
-      if (!response.ok) throw new Error('Failed to delete category');
+      if (!response.ok) throw new Error(t("Failed to delete category"));
 
       actionAbortController.current = null;
       setDeleteModal({ isOpen: false, category: null });
@@ -114,10 +116,10 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
       } else {
         fetchCategories();
       }
-      alert('Category deleted successfully!');
+      alert(t("Category deleted successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      alert('Failed to delete category. Please try again.');
+      alert(t("Failed to delete category. Please try again."));
     } finally {
       setActionLoading(false);
     }
@@ -159,7 +161,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
         disabled={currentPage === 1}
       >
-        « Prev
+        {t("« Prev")}
       </button>
     );
 
@@ -222,7 +224,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
         disabled={currentPage === totalPages}
       >
-        Next »
+        {t("Next »")}
       </button>
     );
 
@@ -234,11 +236,11 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
       <div onClick={saveCurrentState}>
         <div className="card shadow-sm">
           <div className="card-header bg-primary text-white">
-            <h5 className="mb-0">{editingCategory ? 'Edit Category' : 'Add New Category'}</h5>
+            <h5 className="mb-0">{editingCategory ? t("Edit Category") : t("Add New Category")}</h5>
           </div>
           <div className="card-body">
             <div className="mb-3">
-              <label className="form-label fw-semibold">Category Name *</label>
+              <label className="form-label fw-semibold">{t("Category Name *")}</label>
               <input
                 type="text"
                 className="form-control"
@@ -247,7 +249,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
               />
             </div>
             <div className="mb-4">
-              <label className="form-label fw-semibold">Description</label>
+              <label className="form-label fw-semibold">{t("Description")}</label>
               <textarea
                 className="form-control"
                 rows={4}
@@ -261,7 +263,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
                 onClick={handleSave}
                 disabled={actionLoading}
               >
-                {actionLoading ? 'Saving...' : (editingCategory ? 'Update' : 'Create')}
+                {actionLoading ? t("Saving...") : (editingCategory ? t("Update") : t("Create"))}
               </button>
               <button
                 type="button"
@@ -271,7 +273,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
                   handleCancelForm();
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -284,11 +286,11 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
     <div onClick={saveCurrentState}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Categories Management</h3>
-          <p className="text-muted mb-0">Organize books by categories</p>
+          <h3 className="mb-1">{t("Categories Management")}</h3>
+          <p className="text-muted mb-0">{t("Organize books by categories")}</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-          + Add New Category
+          {t("+ Add New Category")}
         </button>
       </div>
 
@@ -297,7 +299,7 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
           <input
             type="text"
             className="form-control"
-            placeholder="Search categories..."
+            placeholder={t("Search categories...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -307,41 +309,41 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
       <div className="card shadow-sm">
         <div className="card-header bg-white">
           <div className="row align-items-center">
-            <div className="col"><h6 className="mb-0">All Categories</h6></div>
+            <div className="col"><h6 className="mb-0">{t("All Categories")}</h6></div>
             <div className="col-auto">
               <div className="d-flex gap-4 small text-muted">
-                <span>Total: <strong>{totalCategories}</strong></span>
-                <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+                <span>{t("Total:")} <strong>{totalCategories}</strong></span>
+                {totalPages > 1 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
               </div>
             </div>
           </div>
         </div>
         <div className="card-body p-0">
-          {error && <div className="alert alert-danger" role="alert">{error}</div>}
+          {error && <div className="alert alert-danger" role="alert">{t("Could not load records.")}</div>}
           {loading ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary"></div>
             </div>
           ) : categories.length === 0 ? (
             <div className="text-center p-5">
-              <p className="mb-0">No categories found</p>
+              <p className="mb-0">{t("No categories found")}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover mb-0 library-record-table" role="table">
                 <thead role="rowgroup" className="table-light">
                   <tr role="row">
-                    <th role="columnheader" scope="col">Name</th>
-                    <th role="columnheader" scope="col">Description</th>
-                    <th role="columnheader" scope="col" className="text-end">Actions</th>
+                    <th role="columnheader" scope="col">{t("Name")}</th>
+                    <th role="columnheader" scope="col">{t("Description")}</th>
+                    <th role="columnheader" scope="col" className="text-end">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody role="rowgroup">
                   {categories.map((cat) => (
                     <tr role="row" key={cat.id}>
-                      <td role="cell" data-label="Name" className="fw-medium">{cat.name}</td>
-                      <td role="cell" data-label="Description" className="text-muted">{cat.description || '-'}</td>
-                      <td role="cell" data-label="Actions" className="text-end">
+                      <td role="cell" data-label={t("Name")} className="fw-medium">{cat.name}</td>
+                      <td role="cell" data-label={t("Description")} className="text-muted">{cat.description || '-'}</td>
+                      <td role="cell" data-label={t("Actions")} className="text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
@@ -351,13 +353,13 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
                               setShowForm(true);
                             }}
                           >
-                            Edit
+                            {t("Edit")}
                           </button>
                           <button
                             className="btn btn-outline-danger"
                             onClick={() => setDeleteModal({ isOpen: true, category: cat })}
                           >
-                            Delete
+                            {t("Delete")}
                           </button>
                         </div>
                       </td>
@@ -377,17 +379,17 @@ const CategoriesSection = ({ savedData, onDataChange }: Props) => {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Confirm Delete</h5>
+                <h5 className="modal-title">{t("Confirm Delete")}</h5>
               </div>
               <div className="modal-body">
-                <p>Are you sure you want to delete <strong>{deleteModal.category?.name}</strong>?</p>
+                <p>{t("Are you sure you want to delete “{name}”?", { name: deleteModal.category?.name ?? "" })}</p>
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setDeleteModal({ isOpen: false, category: null })} disabled={actionLoading}>
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button className="btn btn-danger" onClick={handleDelete} disabled={actionLoading}>
-                  {actionLoading ? 'Deleting...' : 'Delete'}
+                  {actionLoading ? t("Deleting...") : t("Delete")}
                 </button>
               </div>
             </div>

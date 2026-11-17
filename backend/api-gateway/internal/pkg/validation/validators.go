@@ -83,8 +83,8 @@ func ValidatePositiveInt(value int, fieldName string) error {
 
 // ValidateISBN validates ISBN-10 or ISBN-13 format
 func ValidateISBN(isbn string) error {
-	if isbn == "" {
-		return errors.New("ISBN is required")
+	if strings.TrimSpace(isbn) == "" {
+		return nil
 	}
 
 	// Remove hyphens and spaces

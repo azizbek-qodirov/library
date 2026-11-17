@@ -13,6 +13,8 @@ import "library_submodule/file.proto";
 service BookService{
     rpc CreateBook(BookCreateReq) returns (Void);
     rpc GetBook(ByID) returns (BookGetRes);
+    rpc GetCopyByBarcode(CopyBarcodeReq) returns (CopyLookupRes);
+    rpc ListBookCopies(ByID) returns (BookCopiesRes);
     rpc UpdateBook(BookUpdateReq) returns (Void);
     rpc DeleteBook(ByID) returns (Void);
     rpc GetAllBooks(BooksGetAllReq) returns (BooksGetAllRes);
@@ -94,4 +96,23 @@ message BooksGetAllReq {
 message BooksGetAllRes {
     repeated BookGetRes books = 1;
     int64 total_count = 2;
+}
+
+message CopyBarcodeReq {
+    string barcode = 1;
+}
+
+message BookCopy {
+    string id = 1;
+    string barcode = 2;
+    string status = 3;
+}
+
+message CopyLookupRes {
+    BookCopy copy = 1;
+    BookGetRes book = 2;
+}
+
+message BookCopiesRes {
+    repeated BookCopy copies = 1;
 }

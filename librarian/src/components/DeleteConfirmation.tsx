@@ -1,3 +1,5 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 
 // Delete Confirmation Modal
 const DeleteConfirmationModal = ({ isOpen, onConfirm, onCancel, itemName, isLoading }: {
@@ -7,6 +9,7 @@ const DeleteConfirmationModal = ({ isOpen, onConfirm, onCancel, itemName, isLoad
   itemName: string;
   isLoading: boolean;
 }) => {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   return (
@@ -14,19 +17,19 @@ const DeleteConfirmationModal = ({ isOpen, onConfirm, onCancel, itemName, isLoad
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content shadow">
           <div className="modal-header border-0 pb-0">
-            <h5 className="modal-title text-danger">Confirm Delete</h5>
-            <button type="button" className="btn-close" onClick={onCancel} disabled={isLoading}></button>
+            <h5 className="modal-title text-danger">{t("Confirm Delete")}</h5>
+            <button type="button" className="btn-close" aria-label={t("Close")} onClick={onCancel} disabled={isLoading}></button>
           </div>
           <div className="modal-body">
             <div className="text-center mb-3">
-              <div className="text-danger mb-3" style={{ fontSize: '3rem' }}>⚠️</div>
-              <p className="mb-2">Are you sure you want to delete <strong>{itemName}</strong>?</p>
-              <p className="text-muted small">This action cannot be undone.</p>
+              <div className="text-danger mb-3" style={{ fontSize: '3rem' }}><Icon name="warning" size={28} /></div>
+              <p className="mb-2">{t("Are you sure you want to delete “{name}”?", { name: itemName ?? "" })}</p>
+              <p className="text-muted small">{t("This action cannot be undone.")}</p>
             </div>
           </div>
           <div className="modal-footer border-0 pt-0">
             <button type="button" className="btn btn-outline-secondary" onClick={onCancel} disabled={isLoading}>
-              Cancel
+              {t("Cancel")}
             </button>
             <button 
               type="button" 
@@ -37,10 +40,10 @@ const DeleteConfirmationModal = ({ isOpen, onConfirm, onCancel, itemName, isLoad
               {isLoading ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2"></span>
-                  Deleting...
+                  {t("Deleting...")}
                 </>
               ) : (
-                'Delete'
+                t("Delete")
               )}
             </button>
           </div>

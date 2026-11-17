@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 
 import React, { useState } from 'react';
 import type { User, UserFormData } from './types';
@@ -9,6 +10,7 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
   onCancel: () => void;
   isLoading: boolean;
 }) => {
+  const { t } = useI18n();
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user?.full_name || '',
     group_name: user?.group_name || '',
@@ -25,13 +27,13 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
   return (
     <div className="card shadow-sm">
       <div className="card-header bg-primary text-white">
-        <h5 className="mb-0">{user ? 'Edit User' : 'Add New User'}</h5>
+        <h5 className="mb-0">{user ? t("Edit User") : t("Add New User")}</h5>
       </div>
       <div className="card-body">
         <form onSubmit={handleSubmit}>
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold" htmlFor="borrower-full-name">Full Name *</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-full-name">{t("Full Name *")}</label>
               <input
                 id="borrower-full-name"
                 type="text"
@@ -42,7 +44,7 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold" htmlFor="borrower-group-name">Group Name</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-group-name">{t("Group Name")}</label>
               <input
                 id="borrower-group-name"
                 type="text"
@@ -54,7 +56,7 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
           </div>
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold" htmlFor="borrower-email">Email</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-email">{t("Email")}</label>
               <input
                 id="borrower-email"
                 type="email"
@@ -64,7 +66,7 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold" htmlFor="borrower-phone">Phone</label>
+              <label className="form-label fw-semibold" htmlFor="borrower-phone">{t("Phone")}</label>
               <input
                 id="borrower-phone"
                 type="tel"
@@ -75,7 +77,7 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
             </div>
           </div>
           <div className="mb-4">
-            <label className="form-label fw-semibold" htmlFor="borrower-role">Role *</label>
+            <label className="form-label fw-semibold" htmlFor="borrower-role">{t("Role *")}</label>
             <select
               id="borrower-role"
               className="form-select"
@@ -83,8 +85,8 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
               onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'student' | 'teacher' }))}
               required
             >
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
+              <option value="student">{t("Student")}</option>
+              <option value="teacher">{t("Teacher")}</option>
             </select>
           </div>
           <div className="d-flex gap-2">
@@ -96,10 +98,10 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
               {isLoading ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2"></span>
-                  Saving...
+                  {t("Saving...")}
                 </>
               ) : (
-                user ? 'Update User' : 'Create User'
+                user ? t("Update User") : t("Create User")
               )}
             </button>
             <button
@@ -110,7 +112,7 @@ const UserForm = ({ user, onSave, onCancel, isLoading }: {
                 onCancel();
               }}
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </form>

@@ -1,7 +1,10 @@
+import { useI18n } from '../../../shared/i18n';
+import { LanguageSelect } from '../../../shared/LanguageSelect';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 function Navigation() {
+  const { t } = useI18n();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -38,20 +41,8 @@ function Navigation() {
           className="navbar-brand fw-bold text-decoration-none"
           onClick={handleNavClick}
         >
-          Oxus Kutubxonasi
+          {t("Oxus Library")}
         </Link>
-
-        {/* Toggle button for mobile view */}
-        <button
-          className="navbar-toggler"
-          type="button"
-          aria-controls="navbarNav"
-          aria-expanded={isMenuOpen}
-          aria-label="Menyuni ochish yoki yopish"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
 
         {/* Nav links */}
         <div
@@ -68,7 +59,7 @@ function Navigation() {
                 }`}
                 onClick={handleNavClick}
               >
-                Asosiy menyu
+                {t("Home")}
               </Link>
             </li>
             <li className="nav-item">
@@ -80,10 +71,24 @@ function Navigation() {
                 }`}
                 onClick={handleNavClick}
               >
-                Kategoriyalar
+                {t("Categories")}
               </Link>
             </li>
           </ul>
+        </div>
+        <div className="public-nav-actions">
+          <LanguageSelect />
+          {/* Toggle button for mobile view */}
+          <button
+            className="navbar-toggler"
+            type="button"
+            aria-controls="navbarNav"
+            aria-expanded={isMenuOpen}
+            aria-label={t("Toggle navigation")}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
         </div>
       </div>
     </nav>

@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import { usePaginatedList } from './usePaginatedList';
 import { staffFetch } from './api';
 import { type JSX, useEffect, useRef, useState } from 'react';
@@ -18,6 +19,7 @@ interface Props {
 
 // Authors Section Component (Similar structure)
 const AuthorsSection = ({ savedData, onDataChange }: Props) => {
+  const { locale, t } = useI18n();
   const [searchQuery, setSearchQuery] = useState(savedData?.searchQuery ?? '');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', birth_date: '', biography: '' });
@@ -53,7 +55,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      alert('Author name is required');
+      alert(t("Author name is required"));
       return;
     }
 
@@ -76,15 +78,15 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
         signal
       });
 
-      if (!response.ok) throw new Error('Failed to save author');
+      if (!response.ok) throw new Error(t("Failed to save author"));
 
       actionAbortController.current = null;
       handleCancelForm();
       fetchAuthors();
-      alert(`Author ${editingAuthor ? 'updated' : 'created'} successfully!`);
+      alert(t(editingAuthor ? "Author updated successfully!" : "Author created successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      alert('Failed to save author. Please try again.');
+      alert(t("Failed to save author. Please try again."));
     } finally {
       setActionLoading(false);
     }
@@ -103,15 +105,15 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
         signal
       });
 
-      if (!response.ok) throw new Error('Failed to delete author');
+      if (!response.ok) throw new Error(t("Failed to delete author"));
 
       actionAbortController.current = null;
       setDeleteModal({ isOpen: false, author: null });
       fetchAuthors();
-      alert('Author deleted successfully!');
+      alert(t("Author deleted successfully!"));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      alert('Failed to delete author. Please try again.');
+      alert(t("Failed to delete author. Please try again."));
     } finally {
       setActionLoading(false);
     }
@@ -154,7 +156,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
         disabled={currentPage === 1}
       >
-        « Prev
+        {t("« Prev")}
       </button>
     );
 
@@ -217,7 +219,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
         disabled={currentPage === totalPages}
       >
-        Next »
+        {t("Next »")}
       </button>
     );
 
@@ -229,12 +231,12 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
       <div onClick={saveCurrentState}>
         <div className="card shadow-sm">
           <div className="card-header bg-primary text-white">
-            <h5 className="mb-0">{editingAuthor ? 'Edit Author' : 'Add New Author'}</h5>
+            <h5 className="mb-0">{editingAuthor ? t("Edit Author") : t("Add New Author")}</h5>
           </div>
           <div className="card-body">
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">Author Name *</label>
+                <label className="form-label fw-semibold">{t("Author Name *")}</label>
                 <input
                   type="text"
                   className="form-control"
@@ -243,7 +245,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
                 />
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">Birth Date</label>
+                <label className="form-label fw-semibold">{t("Birth Date")}</label>
                 <input
                   type="date"
                   className="form-control"
@@ -253,7 +255,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
               </div>
             </div>
             <div className="mb-4">
-              <label className="form-label fw-semibold">Biography</label>
+              <label className="form-label fw-semibold">{t("Biography")}</label>
               <textarea
                 className="form-control"
                 rows={5}
@@ -267,7 +269,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
                 onClick={handleSave}
                 disabled={actionLoading}
               >
-                {actionLoading ? 'Saving...' : (editingAuthor ? 'Update' : 'Create')}
+                {actionLoading ? t("Saving...") : (editingAuthor ? t("Update") : t("Create"))}
               </button>
               <button
                 type="button"
@@ -277,7 +279,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
                   handleCancelForm();
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -290,11 +292,11 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
     <div onClick={saveCurrentState}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Authors Management</h3>
-          <p className="text-muted mb-0">Manage book authors</p>
+          <h3 className="mb-1">{t("Authors Management")}</h3>
+          <p className="text-muted mb-0">{t("Manage book authors")}</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-          + Add New Author
+          {t("+ Add New Author")}
         </button>
       </div>
 
@@ -303,7 +305,7 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
           <input
             type="text"
             className="form-control"
-            placeholder="Search authors..."
+            placeholder={t("Search authors...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -313,43 +315,43 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
       <div className="card shadow-sm">
         <div className="card-header bg-white">
           <div className="row align-items-center">
-            <div className="col"><h6 className="mb-0">All Authors</h6></div>
+            <div className="col"><h6 className="mb-0">{t("All Authors")}</h6></div>
             <div className="col-auto">
               <div className="d-flex gap-4 small text-muted">
-                <span>Total: <strong>{totalAuthors}</strong></span>
-                <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+                <span>{t("Total:")} <strong>{totalAuthors}</strong></span>
+                {totalPages > 1 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
               </div>
             </div>
           </div>
         </div>
         <div className="card-body p-0">
-          {error && <div className="alert alert-danger" role="alert">{error}</div>}
+          {error && <div className="alert alert-danger" role="alert">{t("Could not load records.")}</div>}
           {loading ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary"></div>
             </div>
           ) : authors.length === 0 ? (
             <div className="text-center p-5">
-              <p className="mb-0">No authors found</p>
+              <p className="mb-0">{t("No authors found")}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover mb-0 library-record-table" role="table">
                 <thead role="rowgroup" className="table-light">
                   <tr role="row">
-                    <th role="columnheader" scope="col">Name</th>
-                    <th role="columnheader" scope="col">Birth Date</th>
-                    <th role="columnheader" scope="col">Biography</th>
-                    <th role="columnheader" scope="col" className="text-end">Actions</th>
+                    <th role="columnheader" scope="col">{t("Name")}</th>
+                    <th role="columnheader" scope="col">{t("Birth Date")}</th>
+                    <th role="columnheader" scope="col">{t("Biography")}</th>
+                    <th role="columnheader" scope="col" className="text-end">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody role="rowgroup">
                   {authors.map((author) => (
                     <tr role="row" key={author.id}>
-                      <td role="cell" data-label="Name" className="fw-medium">{author.name}</td>
-                      <td role="cell" data-label="Birth date">{author.birth_date ? new Date(author.birth_date).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '-'}</td>
-                      <td role="cell" data-label="Biography" className="text-muted">{author.biography?.substring(0, 50)}{(author.biography?.length ?? 0) > 50 ? '...' : ''}</td>
-                      <td role="cell" data-label="Actions" className="text-end">
+                      <td role="cell" data-label={t("Name")} className="fw-medium">{author.name}</td>
+                      <td role="cell" data-label={t("Birth date")}>{author.birth_date ? new Date(author.birth_date).toLocaleDateString(locale, { timeZone: 'UTC' }) : '-'}</td>
+                      <td role="cell" data-label={t("Biography")} className="text-muted">{author.biography?.substring(0, 50)}{(author.biography?.length ?? 0) > 50 ? '...' : ''}</td>
+                      <td role="cell" data-label={t("Actions")} className="text-end">
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
@@ -363,13 +365,13 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
                               setShowForm(true);
                             }}
                           >
-                            Edit
+                            {t("Edit")}
                           </button>
                           <button
                             className="btn btn-outline-danger"
                             onClick={() => setDeleteModal({ isOpen: true, author })}
                           >
-                            Delete
+                            {t("Delete")}
                           </button>
                         </div>
                       </td>
@@ -389,17 +391,17 @@ const AuthorsSection = ({ savedData, onDataChange }: Props) => {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Confirm Delete</h5>
+                <h5 className="modal-title">{t("Confirm Delete")}</h5>
               </div>
               <div className="modal-body">
-                <p>Are you sure you want to delete <strong>{deleteModal.author?.name}</strong>?</p>
+                <p>{t("Are you sure you want to delete “{name}”?", { name: deleteModal.author?.name ?? "" })}</p>
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setDeleteModal({ isOpen: false, author: null })} disabled={actionLoading}>
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button className="btn btn-danger" onClick={handleDelete} disabled={actionLoading}>
-                  {actionLoading ? 'Deleting...' : 'Delete'}
+                  {actionLoading ? t("Deleting...") : t("Delete")}
                 </button>
               </div>
             </div>

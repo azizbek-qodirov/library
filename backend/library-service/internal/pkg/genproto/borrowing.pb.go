@@ -29,6 +29,7 @@ type BorrowingCreateReq struct {
 	DueDate       string                 `protobuf:"bytes,4,opt,name=due_date,json=dueDate,proto3" json:"due_date,omitempty"`
 	Notes         string                 `protobuf:"bytes,5,opt,name=notes,proto3" json:"notes,omitempty"`
 	RequestId     string                 `protobuf:"bytes,6,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // Optional idempotency key for checkout retries.
+	CopyId        string                 `protobuf:"bytes,7,opt,name=copy_id,json=copyId,proto3" json:"copy_id,omitempty"`          // Exact copy selected by barcode; optional for existing clients.
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -105,6 +106,13 @@ func (x *BorrowingCreateReq) GetRequestId() string {
 	return ""
 }
 
+func (x *BorrowingCreateReq) GetCopyId() string {
+	if x != nil {
+		return x.CopyId
+	}
+	return ""
+}
+
 type BorrowingRenewReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -168,6 +176,7 @@ type BorrowingGetRes struct {
 	Status        string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
 	ReturnedAt    string                 `protobuf:"bytes,8,opt,name=returned_at,json=returnedAt,proto3" json:"returned_at,omitempty"`
 	Notes         string                 `protobuf:"bytes,9,opt,name=notes,proto3" json:"notes,omitempty"`
+	Copy          *BookCopy              `protobuf:"bytes,10,opt,name=copy,proto3" json:"copy,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -263,6 +272,13 @@ func (x *BorrowingGetRes) GetNotes() string {
 		return x.Notes
 	}
 	return ""
+}
+
+func (x *BorrowingGetRes) GetCopy() *BookCopy {
+	if x != nil {
+		return x.Copy
+	}
+	return nil
 }
 
 type BorrowingUpdateReq struct {
@@ -541,7 +557,7 @@ var File_library_submodule_borrowing_proto protoreflect.FileDescriptor
 
 const file_library_submodule_borrowing_proto_rawDesc = "" +
 	"\n" +
-	"!library_submodule/borrowing.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\x1a\x1clibrary_submodule/book.proto\x1a\x1clibrary_submodule/user.proto\"\xb3\x01\n" +
+	"!library_submodule/borrowing.proto\x12\x06protos\x1a\x1clibrary_submodule/void.proto\x1a\x1clibrary_submodule/book.proto\x1a\x1clibrary_submodule/user.proto\"\xcc\x01\n" +
 	"\x12BorrowingCreateReq\x12\x17\n" +
 	"\abook_id\x18\x01 \x01(\tR\x06bookId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
@@ -549,10 +565,11 @@ const file_library_submodule_borrowing_proto_rawDesc = "" +
 	"\bdue_date\x18\x04 \x01(\tR\adueDate\x12\x14\n" +
 	"\x05notes\x18\x05 \x01(\tR\x05notes\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\x06 \x01(\tR\trequestId\"J\n" +
+	"request_id\x18\x06 \x01(\tR\trequestId\x12\x17\n" +
+	"\acopy_id\x18\a \x01(\tR\x06copyId\"J\n" +
 	"\x11BorrowingRenewReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
-	"\x0eextension_date\x18\x02 \x01(\tR\rextensionDate\"\x9f\x02\n" +
+	"\x0eextension_date\x18\x02 \x01(\tR\rextensionDate\"\xc5\x02\n" +
 	"\x0fBorrowingGetRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12&\n" +
 	"\x04book\x18\x02 \x01(\v2\x12.protos.BookGetResR\x04book\x12&\n" +
@@ -563,7 +580,9 @@ const file_library_submodule_borrowing_proto_rawDesc = "" +
 	"\x06status\x18\a \x01(\tR\x06status\x12\x1f\n" +
 	"\vreturned_at\x18\b \x01(\tR\n" +
 	"returnedAt\x12\x14\n" +
-	"\x05notes\x18\t \x01(\tR\x05notes\"U\n" +
+	"\x05notes\x18\t \x01(\tR\x05notes\x12$\n" +
+	"\x04copy\x18\n" +
+	" \x01(\v2\x10.protos.BookCopyR\x04copy\"U\n" +
 	"\x12BorrowingUpdateReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12/\n" +
 	"\x04body\x18\x02 \x01(\v2\x1b.protos.BorrowingUpdateBodyR\x04body\"\xf0\x01\n" +
@@ -623,35 +642,37 @@ var file_library_submodule_borrowing_proto_goTypes = []any{
 	(*BorrowingsGetAllRes)(nil), // 6: protos.BorrowingsGetAllRes
 	(*BookGetRes)(nil),          // 7: protos.BookGetRes
 	(*UserGetRes)(nil),          // 8: protos.UserGetRes
-	(*ByID)(nil),                // 9: protos.ByID
-	(*Void)(nil),                // 10: protos.Void
+	(*BookCopy)(nil),            // 9: protos.BookCopy
+	(*ByID)(nil),                // 10: protos.ByID
+	(*Void)(nil),                // 11: protos.Void
 }
 var file_library_submodule_borrowing_proto_depIdxs = []int32{
 	7,  // 0: protos.BorrowingGetRes.book:type_name -> protos.BookGetRes
 	8,  // 1: protos.BorrowingGetRes.user:type_name -> protos.UserGetRes
-	4,  // 2: protos.BorrowingUpdateReq.body:type_name -> protos.BorrowingUpdateBody
-	2,  // 3: protos.BorrowingsGetAllRes.borrowings:type_name -> protos.BorrowingGetRes
-	0,  // 4: protos.BorrowingService.CreateBorrowing:input_type -> protos.BorrowingCreateReq
-	9,  // 5: protos.BorrowingService.GetBorrowing:input_type -> protos.ByID
-	3,  // 6: protos.BorrowingService.UpdateBorrowing:input_type -> protos.BorrowingUpdateReq
-	9,  // 7: protos.BorrowingService.ReturnBorrowing:input_type -> protos.ByID
-	1,  // 8: protos.BorrowingService.RenewBorrowing:input_type -> protos.BorrowingRenewReq
-	9,  // 9: protos.BorrowingService.MarkBorrowingLost:input_type -> protos.ByID
-	9,  // 10: protos.BorrowingService.DeleteBorrowing:input_type -> protos.ByID
-	5,  // 11: protos.BorrowingService.GetAllBorrowings:input_type -> protos.BorrowingsGetAllReq
-	10, // 12: protos.BorrowingService.CreateBorrowing:output_type -> protos.Void
-	2,  // 13: protos.BorrowingService.GetBorrowing:output_type -> protos.BorrowingGetRes
-	10, // 14: protos.BorrowingService.UpdateBorrowing:output_type -> protos.Void
-	10, // 15: protos.BorrowingService.ReturnBorrowing:output_type -> protos.Void
-	10, // 16: protos.BorrowingService.RenewBorrowing:output_type -> protos.Void
-	10, // 17: protos.BorrowingService.MarkBorrowingLost:output_type -> protos.Void
-	10, // 18: protos.BorrowingService.DeleteBorrowing:output_type -> protos.Void
-	6,  // 19: protos.BorrowingService.GetAllBorrowings:output_type -> protos.BorrowingsGetAllRes
-	12, // [12:20] is the sub-list for method output_type
-	4,  // [4:12] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	9,  // 2: protos.BorrowingGetRes.copy:type_name -> protos.BookCopy
+	4,  // 3: protos.BorrowingUpdateReq.body:type_name -> protos.BorrowingUpdateBody
+	2,  // 4: protos.BorrowingsGetAllRes.borrowings:type_name -> protos.BorrowingGetRes
+	0,  // 5: protos.BorrowingService.CreateBorrowing:input_type -> protos.BorrowingCreateReq
+	10, // 6: protos.BorrowingService.GetBorrowing:input_type -> protos.ByID
+	3,  // 7: protos.BorrowingService.UpdateBorrowing:input_type -> protos.BorrowingUpdateReq
+	10, // 8: protos.BorrowingService.ReturnBorrowing:input_type -> protos.ByID
+	1,  // 9: protos.BorrowingService.RenewBorrowing:input_type -> protos.BorrowingRenewReq
+	10, // 10: protos.BorrowingService.MarkBorrowingLost:input_type -> protos.ByID
+	10, // 11: protos.BorrowingService.DeleteBorrowing:input_type -> protos.ByID
+	5,  // 12: protos.BorrowingService.GetAllBorrowings:input_type -> protos.BorrowingsGetAllReq
+	11, // 13: protos.BorrowingService.CreateBorrowing:output_type -> protos.Void
+	2,  // 14: protos.BorrowingService.GetBorrowing:output_type -> protos.BorrowingGetRes
+	11, // 15: protos.BorrowingService.UpdateBorrowing:output_type -> protos.Void
+	11, // 16: protos.BorrowingService.ReturnBorrowing:output_type -> protos.Void
+	11, // 17: protos.BorrowingService.RenewBorrowing:output_type -> protos.Void
+	11, // 18: protos.BorrowingService.MarkBorrowingLost:output_type -> protos.Void
+	11, // 19: protos.BorrowingService.DeleteBorrowing:output_type -> protos.Void
+	6,  // 20: protos.BorrowingService.GetAllBorrowings:output_type -> protos.BorrowingsGetAllRes
+	13, // [13:21] is the sub-list for method output_type
+	5,  // [5:13] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_library_submodule_borrowing_proto_init() }

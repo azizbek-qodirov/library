@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import { API_BASE_URL } from '../api';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -20,13 +21,14 @@ interface SelectedItem {
 }
 
 function Categories() {
+  const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get("category") || "recommended");
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get("search") || "");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [categoriesError, setCategoriesError] = useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>(() => ({
     search: searchParams.get("search") || "",
     categoryIds: searchParams.get("categoryIds")?.split(",") ?? [],
@@ -91,7 +93,7 @@ function Categories() {
     const abortController = new AbortController();
 
     const fetchCategories = async () => {
-      setCategoriesError(null);
+      setCategoriesError(false);
       try {
         const res = await fetch(`${API_BASE_URL}/categories?limit=15&sort=book_count`, {
           signal: abortController.signal
@@ -104,7 +106,7 @@ function Categories() {
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return; // Ignore abort errors
         console.error("Failed to fetch categories:", err);
-        setCategoriesError(err instanceof Error ? err.message : 'Failed to load categories');
+        setCategoriesError(true);
       }
     };
 
@@ -214,7 +216,7 @@ function Categories() {
     if (debouncedSearch.trim()) {
       filters.push({
         type: "search",
-        label: `Search: "${debouncedSearch}"`,
+        label: t("Search: {value}", { value: debouncedSearch }),
         value: ""
       });
     }
@@ -224,7 +226,7 @@ function Categories() {
       if (category) {
         filters.push({
           type: "category",
-          label: `Category: ${category.name}`,
+          label: t("Category: {value}", { value: category.name }),
           value: categoryId
         });
       }
@@ -233,7 +235,7 @@ function Categories() {
     selectedAuthors.forEach(author => {
       filters.push({
         type: "author",
-        label: `Author: ${author.name}`,
+        label: t("Author: {value}", { value: author.name }),
         value: author.id
       });
     });
@@ -241,7 +243,7 @@ function Categories() {
     if (selectedPublisher) {
       filters.push({
         type: "publisher",
-        label: `Publisher: ${selectedPublisher.name}`,
+        label: t("Publisher: {value}", { value: selectedPublisher.name }),
         value: ""
       });
     }
@@ -249,7 +251,7 @@ function Categories() {
     if (searchFilters.isReferenceOnly !== "all") {
       filters.push({
         type: "reference",
-        label: searchFilters.isReferenceOnly === "true" ? "Reference Only" : "Borrowable Books",
+        label: searchFilters.isReferenceOnly === "true" ? t("Reference Only") : t("Borrowable Books"),
         value: ""
       });
     }
@@ -258,8 +260,8 @@ function Categories() {
   };
 
   const allCategories = [
-    { id: "recommended", name: "Tavsiya qilingan" },
-    { id: "all", name: "Hammasi" },
+    { id: "recommended", name: t("Recommended titles") },
+    { id: "all", name: t("All") },
     ...categories
   ];
 
@@ -272,7 +274,7 @@ function Categories() {
     <div className="categories-page">
       <div className="categories-header">
         <div className="container">
-          <h1 className="categories-title">Kutubxona katalogi</h1>
+          <h1 className="categories-title">{t("Library catalog")}</h1>
 
           {/* Main Search Bar */}
           <div className="search-section">
@@ -280,9 +282,9 @@ function Categories() {
               <input
                 type="search"
                 enterKeyHint="search"
-                aria-label="Kitoblarni qidirish"
+                aria-label={t("Search books")}
                 className="search-input form-control"
-                placeholder="Kitoblarni nomi, muallifi yoki ISBN raqami bo'yicha qidirish..."
+                placeholder={t("Title, author, ISBN, or barcode…")}
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
@@ -295,7 +297,7 @@ function Categories() {
                 aria-expanded={showAdvanced}
                 onClick={() => setShowAdvanced(!showAdvanced)}
               >
-                Kengaytirilgan qidiruvni {showAdvanced ? "yashirish" : "ko'rsatish"}
+                {t(showAdvanced ? "Hide advanced search" : "Show advanced search")}
               </button>
             </div>
 
@@ -311,14 +313,14 @@ function Categories() {
             {/* Selected Filters */}
             {selectedFilters.length > 0 && (
               <div className="selected-filters">
-                <span className="selected-filters-label">Active Filters:</span>
+                <span className="selected-filters-label">{t("Active Filters:")}</span>
                 {selectedFilters.map((filter, index) => (
                   <span key={index} className="filter-tag">
                     {filter.label}
                     <button
                       className="filter-tag-remove"
                       onClick={() => removeFilter(filter.type, filter.value)}
-                      title="Remove filter"
+                      title={t("Remove filter")}
                     >
                       ✕
                     </button>
@@ -328,7 +330,7 @@ function Categories() {
                   className="clear-filters-btn"
                   onClick={clearAllFilters}
                 >
-                  Clear All
+                  {t("Clear All")}
                 </button>
               </div>
             )}
@@ -340,12 +342,12 @@ function Categories() {
       {categoriesError && (
         <div className="container mt-3">
           <div className="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>Warning:</strong> {categoriesError}
+            <strong>{t("Warning:")}</strong> {t("Failed to load categories")}
             <button
               type="button"
               className="btn-close"
-              onClick={() => setCategoriesError(null)}
-              aria-label="Close"
+              onClick={() => setCategoriesError(false)}
+              aria-label={t("Close")}
             ></button>
           </div>
         </div>
@@ -365,7 +367,7 @@ function Categories() {
                 aria-pressed={selectedCategory === category.id}
                 onClick={() => handleCategorySelect(category.id)}
                 disabled={isDisabled}
-                title={isDisabled ? "Clear search/filters to switch categories" : ""}
+                title={isDisabled ? t("Clear search/filters to switch categories") : ""}
               >
                 {category.name}
               </button>

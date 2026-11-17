@@ -1,6 +1,16 @@
+import type { Message } from '../../../shared/i18n';
 import { API_BASE_URL } from './types';
 
 let authorization: string | undefined;
+
+export class StaffSignInError extends Error {
+  readonly key: Message;
+
+  constructor(key: Message) {
+    super(key);
+    this.key = key;
+  }
+}
 
 export async function signIn(username: string, password: string) {
   const bytes = new TextEncoder().encode(`${username}:${password}`);
@@ -8,8 +18,8 @@ export async function signIn(username: string, password: string) {
   const response = await fetch(`${API_BASE_URL}/staff/session`, {
     headers: { Authorization: credentials },
   });
-  if (response.status === 503) throw new Error('Staff access has not been configured.');
-  if (!response.ok) throw new Error('Sign-in failed. Check your username and password.');
+  if (response.status === 503) throw new StaffSignInError('Staff access has not been configured.');
+  if (!response.ok) throw new StaffSignInError('Sign-in failed. Check your username and password.');
   authorization = credentials;
 }
 

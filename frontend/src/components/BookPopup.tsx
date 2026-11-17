@@ -1,3 +1,5 @@
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { useEffect, useId, useRef, useState } from "react";
 import type { Book } from "./types";
 
@@ -7,6 +9,7 @@ interface Props {
 }
 
 function BookPopup({ book, onClose }: Props) {
+  const { locale, t } = useI18n();
   const available = (book.available_copies ?? 0) > 0;
 
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -43,7 +46,7 @@ function BookPopup({ book, onClose }: Props) {
         <button
           className="book-popup-close btn btn-outline-secondary"
           onClick={onClose}
-          aria-label="Close popup"
+          aria-label={t("Close popup")}
         >
           ✕
         </button>
@@ -61,14 +64,14 @@ function BookPopup({ book, onClose }: Props) {
                 />
               ) : (
                 <div className="book-popup-placeholder">
-                  <i className="bi bi-book" style={{ fontSize: '4rem', color: '#6c757d' }}>📖</i>
-                  <div className="mt-2">No Cover Available</div>
+                  <i className="bi bi-book" style={{ fontSize: '4rem', color: '#6c757d' }}><Icon name="book" size={28} /></i>
+                  <div className="mt-2">{t("No Cover Available")}</div>
                 </div>
               )}
               
               {/* Availability badge */}
               <div className={`book-popup-badge ${available ? 'available' : 'unavailable'}`}>
-                {available ? '✓ Available' : '✗ Not Available'}
+                {available ? t("✓ Available") : t("✗ Not Available")}
               </div>
             </div>
           </div>
@@ -82,7 +85,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* Authors */}
               {book.author_ids && book.author_ids.length > 0 && (
                 <div className="book-detail-item">
-                  <strong>Author{book.author_ids.length > 1 ? 's' : ''}:</strong>
+                  <strong>{t(book.author_ids.length > 1 ? "Authors" : "Author")}:</strong>
                   <span className="ms-2">
                     {book.author_ids.map(author => author.name).join(', ')}
                   </span>
@@ -92,7 +95,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* Publisher */}
               {book.publisher_id && (
                 <div className="book-detail-item">
-                  <strong>Publisher:</strong>
+                  <strong>{t("Publisher:")}</strong>
                   <span className="ms-2">{book.publisher_id.name}</span>
                 </div>
               )}
@@ -100,7 +103,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* Categories */}
               {book.category_ids && book.category_ids.length > 0 && (
                 <div className="book-detail-item">
-                  <strong>Categories:</strong>
+                  <strong>{t("Categories:")}</strong>
                   <div className="mt-1">
                     {book.category_ids.map(category => (
                       <span key={category.id} className="badge bg-primary me-1 mb-1">
@@ -114,7 +117,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* ISBN */}
               {book.isbn && (
                 <div className="book-detail-item">
-                  <strong>ISBN:</strong>
+                  <strong>{t("ISBN:")}</strong>
                   <span className="ms-2">{book.isbn}</span>
                 </div>
               )}
@@ -122,9 +125,9 @@ function BookPopup({ book, onClose }: Props) {
               {/* Published Date */}
               {(book.published_date || book.publication_year) && (
                 <div className="book-detail-item">
-                  <strong>Published:</strong>
+                  <strong>{t("Published:")}</strong>
                   <span className="ms-2">
-                    {book.published_date ? new Date(book.published_date).toLocaleDateString(undefined, { timeZone: 'UTC' }) : book.publication_year}
+                    {book.published_date ? new Date(book.published_date).toLocaleDateString(locale, { timeZone: 'UTC' }) : book.publication_year}
                   </span>
                 </div>
               )}
@@ -132,7 +135,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* Language */}
               {book.language && (
                 <div className="book-detail-item">
-                  <strong>Language:</strong>
+                  <strong>{t("Language:")}</strong>
                   <span className="ms-2">{book.language}</span>
                 </div>
               )}
@@ -140,7 +143,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* Page Count */}
               {book.page_count && (
                 <div className="book-detail-item">
-                  <strong>Pages:</strong>
+                  <strong>{t("Pages:")}</strong>
                   <span className="ms-2">{book.page_count}</span>
                 </div>
               )}
@@ -148,7 +151,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* Location */}
               {book.location && (
                 <div className="book-detail-item">
-                  <strong>Location:</strong>
+                  <strong>{t("Location:")}</strong>
                   <span className="ms-2">{book.location}</span>
                 </div>
               )}
@@ -156,9 +159,9 @@ function BookPopup({ book, onClose }: Props) {
               {/* Copies Information */}
               {book.total_copies && (
                 <div className="book-detail-item">
-                  <strong>Copies:</strong>
+                  <strong>{t("Copies:")}</strong>
                   <span className="ms-2">
-                    {book.available_copies || 0} available out of {book.total_copies} total
+                    {t("{available} available out of {total}", { available: book.available_copies ?? 0, total: book.total_copies })}
                   </span>
                 </div>
               )}
@@ -167,7 +170,7 @@ function BookPopup({ book, onClose }: Props) {
               {book.is_reference_only && (
                 <div className="book-detail-item">
                   <span className="badge bg-warning text-dark">
-                    📚 Reference Only - Cannot be borrowed
+                    {t("For in-library use only")}
                   </span>
                 </div>
               )}
@@ -175,7 +178,7 @@ function BookPopup({ book, onClose }: Props) {
               {/* Description */}
               {book.description && (
                 <div className="book-detail-item mt-3">
-                  <strong>Description:</strong>
+                  <strong>{t("Description:")}</strong>
                   <p className="mt-2 text-muted">{book.description}</p>
                 </div>
               )}

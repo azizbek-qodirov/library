@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import { API_BASE_URL } from '../api';
 import { useEffect, useState } from "react";
 import type { Author, Category, Publisher } from "./types";
@@ -25,6 +26,7 @@ interface Props {
 }
 
 function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Props) {
+  const { t } = useI18n();
     const [categorySearch, setCategorySearch] = useState("");
     const [authorSearch, setAuthorSearch] = useState("");
     const [publisherSearch, setPublisherSearch] = useState("");
@@ -34,8 +36,8 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
     const [publishers, setPublishers] = useState<Publisher[]>([]);
     const [authorsLoading, setAuthorsLoading] = useState(false);
     const [publishersLoading, setPublishersLoading] = useState(false);
-    const [authorsError, setAuthorsError] = useState<string | null>(null);
-    const [publishersError, setPublishersError] = useState<string | null>(null);
+    const [authorsError, setAuthorsError] = useState(false);
+    const [publishersError, setPublishersError] = useState(false);
 
     // Fetch ALL categories for the dropdown
     useEffect(() => {
@@ -67,7 +69,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
     useEffect(() => {
         const controller = new AbortController();
         setAuthors([]);
-        setAuthorsError(null);
+        setAuthorsError(false);
         setAuthorsLoading(Boolean(authorSearch.trim()));
         if (!authorSearch.trim()) return;
 
@@ -80,8 +82,8 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                 if (!res.ok) throw new Error(`Failed to fetch authors: ${res.statusText}`);
                 const data = await res.json();
                 if (!controller.signal.aborted) setAuthors(data.authors || []);
-            } catch (err) {
-                if (!controller.signal.aborted) setAuthorsError(err instanceof Error ? err.message : 'Failed to load authors');
+            } catch {
+                if (!controller.signal.aborted) setAuthorsError(true);
             } finally {
                 if (!controller.signal.aborted) setAuthorsLoading(false);
             }
@@ -95,7 +97,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
     useEffect(() => {
         const controller = new AbortController();
         setPublishers([]);
-        setPublishersError(null);
+        setPublishersError(false);
         setPublishersLoading(Boolean(publisherSearch.trim()));
         if (!publisherSearch.trim()) return;
 
@@ -108,8 +110,8 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                 if (!res.ok) throw new Error(`Failed to fetch publishers: ${res.statusText}`);
                 const data = await res.json();
                 if (!controller.signal.aborted) setPublishers(data.publishers || []);
-            } catch (err) {
-                if (!controller.signal.aborted) setPublishersError(err instanceof Error ? err.message : 'Failed to load publishers');
+            } catch {
+                if (!controller.signal.aborted) setPublishersError(true);
             } finally {
                 if (!controller.signal.aborted) setPublishersLoading(false);
             }
@@ -175,11 +177,11 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                 {/* Categories Filter */}
                 <div className="col-lg-3 col-md-6 mb-3">
                     <div className="filter-group">
-                        <label className="filter-label">Categories</label>
+                        <label className="filter-label">{t("Categories")}</label>
                         <input
                             type="text"
                             className="filter-search-input form-control form-control-sm"
-                            placeholder="Search categories..."
+                            placeholder={t("Search categories...")}
                             value={categorySearch}
                             onChange={(e) => setCategorySearch(e.target.value)}
                         />
@@ -199,12 +201,12 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                             ))}
                             {filteredCategories.length === 0 && categorySearch && (
                                 <div className="filter-option text-muted">
-                                    No categories found
+                                    {t("No categories found")}
                                 </div>
                             )}
                             {filteredCategories.length === 0 && !categorySearch && (
                                 <div className="filter-option text-muted">
-                                    No categories available
+                                    {t("No categories available")}
                                 </div>
                             )}
                             {filters.categoryIds.length > 0 && (
@@ -213,7 +215,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                                         className="btn btn-sm btn-outline-secondary w-100"
                                         onClick={clearCategories}
                                     >
-                                        Clear Selection
+                                        {t("Clear Selection")}
                                     </button>
                                 </div>
                             )}
@@ -224,11 +226,11 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                 {/* Authors Filter */}
                 <div className="col-lg-3 col-md-6 mb-3">
                     <div className="filter-group">
-                        <label className="filter-label">Mualliflar</label>
+                        <label className="filter-label">{t("Authors")}</label>
                         <input
                             type="text"
                             className="filter-search-input form-control form-control-sm"
-                            placeholder="Mualliflarni qidirish..."
+                            placeholder={t("Search authors…")}
                             value={authorSearch}
                             onChange={(e) => setAuthorSearch(e.target.value)}
                         />
@@ -236,13 +238,13 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                             {authorsLoading && (
                                 <div className="filter-option text-center">
                                     <div className="spinner-border spinner-border-sm" role="status">
-                                        <span className="visually-hidden">Yuklanmoqda...</span>
+                                        <span className="visually-hidden">{t("Loading…")}</span>
                                     </div>
                                 </div>
                             )}
                             {authorsError && (
                                 <div className="filter-option text-danger">
-                                    <small>{authorsError}</small>
+                                    <small>{t("Failed to load authors")}</small>
                                 </div>
                             )}
                             {authors.map((author) => (
@@ -260,12 +262,12 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                             ))}
                             {authors.length === 0 && authorSearch.trim() && !authorsLoading && (
                                 <div className="filter-option text-muted">
-                                    Qidiruv natijasi bo'yicha mualliflar topilmadi!
+                                    {t("No authors found")}
                                 </div>
                             )}
                             {!authorSearch.trim() && (
                                 <div className="filter-option text-muted">
-                                    Mualliflarni qidirish uchun yozing...
+                                    {t("Type to search authors…")}
                                 </div>
                             )}
                             {filters.authorIds.length > 0 && (
@@ -274,7 +276,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                                         className="btn btn-sm btn-outline-secondary w-100"
                                         onClick={clearAuthors}
                                     >
-                                        Clear Selection
+                                        {t("Clear Selection")}
                                     </button>
                                 </div>
                             )}
@@ -285,11 +287,11 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                 {/* Publishers Filter */}
                 <div className="col-lg-3 col-md-6 mb-3">
                     <div className="filter-group">
-                        <label className="filter-label">Publisher</label>
+                        <label className="filter-label">{t("Publisher")}</label>
                         <input
                             type="text"
                             className="filter-search-input form-control form-control-sm"
-                            placeholder="Search publishers..."
+                            placeholder={t("Search publishers...")}
                             value={publisherSearch}
                             onChange={(e) => setPublisherSearch(e.target.value)}
                         />
@@ -297,13 +299,13 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                             {publishersLoading && (
                                 <div className="filter-option text-center">
                                     <div className="spinner-border spinner-border-sm" role="status">
-                                        <span className="visually-hidden">Yuklanmoqda...</span>
+                                        <span className="visually-hidden">{t("Loading…")}</span>
                                     </div>
                                 </div>
                             )}
                             {publishersError && (
                                 <div className="filter-option text-danger">
-                                    <small>{publishersError}</small>
+                                    <small>{t("Failed to load publishers")}</small>
                                 </div>
                             )}
                             {publishers.map((publisher) => (
@@ -322,12 +324,12 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                             ))}
                             {publishers.length === 0 && publisherSearch.trim() && !publishersLoading && (
                                 <div className="filter-option text-muted">
-                                    No publishers found
+                                    {t("No publishers found")}
                                 </div>
                             )}
                             {!publisherSearch.trim() && (
                                 <div className="filter-option text-muted">
-                                    Type to search publishers
+                                    {t("Type to search publishers")}
                                 </div>
                             )}
                             {filters.publisherId && (
@@ -336,7 +338,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                                         className="btn btn-sm btn-outline-secondary w-100"
                                         onClick={() => onFiltersChange({ publisherId: "" }, { publisher: null })}
                                     >
-                                        Clear Selection
+                                        {t("Clear Selection")}
                                     </button>
                                 </div>
                             )}
@@ -347,7 +349,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                 {/* Reference Only Filter */}
                 <div className="col-lg-3 col-md-6 mb-3">
                     <div className="filter-group">
-                        <label className="filter-label">Kitob turi</label>
+                        <label className="filter-label">{t("Book type")}</label>
                         <div className="reference-filter">
                             <div className="form-check">
                                 <input
@@ -360,7 +362,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                                     onChange={(e) => handleReferenceChange(e.target.value)}
                                 />
                                 <label className="form-check-label" htmlFor="referenceAll">
-                                    Barchasi
+                                    {t("All")}
                                 </label>
                             </div>
                             <div className="form-check">
@@ -374,7 +376,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                                     onChange={(e) => handleReferenceChange(e.target.value)}
                                 />
                                 <label className="form-check-label" htmlFor="referenceTrue">
-                                    Faqat kutubxonada foydalanish uchun
+                                    {t("In-library use only")}
                                 </label>
                             </div>
                             <div className="form-check">
@@ -388,7 +390,7 @@ function AdvancedSearchPanel({ filters, selectedAuthors, onFiltersChange }: Prop
                                     onChange={(e) => handleReferenceChange(e.target.value)}
                                 />
                                 <label className="form-check-label" htmlFor="referenceFalse">
-                                    Uyga olib ketish mumkin
+                                    {t("Available to borrow")}
                                 </label>
                             </div>
                         </div>

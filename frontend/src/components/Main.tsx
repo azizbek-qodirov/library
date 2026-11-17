@@ -1,3 +1,6 @@
+import type { Message } from '../../../shared/i18n';
+import { useI18n } from '../../../shared/i18n';
+import { Icon } from '../../../shared/Icon';
 import { API_BASE_URL } from '../api';
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +13,7 @@ interface RecommendedResponse {
 }
 
 function Main() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -17,7 +21,7 @@ function Main() {
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Message | null>(null);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -33,12 +37,12 @@ function Main() {
           const data: RecommendedResponse = await res.json();
           setRecommendedBooks(data.recommendeds?.map(r => r.book_id) || []);
         } else {
-          setError("Tavsiya etilgan kitoblarni yuklashda xatolik");
+          setError("Could not load recommended books");
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return; // Ignore abort errors
         console.error("Failed to fetch recommended books:", err);
-        setError("Tarmoq xatosi: Serverga ulanib bo'lmadi");
+        setError("Could not connect to the server");
       } finally {
         setIsLoading(false);
       }
@@ -92,16 +96,16 @@ function Main() {
           <div className="col-lg-6 col-md-12">
             <div className="library-home-intro px-lg-5">
               <h1 className="display-3 fw-bold text-white library-home-heading">
-                <span className="text-gradient">Oxus Universiteti</span> kutubxonasiga xush kelibsiz!
+                {t("Welcome to Oxus University Library")}
               </h1>
               <p className="lead text-light opacity-75 library-home-copy">
-                Har bir buyuk fikr birinchi sahifadan boshlanadi — endi o'z sahifangizni tez va oson biz bilan toping!
+                {t("Every great idea starts on the first page. Find your next book with us.")}
               </p>
               <button
                 className="btn-explore"
                 onClick={() => navigate("/categories")}
               >
-                <span className="btn-text">Kitoblarni kashf eting</span>
+                <span className="btn-text">{t("Explore books")}</span>
                 <span className="btn-arrow">→</span>
                 <div className="btn-bg"></div>
               </button>
@@ -109,11 +113,11 @@ function Main() {
           </div>
 
           <section className="col-12 d-lg-none mobile-featured" aria-labelledby="mobile-featured-title">
-            <h2 id="mobile-featured-title">Tavsiya etilgan kitoblar</h2>
-            {isLoading && <p role="status" className="mobile-featured-status">Yuklanmoqda…</p>}
-            {error && <p role="alert" className="mobile-featured-status">{error}</p>}
+            <h2 id="mobile-featured-title">{t("Recommended books")}</h2>
+            {isLoading && <p role="status" className="mobile-featured-status">{t("Loading…")}</p>}
+            {error && <p role="alert" className="mobile-featured-status">{t(error)}</p>}
             {!isLoading && !error && recommendedBooks.length === 0 && (
-              <p className="mobile-featured-status">Hozircha tavsiya etilgan kitoblar yo‘q.</p>
+              <p className="mobile-featured-status">{t("No books have been recommended yet.")}</p>
             )}
             {recommendedBooks.length > 0 && (
               <ul className="mobile-featured-list">
@@ -123,7 +127,7 @@ function Main() {
                       <span className="mobile-featured-cover">
                         {book.cover_image_id?.url ? (
                           <img src={book.cover_image_id.url} alt="" loading="lazy" />
-                        ) : <span aria-hidden="true">📖</span>}
+                        ) : <span aria-hidden="true"><Icon name="book" size={28} /></span>}
                       </span>
                       <span className="mobile-featured-title">{book.title}</span>
                       {book.author_ids?.[0] && <span className="mobile-featured-author">{book.author_ids[0].name}</span>}
@@ -139,14 +143,14 @@ function Main() {
             {isLoading && (
               <div className="text-center text-white p-5">
                 <div className="spinner-border" role="status">
-                  <span className="visually-hidden">Yuklanmoqda...</span>
+                  <span className="visually-hidden">{t("Loading…")}</span>
                 </div>
-                <p className="mt-3">Tavsiya etilgan kitoblar yuklanmoqda...</p>
+                <p className="mt-3">{t("Loading recommended books…")}</p>
               </div>
             )}
             {error && (
               <div className="alert alert-warning text-center" role="alert">
-                {error}
+                {t(error)}
               </div>
             )}
             {!isLoading && !error && recommendedBooks.length > 0 && (
@@ -159,7 +163,7 @@ function Main() {
                 <div className="carousel-navigation">
                   <button 
                     className="carousel-nav nav-prev"
-                    aria-label="Oldingi kitob"
+                    aria-label={t("Previous book")}
                     onClick={prevSlide}
                     disabled={isTransitioning}
                   >
@@ -167,7 +171,7 @@ function Main() {
                   </button>
                   <button 
                     className="carousel-nav nav-next"
-                    aria-label="Keyingi kitob"
+                    aria-label={t("Next book")}
                     onClick={nextSlide}
                     disabled={isTransitioning}
                   >
@@ -258,8 +262,8 @@ function Main() {
                                 />
                               ) : (
                                 <div className="book-placeholder">
-                                  <div className="placeholder-icon">📚</div>
-                                  <div className="placeholder-text">No Cover</div>
+                                  <div className="placeholder-icon"><Icon name="library" size={28} /></div>
+                                  <div className="placeholder-text">{t("No Cover")}</div>
                                 </div>
                               )}
                               <div className="book-shine"></div>
