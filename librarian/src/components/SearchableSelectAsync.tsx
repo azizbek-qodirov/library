@@ -21,6 +21,8 @@ interface SearchableSelectAsyncProps {
   label?: string;
   required?: boolean;
   initialOptions?: Option[];
+  onCreate?: (name: string) => void;
+  createLabel?: string;
 }
 
 const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
@@ -33,7 +35,9 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
   className = '',
   label,
   required = false,
-  initialOptions = EMPTY_OPTIONS
+  initialOptions = EMPTY_OPTIONS,
+  onCreate,
+  createLabel,
 }) => {
   const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState('');
@@ -247,6 +251,7 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={selectedValues.length === 0 ? placeholder : ''}
             disabled={disabled}
+            aria-label={label}
           />
         </div>
 
@@ -270,6 +275,16 @@ const SearchableSelectAsync: React.FC<SearchableSelectAsyncProps> = ({
             ) : options.length === 0 ? (
               <div className="p-3 text-center text-muted">
                 {t("No options found")}
+                {onCreate && (
+                  <button type="button" className="btn btn-outline-primary btn-sm d-block mx-auto mt-2"
+                    onClick={() => {
+                      onCreate(searchQuery.trim());
+                      setIsOpen(false);
+                      setSearchQuery('');
+                    }}>
+                    {createLabel}
+                  </button>
+                )}
               </div>
             ) : (
               options.map((option, index) => {

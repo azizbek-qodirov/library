@@ -30,7 +30,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PublisherServiceClient interface {
-	CreatePublisher(ctx context.Context, in *PublisherCreateReq, opts ...grpc.CallOption) (*Void, error)
+	CreatePublisher(ctx context.Context, in *PublisherCreateReq, opts ...grpc.CallOption) (*PublisherGetRes, error)
 	GetPublisher(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*PublisherGetRes, error)
 	UpdatePublisher(ctx context.Context, in *PublisherUpdateReq, opts ...grpc.CallOption) (*Void, error)
 	DeletePublisher(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
@@ -45,9 +45,9 @@ func NewPublisherServiceClient(cc grpc.ClientConnInterface) PublisherServiceClie
 	return &publisherServiceClient{cc}
 }
 
-func (c *publisherServiceClient) CreatePublisher(ctx context.Context, in *PublisherCreateReq, opts ...grpc.CallOption) (*Void, error) {
+func (c *publisherServiceClient) CreatePublisher(ctx context.Context, in *PublisherCreateReq, opts ...grpc.CallOption) (*PublisherGetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Void)
+	out := new(PublisherGetRes)
 	err := c.cc.Invoke(ctx, PublisherService_CreatePublisher_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (c *publisherServiceClient) GetAllPublishers(ctx context.Context, in *Publi
 // All implementations must embed UnimplementedPublisherServiceServer
 // for forward compatibility.
 type PublisherServiceServer interface {
-	CreatePublisher(context.Context, *PublisherCreateReq) (*Void, error)
+	CreatePublisher(context.Context, *PublisherCreateReq) (*PublisherGetRes, error)
 	GetPublisher(context.Context, *ByID) (*PublisherGetRes, error)
 	UpdatePublisher(context.Context, *PublisherUpdateReq) (*Void, error)
 	DeletePublisher(context.Context, *ByID) (*Void, error)
@@ -114,7 +114,7 @@ type PublisherServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPublisherServiceServer struct{}
 
-func (UnimplementedPublisherServiceServer) CreatePublisher(context.Context, *PublisherCreateReq) (*Void, error) {
+func (UnimplementedPublisherServiceServer) CreatePublisher(context.Context, *PublisherCreateReq) (*PublisherGetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePublisher not implemented")
 }
 func (UnimplementedPublisherServiceServer) GetPublisher(context.Context, *ByID) (*PublisherGetRes, error) {

@@ -20,7 +20,7 @@ func NewAuthorService(db *sql.DB) *AuthorService {
 	return &AuthorService{repo: repo.NewAuthorRepo(db)}
 }
 
-func (s *AuthorService) CreateAuthor(ctx context.Context, req *pb.AuthorCreateReq) (*pb.Void, error) {
+func (s *AuthorService) CreateAuthor(ctx context.Context, req *pb.AuthorCreateReq) (*pb.AuthorGetRes, error) {
 	if req.GetBirthDate() == "" {
 		req.BirthDate = nil
 	}

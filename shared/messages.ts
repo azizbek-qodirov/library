@@ -1,4 +1,8 @@
 export const messages = {
+  "Book pages": { en: "Book pages", uz: "Kitob sahifalari", ru: "Страницы книг" },
+  "Failed to save publisher. Please try again.": { en: "Failed to save publisher. Please try again.", uz: "Nashriyotni saqlab bo‘lmadi. Qayta urinib ko‘ring.", ru: "Не удалось сохранить издательство. Попробуйте ещё раз." },
+  "Save and select": { en: "Save and select", uz: "Saqlash va tanlash", ru: "Сохранить и выбрать" },
+  "Only the name is required. You can add other details later.": { en: "Only the name is required. You can add other details later.", uz: "Faqat ism yoki nom kiritilishi shart. Qolgan ma’lumotlarni keyin qo‘shishingiz mumkin.", ru: "Обязательно только имя или название. Остальные сведения можно добавить позже." },
   "« Prev": { en: "« Prev", uz: "« Oldingi", ru: "« Назад" },
   "{available} available out of {total}": { en: "{available} available out of {total}", uz: "{available} ta mavjud, jami {total} ta", ru: "Доступно {available} из {total}" },
   "← Prev": { en: "← Prev", uz: "← Oldingi", ru: "← Назад" },

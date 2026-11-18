@@ -20,13 +20,16 @@ func NewPublisherRepo(db *sql.DB) *PublisherRepo {
 	return &PublisherRepo{db: db}
 }
 
-func (r *PublisherRepo) CreatePublisher(ctx context.Context, req *pb.PublisherCreateReq) (*pb.Void, error) {
-	query := `INSERT INTO publishers (name, description) VALUES ($1, $2)`
-	_, err := r.db.ExecContext(ctx, query, req.Name, req.Description)
+func (r *PublisherRepo) CreatePublisher(ctx context.Context, req *pb.PublisherCreateReq) (*pb.PublisherGetRes, error) {
+	var publisher pb.PublisherGetRes
+	err := r.db.QueryRowContext(ctx,
+		`INSERT INTO publishers (name, description) VALUES ($1, $2) RETURNING id, name, description`,
+		strings.TrimSpace(req.Name), req.Description,
+	).Scan(&publisher.Id, &publisher.Name, &publisher.Description)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Void{}, nil
+	return &publisher, nil
 }
 
 func (r *PublisherRepo) GetPublisher(ctx context.Context, req *pb.ByID) (*pb.PublisherGetRes, error) {

@@ -12,6 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type PublisherCreateResponse struct {
+	Message   string              `json:"message"`
+	Publisher *pb.PublisherGetRes `json:"publisher"`
+}
+
 // CreatePublisher godoc
 // @Summary Creates a new publisher
 // @Description Creates a new publisher in the database
@@ -19,7 +24,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param message body pb.PublisherCreateReq true "Publisher create request"
-// @Success 201 {object} pb.Void "Publisher created successfully"
+// @Success 201 {object} PublisherCreateResponse "Publisher created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
 // @Security StaffAuth
@@ -39,13 +44,13 @@ func (h *HTTPHandler) CreatePublisher(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
 	defer cancel()
 
-	_, err := h.PS.CreatePublisher(ctx, req)
+	created, err := h.PS.CreatePublisher(ctx, req)
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Create publisher")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Publisher created successfully"})
+	c.JSON(http.StatusCreated, PublisherCreateResponse{Message: "Publisher created successfully", Publisher: created})
 }
 
 // GetPublisherByID godoc

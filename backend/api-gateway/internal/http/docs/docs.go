@@ -48,7 +48,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Author created successfully",
                         "schema": {
-                            "$ref": "#/definitions/genproto.Void"
+                            "$ref": "#/definitions/handlers.AuthorCreateResponse"
                         }
                     },
                     "400": {
@@ -1114,7 +1114,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Category created successfully",
                         "schema": {
-                            "$ref": "#/definitions/genproto.Void"
+                            "$ref": "#/definitions/handlers.CategoryCreateResponse"
                         }
                     },
                     "400": {
@@ -1562,7 +1562,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Publisher created successfully",
                         "schema": {
-                            "$ref": "#/definitions/genproto.Void"
+                            "$ref": "#/definitions/handlers.PublisherCreateResponse"
                         }
                     },
                     "400": {
@@ -2968,6 +2968,39 @@ const docTemplate = `{
         },
         "genproto.Void": {
             "type": "object"
+        },
+        "handlers.AuthorCreateResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/genproto.AuthorGetRes"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.CategoryCreateResponse": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/genproto.CategoryGetRes"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.PublisherCreateResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "publisher": {
+                    "$ref": "#/definitions/genproto.PublisherGetRes"
+                }
+            }
         }
     },
     "securityDefinitions": {

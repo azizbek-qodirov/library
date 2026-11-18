@@ -44,7 +44,7 @@ const UsersSection = ({ savedData, onDataChange }: {
   const usersPerPage = 20;
   const {
     items: users, total: totalUsers, loading, error, currentPage, setCurrentPage, reload: fetchUsers,
-  } = usePaginatedList<User>('/users', 'users', t("total"), searchQuery,
+  } = usePaginatedList<User>('/users', 'users', 'total', searchQuery,
     new URLSearchParams({ role: roleFilter, group_name: groupFilter.trim() }).toString(), usersPerPage);
   const totalPages = Math.ceil(totalUsers / usersPerPage);
 

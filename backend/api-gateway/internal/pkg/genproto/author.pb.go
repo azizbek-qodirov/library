@@ -416,9 +416,9 @@ const file_library_submodule_author_proto_rawDesc = "" +
 	"\x10GetAllAuthorsRes\x12.\n" +
 	"\aauthors\x18\x01 \x03(\v2\x14.protos.AuthorGetResR\aauthors\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x04R\n" +
-	"totalCount2\x9f\x02\n" +
-	"\rAuthorService\x125\n" +
-	"\fCreateAuthor\x12\x17.protos.AuthorCreateReq\x1a\f.protos.Void\x12/\n" +
+	"totalCount2\xa7\x02\n" +
+	"\rAuthorService\x12=\n" +
+	"\fCreateAuthor\x12\x17.protos.AuthorCreateReq\x1a\x14.protos.AuthorGetRes\x12/\n" +
 	"\tGetAuthor\x12\f.protos.ByID\x1a\x14.protos.AuthorGetRes\x125\n" +
 	"\fUpdateAuthor\x12\x17.protos.AuthorUpdateReq\x1a\f.protos.Void\x12*\n" +
 	"\fDeleteAuthor\x12\f.protos.ByID\x1a\f.protos.Void\x12C\n" +
@@ -455,7 +455,7 @@ var file_library_submodule_author_proto_depIdxs = []int32{
 	2, // 4: protos.AuthorService.UpdateAuthor:input_type -> protos.AuthorUpdateReq
 	6, // 5: protos.AuthorService.DeleteAuthor:input_type -> protos.ByID
 	4, // 6: protos.AuthorService.GetAllAuthors:input_type -> protos.AuthorsGetAllReq
-	7, // 7: protos.AuthorService.CreateAuthor:output_type -> protos.Void
+	1, // 7: protos.AuthorService.CreateAuthor:output_type -> protos.AuthorGetRes
 	1, // 8: protos.AuthorService.GetAuthor:output_type -> protos.AuthorGetRes
 	7, // 9: protos.AuthorService.UpdateAuthor:output_type -> protos.Void
 	7, // 10: protos.AuthorService.DeleteAuthor:output_type -> protos.Void

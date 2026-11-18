@@ -30,7 +30,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthorServiceClient interface {
-	CreateAuthor(ctx context.Context, in *AuthorCreateReq, opts ...grpc.CallOption) (*Void, error)
+	CreateAuthor(ctx context.Context, in *AuthorCreateReq, opts ...grpc.CallOption) (*AuthorGetRes, error)
 	GetAuthor(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*AuthorGetRes, error)
 	UpdateAuthor(ctx context.Context, in *AuthorUpdateReq, opts ...grpc.CallOption) (*Void, error)
 	DeleteAuthor(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
@@ -45,9 +45,9 @@ func NewAuthorServiceClient(cc grpc.ClientConnInterface) AuthorServiceClient {
 	return &authorServiceClient{cc}
 }
 
-func (c *authorServiceClient) CreateAuthor(ctx context.Context, in *AuthorCreateReq, opts ...grpc.CallOption) (*Void, error) {
+func (c *authorServiceClient) CreateAuthor(ctx context.Context, in *AuthorCreateReq, opts ...grpc.CallOption) (*AuthorGetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Void)
+	out := new(AuthorGetRes)
 	err := c.cc.Invoke(ctx, AuthorService_CreateAuthor_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (c *authorServiceClient) GetAllAuthors(ctx context.Context, in *AuthorsGetA
 // All implementations must embed UnimplementedAuthorServiceServer
 // for forward compatibility.
 type AuthorServiceServer interface {
-	CreateAuthor(context.Context, *AuthorCreateReq) (*Void, error)
+	CreateAuthor(context.Context, *AuthorCreateReq) (*AuthorGetRes, error)
 	GetAuthor(context.Context, *ByID) (*AuthorGetRes, error)
 	UpdateAuthor(context.Context, *AuthorUpdateReq) (*Void, error)
 	DeleteAuthor(context.Context, *ByID) (*Void, error)
@@ -114,7 +114,7 @@ type AuthorServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthorServiceServer struct{}
 
-func (UnimplementedAuthorServiceServer) CreateAuthor(context.Context, *AuthorCreateReq) (*Void, error) {
+func (UnimplementedAuthorServiceServer) CreateAuthor(context.Context, *AuthorCreateReq) (*AuthorGetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAuthor not implemented")
 }
 func (UnimplementedAuthorServiceServer) GetAuthor(context.Context, *ByID) (*AuthorGetRes, error) {

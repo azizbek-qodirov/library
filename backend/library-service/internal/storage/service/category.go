@@ -20,7 +20,7 @@ func NewCategoryService(db *sql.DB) *CategoryService {
 	return &CategoryService{repo: repo.NewCategoryRepo(db)}
 }
 
-func (s *CategoryService) CreateCategory(ctx context.Context, req *pb.CategoryCreateReq) (*pb.Void, error) {
+func (s *CategoryService) CreateCategory(ctx context.Context, req *pb.CategoryCreateReq) (*pb.CategoryGetRes, error) {
 	return s.repo.CreateCategory(ctx, req)
 }
 

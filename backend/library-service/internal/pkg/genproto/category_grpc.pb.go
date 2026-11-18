@@ -30,7 +30,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CategoryServiceClient interface {
-	CreateCategory(ctx context.Context, in *CategoryCreateReq, opts ...grpc.CallOption) (*Void, error)
+	CreateCategory(ctx context.Context, in *CategoryCreateReq, opts ...grpc.CallOption) (*CategoryGetRes, error)
 	GetCategory(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*CategoryGetRes, error)
 	UpdateCategory(ctx context.Context, in *CategoryUpdateReq, opts ...grpc.CallOption) (*Void, error)
 	DeleteCategory(ctx context.Context, in *ByID, opts ...grpc.CallOption) (*Void, error)
@@ -45,9 +45,9 @@ func NewCategoryServiceClient(cc grpc.ClientConnInterface) CategoryServiceClient
 	return &categoryServiceClient{cc}
 }
 
-func (c *categoryServiceClient) CreateCategory(ctx context.Context, in *CategoryCreateReq, opts ...grpc.CallOption) (*Void, error) {
+func (c *categoryServiceClient) CreateCategory(ctx context.Context, in *CategoryCreateReq, opts ...grpc.CallOption) (*CategoryGetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Void)
+	out := new(CategoryGetRes)
 	err := c.cc.Invoke(ctx, CategoryService_CreateCategory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (c *categoryServiceClient) GetAllCategories(ctx context.Context, in *Catego
 // All implementations must embed UnimplementedCategoryServiceServer
 // for forward compatibility.
 type CategoryServiceServer interface {
-	CreateCategory(context.Context, *CategoryCreateReq) (*Void, error)
+	CreateCategory(context.Context, *CategoryCreateReq) (*CategoryGetRes, error)
 	GetCategory(context.Context, *ByID) (*CategoryGetRes, error)
 	UpdateCategory(context.Context, *CategoryUpdateReq) (*Void, error)
 	DeleteCategory(context.Context, *ByID) (*Void, error)
@@ -114,7 +114,7 @@ type CategoryServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCategoryServiceServer struct{}
 
-func (UnimplementedCategoryServiceServer) CreateCategory(context.Context, *CategoryCreateReq) (*Void, error) {
+func (UnimplementedCategoryServiceServer) CreateCategory(context.Context, *CategoryCreateReq) (*CategoryGetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCategory not implemented")
 }
 func (UnimplementedCategoryServiceServer) GetCategory(context.Context, *ByID) (*CategoryGetRes, error) {

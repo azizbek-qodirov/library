@@ -1,8 +1,10 @@
 import { useI18n } from '../../../shared/i18n';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import { readAPI } from './api';
 import SearchableSelectAsync from './SearchableSelectAsync';
+import CreateBookRelationDialog from './CreateBookRelationDialog';
+import type { BookRelationKind } from './CreateBookRelationDialog';
 import type { Author, Book, BookFormData, Category, Publisher } from './types';
 
 interface BookEditorProps {
@@ -32,11 +34,19 @@ export default function BookEditor({
     editingBook, formData, setFormData, imagePreview, actionLoading, handleFileChange, handleSave, handleCancelForm,
 }: BookEditorProps) {
   const { t } = useI18n();
-    const initialAuthors = useMemo(() => (editingBook?.author_ids ?? []).map(a => ({ id: a.id, label: a.name })), [editingBook]);
-    const initialCategories = useMemo(() => (editingBook?.category_ids ?? []).map(c => ({ id: c.id, label: c.name })), [editingBook]);
-    const initialPublishers = useMemo(() => editingBook?.publisher_id
+    const [createRelation, setCreateRelation] = useState<{ kind: BookRelationKind; name: string } | null>(null);
+    const [createdAuthors, setCreatedAuthors] = useState<{ id: string; label: string }[]>([]);
+    const [createdPublishers, setCreatedPublishers] = useState<{ id: string; label: string }[]>([]);
+    const [createdCategories, setCreatedCategories] = useState<{ id: string; label: string }[]>([]);
+    const initialAuthors = useMemo(() => [
+        ...(editingBook?.author_ids ?? []).map(a => ({ id: a.id, label: a.name })), ...createdAuthors,
+    ], [editingBook, createdAuthors]);
+    const initialCategories = useMemo(() => [
+        ...(editingBook?.category_ids ?? []).map(c => ({ id: c.id, label: c.name })), ...createdCategories,
+    ], [editingBook, createdCategories]);
+    const initialPublishers = useMemo(() => [...(editingBook?.publisher_id
         ? [{ id: editingBook.publisher_id.id, label: editingBook.publisher_id.name }]
-        : [], [editingBook]);
+        : []), ...createdPublishers], [editingBook, createdPublishers]);
 
     return (
         <div>
@@ -162,7 +172,13 @@ export default function BookEditor({
                                 onChange={(value) => setFormData(prev => ({ ...prev, publisher_id: value as string }))}
                                 placeholder={t("Search publisher...")}
                                 multiple={false}
+                                onCreate={name => setCreateRelation({ kind: 'publisher', name })}
+                                createLabel={t('Add New Publisher')}
                             />
+                            <button type="button" className="btn btn-link btn-sm px-0"
+                                disabled={actionLoading} onClick={() => setCreateRelation({ kind: 'publisher', name: '' })}>
+                                {t('Add New Publisher')}
+                            </button>
                         </div>
                     </div>
 
@@ -215,7 +231,13 @@ export default function BookEditor({
                             onChange={(value) => setFormData(prev => ({ ...prev, author_ids: value as string[] }))}
                             placeholder={t("Search and select authors...")}
                             multiple={true}
+                            onCreate={name => setCreateRelation({ kind: 'author', name })}
+                            createLabel={t('Add New Author')}
                         />
+                        <button type="button" className="btn btn-link btn-sm px-0"
+                            disabled={actionLoading} onClick={() => setCreateRelation({ kind: 'author', name: '' })}>
+                            {t('Add New Author')}
+                        </button>
                     </div>
 
                     {/* Categories Selection */}
@@ -228,7 +250,13 @@ export default function BookEditor({
                             onChange={(value) => setFormData(prev => ({ ...prev, category_ids: value as string[] }))}
                             placeholder={t("Search and select categories...")}
                             multiple={true}
+                            onCreate={name => setCreateRelation({ kind: 'category', name })}
+                            createLabel={t('Add New Category')}
                         />
+                        <button type="button" className="btn btn-link btn-sm px-0"
+                            disabled={actionLoading} onClick={() => setCreateRelation({ kind: 'category', name: '' })}>
+                            {t('Add New Category')}
+                        </button>
                     </div>
 
                     <div className="d-flex gap-2">
@@ -259,6 +287,22 @@ export default function BookEditor({
                     </div>
                 </div>
             </div>
+            {createRelation && <CreateBookRelationDialog kind={createRelation.kind} initialName={createRelation.name}
+                onClose={() => setCreateRelation(null)}
+                onCreated={record => {
+                    const option = { id: record.id, label: record.name };
+                    if (createRelation.kind === 'author') {
+                        setCreatedAuthors(previous => [...previous, option]);
+                        setFormData(previous => ({ ...previous, author_ids: [...new Set([...previous.author_ids, record.id])] }));
+                    } else if (createRelation.kind === 'publisher') {
+                        setCreatedPublishers(previous => [...previous, option]);
+                        setFormData(previous => ({ ...previous, publisher_id: record.id }));
+                    } else {
+                        setCreatedCategories(previous => [...previous, option]);
+                        setFormData(previous => ({ ...previous, category_ids: [...new Set([...previous.category_ids, record.id])] }));
+                    }
+                    setCreateRelation(null);
+                }} />}
         </div>
     );
 }

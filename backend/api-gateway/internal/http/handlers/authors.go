@@ -12,6 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type AuthorCreateResponse struct {
+	Message string           `json:"message"`
+	Author  *pb.AuthorGetRes `json:"author"`
+}
+
 // CreateAuthor godoc
 // @Summary Creates a new author
 // @Description Creates a new author in the database
@@ -19,7 +24,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param message body pb.AuthorCreateReq true "Author create request"
-// @Success 201 {object} pb.Void "Author created successfully"
+// @Success 201 {object} AuthorCreateResponse "Author created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
 // @Security StaffAuth
@@ -39,13 +44,13 @@ func (h *HTTPHandler) CreateAuthor(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
 	defer cancel()
 
-	_, err := h.AS.CreateAuthor(ctx, req)
+	created, err := h.AS.CreateAuthor(ctx, req)
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Create author")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Author created successfully"})
+	c.JSON(http.StatusCreated, AuthorCreateResponse{Message: "Author created successfully", Author: created})
 }
 
 // GetAuthorByID godoc

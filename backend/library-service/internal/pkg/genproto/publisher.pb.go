@@ -385,9 +385,9 @@ const file_library_submodule_publisher_proto_rawDesc = "" +
 	"publishers\x18\x01 \x03(\v2\x17.protos.PublisherGetResR\n" +
 	"publishers\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x04R\n" +
-	"totalCount2\xc0\x02\n" +
-	"\x10PublisherService\x12;\n" +
-	"\x0fCreatePublisher\x12\x1a.protos.PublisherCreateReq\x1a\f.protos.Void\x125\n" +
+	"totalCount2\xcb\x02\n" +
+	"\x10PublisherService\x12F\n" +
+	"\x0fCreatePublisher\x12\x1a.protos.PublisherCreateReq\x1a\x17.protos.PublisherGetRes\x125\n" +
 	"\fGetPublisher\x12\f.protos.ByID\x1a\x17.protos.PublisherGetRes\x12;\n" +
 	"\x0fUpdatePublisher\x12\x1a.protos.PublisherUpdateReq\x1a\f.protos.Void\x12-\n" +
 	"\x0fDeletePublisher\x12\f.protos.ByID\x1a\f.protos.Void\x12L\n" +
@@ -424,7 +424,7 @@ var file_library_submodule_publisher_proto_depIdxs = []int32{
 	2, // 4: protos.PublisherService.UpdatePublisher:input_type -> protos.PublisherUpdateReq
 	6, // 5: protos.PublisherService.DeletePublisher:input_type -> protos.ByID
 	4, // 6: protos.PublisherService.GetAllPublishers:input_type -> protos.PublishersGetAllReq
-	7, // 7: protos.PublisherService.CreatePublisher:output_type -> protos.Void
+	1, // 7: protos.PublisherService.CreatePublisher:output_type -> protos.PublisherGetRes
 	1, // 8: protos.PublisherService.GetPublisher:output_type -> protos.PublisherGetRes
 	7, // 9: protos.PublisherService.UpdatePublisher:output_type -> protos.Void
 	7, // 10: protos.PublisherService.DeletePublisher:output_type -> protos.Void

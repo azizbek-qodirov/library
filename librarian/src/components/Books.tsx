@@ -65,8 +65,8 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     const itemsPerPage = 20;
     const {
       items: books, total: totalBooks, loading, error, currentPage, setCurrentPage, reload: fetchBooks,
-    } = usePaginatedList<Book>('/books', t("books"), 'total_count', searchQuery);
-    const totalPages = Math.ceil(totalBooks / itemsPerPage);
+    } = usePaginatedList<Book>('/books', 'books', 'total_count', searchQuery);
+    const totalPages = Math.max(1, Math.ceil(totalBooks / itemsPerPage));
 
     // Restore saved data
     useEffect(() => {
@@ -274,7 +274,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
     };
 
     const renderPagination = () => {
-        if (totalPages <= 1) return null;
+        if (totalBooks === 0) return null;
 
         const pages = [];
         const delta = 2;
@@ -320,6 +320,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                 <button
                     key={i}
                     className={`btn btn-sm me-1 ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'}`}
+                    aria-current={i === currentPage ? 'page' : undefined}
                     onClick={() => setCurrentPage(i)}
                 >
                     {i}
@@ -353,7 +354,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
             </button>
         );
 
-        return <div className="d-flex flex-wrap row-gap-2 justify-content-center align-items-center mt-4">{pages}</div>;
+        return <nav aria-label={t('Book pages')} className="d-flex flex-wrap row-gap-2 justify-content-center align-items-center mt-4">{pages}</nav>;
     };
 
     if (showForm) {
@@ -418,7 +419,7 @@ const BooksSection: React.FC<Props> = ({ savedData, onDataChange }) => {
                         <div className="col-auto">
                             <div className="d-flex gap-4 small text-muted">
                                 <span>{t("Total:")} <strong>{totalBooks}</strong></span>
-                                {totalPages > 1 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
+                                {totalBooks > 0 && <span>{t("Page {page} of {total}", { page: currentPage, total: totalPages })}</span>}
                             </div>
                         </div>
                     </div>

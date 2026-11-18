@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	pb "library/internal/pkg/genproto"
 )
@@ -15,13 +16,16 @@ func NewCategoryRepo(db *sql.DB) *CategoryRepo {
 	return &CategoryRepo{db: db}
 }
 
-func (r *CategoryRepo) CreateCategory(ctx context.Context, req *pb.CategoryCreateReq) (*pb.Void, error) {
-	query := `INSERT INTO categories (name, description) VALUES ($1, $2)`
-	_, err := r.db.ExecContext(ctx, query, req.Name, req.Description)
+func (r *CategoryRepo) CreateCategory(ctx context.Context, req *pb.CategoryCreateReq) (*pb.CategoryGetRes, error) {
+	var category pb.CategoryGetRes
+	err := r.db.QueryRowContext(ctx,
+		`INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING id, name, description`,
+		strings.TrimSpace(req.Name), req.Description,
+	).Scan(&category.Id, &category.Name, &category.Description)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Void{}, nil
+	return &category, nil
 }
 
 func (r *CategoryRepo) GetCategory(ctx context.Context, req *pb.ByID) (*pb.CategoryGetRes, error) {

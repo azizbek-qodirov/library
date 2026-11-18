@@ -7,7 +7,7 @@ package protos;
 import "library_submodule/void.proto";
 
 service AuthorService {
-    rpc CreateAuthor(AuthorCreateReq) returns (Void);
+    rpc CreateAuthor(AuthorCreateReq) returns (AuthorGetRes);
     rpc GetAuthor(ByID) returns (AuthorGetRes);
     rpc UpdateAuthor(AuthorUpdateReq) returns (Void);
     rpc DeleteAuthor(ByID) returns (Void);

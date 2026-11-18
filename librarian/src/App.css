@@ -336,3 +336,16 @@
     background: #142a2259;
   }
 }
+.book-relation-dialog {
+  width: min(480px, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.book-relation-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+.book-relation-dialog .modal-header,
+.book-relation-dialog .modal-body,
+.book-relation-dialog .modal-footer { padding: 1rem 1.25rem; }

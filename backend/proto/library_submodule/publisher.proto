@@ -7,7 +7,7 @@ package protos;
 import "library_submodule/void.proto";
 
 service PublisherService{
-    rpc CreatePublisher(PublisherCreateReq) returns (Void);
+    rpc CreatePublisher(PublisherCreateReq) returns (PublisherGetRes);
     rpc GetPublisher(ByID) returns (PublisherGetRes);
     rpc UpdatePublisher(PublisherUpdateReq) returns (Void);
     rpc DeletePublisher(ByID) returns (Void);

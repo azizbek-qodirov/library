@@ -395,9 +395,9 @@ const file_library_submodule_category_proto_rawDesc = "" +
 	"categories\x18\x01 \x03(\v2\x16.protos.CategoryGetResR\n" +
 	"categories\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x04R\n" +
-	"totalCount2\xb8\x02\n" +
-	"\x0fCategoryService\x129\n" +
-	"\x0eCreateCategory\x12\x19.protos.CategoryCreateReq\x1a\f.protos.Void\x123\n" +
+	"totalCount2\xc2\x02\n" +
+	"\x0fCategoryService\x12C\n" +
+	"\x0eCreateCategory\x12\x19.protos.CategoryCreateReq\x1a\x16.protos.CategoryGetRes\x123\n" +
 	"\vGetCategory\x12\f.protos.ByID\x1a\x16.protos.CategoryGetRes\x129\n" +
 	"\x0eUpdateCategory\x12\x19.protos.CategoryUpdateReq\x1a\f.protos.Void\x12,\n" +
 	"\x0eDeleteCategory\x12\f.protos.ByID\x1a\f.protos.Void\x12L\n" +
@@ -434,7 +434,7 @@ var file_library_submodule_category_proto_depIdxs = []int32{
 	2, // 4: protos.CategoryService.UpdateCategory:input_type -> protos.CategoryUpdateReq
 	6, // 5: protos.CategoryService.DeleteCategory:input_type -> protos.ByID
 	4, // 6: protos.CategoryService.GetAllCategories:input_type -> protos.CategoriesGetAllReq
-	7, // 7: protos.CategoryService.CreateCategory:output_type -> protos.Void
+	1, // 7: protos.CategoryService.CreateCategory:output_type -> protos.CategoryGetRes
 	1, // 8: protos.CategoryService.GetCategory:output_type -> protos.CategoryGetRes
 	7, // 9: protos.CategoryService.UpdateCategory:output_type -> protos.Void
 	7, // 10: protos.CategoryService.DeleteCategory:output_type -> protos.Void

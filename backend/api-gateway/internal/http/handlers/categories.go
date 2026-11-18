@@ -12,6 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type CategoryCreateResponse struct {
+	Message  string             `json:"message"`
+	Category *pb.CategoryGetRes `json:"category"`
+}
+
 // CreateCategory godoc
 // @Summary Creates a new category
 // @Description Creates a new category in the database
@@ -19,7 +24,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param message body pb.CategoryCreateReq true "Category create request"
-// @Success 201 {object} pb.Void "Category created successfully"
+// @Success 201 {object} CategoryCreateResponse "Category created successfully"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
 // @Security StaffAuth
@@ -40,13 +45,13 @@ func (h *HTTPHandler) CreateCategory(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second*5)
 	defer cancel()
 
-	_, err := h.CS.CreateCategory(ctx, req)
+	created, err := h.CS.CreateCategory(ctx, req)
 	if err != nil {
 		errors.HandleGRPCError(c, err, "Create category")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Category created successfully"})
+	c.JSON(http.StatusCreated, CategoryCreateResponse{Message: "Category created successfully", Category: created})
 }
 
 // GetCategoryByID godoc

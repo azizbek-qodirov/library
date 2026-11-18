@@ -7,7 +7,7 @@ package protos;
 import "library_submodule/void.proto";
 
 service CategoryService {
-    rpc CreateCategory(CategoryCreateReq) returns (Void);
+    rpc CreateCategory(CategoryCreateReq) returns (CategoryGetRes);
     rpc GetCategory(ByID) returns (CategoryGetRes);
     rpc UpdateCategory(CategoryUpdateReq) returns (Void);
     rpc DeleteCategory(ByID) returns (Void);

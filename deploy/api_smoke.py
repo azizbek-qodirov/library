@@ -42,9 +42,12 @@ def listed(path, key, **query):
 
 
 def create_and_find(route, plural, data, alias=None):
-    api("/" + route, "POST", data, 201)
+    created = api("/" + route, "POST", data, 201)
     matches = listed("/" + plural, alias or plural, search=marker, limit=10)
     assert len(matches) == 1, (route, matches)
+    if route in ("author", "publisher", "category"):
+        assert created[route]["id"] == matches[0]["id"]
+        assert created[route]["name"] == data["name"]
     return matches[0]["id"]
 
 

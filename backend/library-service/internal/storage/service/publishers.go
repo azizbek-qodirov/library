@@ -20,7 +20,7 @@ func NewPublisherService(db *sql.DB) *PublisherService {
 	return &PublisherService{repo: repo.NewPublisherRepo(db)}
 }
 
-func (s *PublisherService) CreatePublisher(ctx context.Context, req *pb.PublisherCreateReq) (*pb.Void, error) {
+func (s *PublisherService) CreatePublisher(ctx context.Context, req *pb.PublisherCreateReq) (*pb.PublisherGetRes, error) {
 	return s.repo.CreatePublisher(ctx, req)
 }
 

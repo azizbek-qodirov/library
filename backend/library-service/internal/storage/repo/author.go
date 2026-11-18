@@ -23,13 +23,16 @@ func NewAuthorRepo(db *sql.DB) *AuthorRepo {
 	return &AuthorRepo{db: db}
 }
 
-func (r *AuthorRepo) CreateAuthor(ctx context.Context, req *pb.AuthorCreateReq) (*pb.Void, error) {
-	query := `INSERT INTO authors (name, birth_date, biography) VALUES ($1, $2, $3)`
-	_, err := r.db.ExecContext(ctx, query, req.Name, req.BirthDate, req.Biography)
+func (r *AuthorRepo) CreateAuthor(ctx context.Context, req *pb.AuthorCreateReq) (*pb.AuthorGetRes, error) {
+	var author pb.AuthorGetRes
+	err := r.db.QueryRowContext(ctx,
+		`INSERT INTO authors (name, birth_date, biography) VALUES ($1, $2, $3) RETURNING id, name, birth_date::text, biography`,
+		strings.TrimSpace(req.Name), req.BirthDate, req.Biography,
+	).Scan(&author.Id, &author.Name, &author.BirthDate, &author.Biography)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Void{}, nil
+	return &author, nil
 }
 
 func (r *AuthorRepo) GetAuthor(ctx context.Context, req *pb.ByID) (*pb.AuthorGetRes, error) {
